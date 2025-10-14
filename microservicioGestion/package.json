@@ -1,0 +1,28 @@
+{
+  "name": "microserviciogestion",
+  "version": "1.0.0",
+  "description": "Microservicio de gestión de pacientes y citas (Bizihotz)",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js",
+    "dev": "nodemon main.js"
+  },
+  "keywords": [
+    "node",
+    "mongodb",
+    "mongoose",
+    "backend"
+  ],
+  "author": "Iñigo Fiat Sarasola",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mongodb": "^5.7.0",
+    "mongoose": "^8.19.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
