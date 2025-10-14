@@ -20,6 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: npm run dev
     depends_on:
       mongo:
         condition: service_healthy
