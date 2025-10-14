@@ -1,11 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const { connectDB } = require('./config/db');
-const pacienteRoutes = require('./routes/pacienteRoutes');
-const citaRoutes = require('./routes/citaRoutes');
-const historialRoutes = require('./routes/historialRoutes');
-const registroRoutes = require('./routes/registroRoutes');
-const pacienteUsuarioRoutes = require('./routes/pacienteUsuarioRoutes');
+const pacienteRutas = require('./rutas/pacienteRutas');
+const citaRutas = require('./rutas/citasRutas');
+const historialRoutes = require('./rutas/historialRutas');
+const registroRoutes = require('./rutas/registroRutas');
+const pacienteUsuarioRoutes = require('./rutas/pacienteUsuarioRutas');
 const swaggerDocument = require('./docs/openapi.json');
 
 const PORT = process.env.PORT || 4001;
@@ -13,12 +14,27 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+const healthCheck = async (_req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ status: 'degraded', db: 'disconnected' });
+  }
 
-app.use('/api/pacientes', pacienteRoutes);
-app.use('/api/citas', citaRoutes);
+  try {
+    await mongoose.connection.db.admin().command({ ping: 1 });
+    return res.json({ status: 'ok', db: 'connected' });
+  } catch (error) {
+    return res.status(503).json({
+      status: 'degraded',
+      db: 'error',
+      detalle: error.message
+    });
+  }
+};
+
+app.get('/status', healthCheck);
+
+app.use('/api/pacientes', pacienteRutas);
+app.use('/api/citas', citaRutas);
 app.use('/api/historiales', historialRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/pacientes-usuarios', pacienteUsuarioRoutes);
