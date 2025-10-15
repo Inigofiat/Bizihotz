@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Microservicio de Nutricion
+  version: 1.0.0
+  description: |
+    API basada en FastAPI para gestionar alimentos, recetas y dietas dentro del ecosistema Bizihotz.
+servers:
+  - url: http://localhost:5002
+paths:
+  /health:
+    get:
+      summary: Comprobar el estado del servicio
+      responses:
+        '200':
+          description: Estado del microservicio
+  /api/alimentos:
+    get:
+      summary: Listar alimentos
+      parameters:
+        - in: query
+          name: buscar
+          schema:
+            type: string
+          description: Texto a buscar en el nombre del alimento
+      responses:
+        '200':
+          description: Coleccion de alimentos
+    post:
+      summary: Crear alimento
+      responses:
+        '201':
+          description: Alimento creado
+  /api/recetas:
+    get:
+      summary: Listar recetas
+      responses:
+        '200':
+          description: Coleccion de recetas
+    post:
+      summary: Crear receta
+      responses:
+        '201':
+          description: Receta creada
+  /api/dietas:
+    get:
+      summary: Listar dietas
+      responses:
+        '200':
+          description: Coleccion de dietas
+    post:
+      summary: Crear dieta
+      responses:
+        '201':
+          description: Dieta creada
