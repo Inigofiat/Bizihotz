@@ -1,0 +1,117 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #effff4;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-box {
+  background-color: #c8e0cf;
+  padding: 60px 40px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.logo {
+  width: 100px;
+  margin-bottom: 60px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background-color: #12814c;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+.input-group svg {
+  flex-shrink: 0;
+  margin-right: 14px;
+  fill: #e0fff0;
+  width: 28px;
+  height: 28px;
+}
+
+.input-group input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: #fff;
+  font-size: 18px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+::placeholder {
+  color: #e0fff0;
+}
+
+.eye-button {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.eye-button svg {
+  fill: #e0fff0;
+}
+
+.login-button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #98cfa3;
+  border: none;
+  color: #083f20;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #afe8ba;
+  color: #083f20;
+}
+
+@media (max-width: 480px) {
+  .logo {
+    width: 80px;
+    margin-bottom: 40px;
+  }
+
+  .login-box {
+    padding: 40px 20px;
+  }
+}
+
+.eye-button svg {
+  fill: #e0fff0;
+  width: 24px;
+  height: 24px;
+  transition: fill 0.3s ease;
+}
+
+.eye-button:hover svg {
+  fill: #ffffff;
+}
