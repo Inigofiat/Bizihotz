@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  background-color: #effff4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: sans-serif;
+}
+
+.logo-img {
+  max-width: 550px;
+  width: 80%;
+  height: auto;
+}
+
+.loader {
+  margin-top: 30px;
+  border: 6px solid #d9f2e6;
+  border-top: 6px solid #12814c;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

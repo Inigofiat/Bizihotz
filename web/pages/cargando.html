@@ -4,42 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bizihotz Logo</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #effff4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: sans-serif;
-    }
-
-    .logo-img {
-      max-width: 550px;
-      width: 80%;
-      height: auto;
-    }
-
-    .loader {
-      margin-top: 30px;
-      border: 6px solid #d9f2e6;
-      border-top: 6px solid #12814c;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+  <link rel="stylesheet" href="../css/cargando.css">
 </head>
 <body>
   <img src="../images/1.png" alt="Logo Bizihotz" class="logo-img">
   <div class="loader"></div>
-
+  <script>
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 3000);
+  </script>
 </body>
 </html>

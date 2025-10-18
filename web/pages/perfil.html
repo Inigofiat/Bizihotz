@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfil</title>
+  <link rel="stylesheet" href="../css/perfil.css" />
+</head>
+<body>
+  <div class="profile-container">
+    <div class="profile-card">
+      <div class="avatar-wrapper" onclick="document.getElementById('avatarInput').click()">
+        <img id="avatarImage" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar" class="avatar" />
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" />
+      </div>
+
+      <h1 class="profile-name" id="profileName">Iñigo Fiat Sarasola</h1>
+
+      <div class="profile-info" id="profileInfo">
+        <p><span class="label">Nombre:</span> <span class="value">Iñigo</span></p>
+        <p><span class="label">Apellidos:</span> <span class="value">Fiat Sarasola</span></p>
+        <p><span class="label">Teléfono:</span> <span class="value">123456789</span></p>
+        <p><span class="label">Rol:</span> <span class="value">nutricionista</span></p>
+        <p><span class="label">Nombre de usuario:</span> <span class="value">inigofiat</span></p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn edit" onclick="abrirModal('modalEditar')">Editar perfil</button>
+        <button class="btn password" onclick="abrirModal('modalContrasena')">Cambiar contraseña</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Perfil -->
+  <div class="modal" id="modalEditar">
+    <div class="modal-content">
+      <button class="close" onclick="cerrarModal('modalEditar')" aria-label="Cerrar">&times;</button>
+      <h2>Editar Perfil</h2>
+      <form onsubmit="guardarPerfil(event)">
+        <label>Nombre</label>
+        <input type="text" id="inputNombre" value="Iñigo" />
+        <label>Apellidos</label>
+        <input type="text" id="inputApellidos" value="Fiat Sarasola" />
+        <label>Teléfono</label>
+        <input type="text" id="inputTelefono" value="123456789" />
+        <button type="submit" class="btn-filled">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Cambiar Contraseña -->
+  <div class="modal" id="modalContrasena">
+    <div class="modal-content">
+      <button class="close" onclick="cerrarModal('modalContrasena')" aria-label="Cerrar">&times;</button>
+      <h2>Cambiar Contraseña</h2>
+      <form onsubmit="guardarContrasena(event)">
+        <label for="currentPassword">Contraseña actual</label>
+        <div class="password-field">
+          <input type="password" id="currentPassword" />
+          <button type="button" class="togglePassword" data-input="currentPassword" aria-label="Mostrar u ocultar contraseña">
+            <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
+          </button>
+        </div>
+
+        <label for="newPassword">Nueva contraseña</label>
+        <div class="password-field">
+          <input type="password" id="newPassword" />
+          <button type="button" class="togglePassword" data-input="newPassword" aria-label="Mostrar u ocultar contraseña">
+            <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
+          </button>
+        </div>
+
+        <label for="confirmPassword">Confirmar nueva contraseña</label>
+        <div class="password-field">
+          <input type="password" id="confirmPassword" />
+          <button type="button" class="togglePassword" data-input="confirmPassword" aria-label="Mostrar u ocultar contraseña">
+            <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
+          </button>
+        </div>
+
+        <p id="passwordFeedback" class="feedback"></p>
+        <button type="submit" class="btn-filled">Actualizar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/perfil.js"></script>
+</body>
+</html>

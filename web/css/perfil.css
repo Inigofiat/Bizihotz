@@ -1,0 +1,206 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #effff3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.profile-container {
+  background-color: #effff3;
+  padding: 40px;
+}
+
+.profile-card {
+  background-color: #5e7f65;
+  padding: 40px 30px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  color: white;
+  text-align: center;
+}
+
+.avatar-wrapper {
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  padding: 10px;
+  object-fit: cover;
+}
+
+.profile-name {
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.profile-info {
+  text-align: left;
+  font-size: 15px;
+  margin-bottom: 30px;
+}
+
+.profile-info .label {
+  font-weight: bold;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit {
+  background-color: white;
+  color: #007bff;
+  border: 2px solid #007bff;
+}
+
+.edit:hover {
+  background-color: #f0f8ff;
+}
+
+.password {
+  background-color: white;
+  color: #0044cc;
+  border: 2px solid #0044cc;
+}
+
+.password:hover {
+  background-color: #e6f0ff;
+}
+
+/* Modales */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+  margin-bottom: 24px;
+  font-size: 22px;
+}
+
+.modal-content label {
+  font-weight: bold;
+  margin-top: 16px;
+  display: block;
+  color: #333;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  background-color: #fdfdfd;
+}
+
+.modal-content input:focus {
+  border-color: #2d8b57;
+  outline: none;
+}
+
+btn-filled {
+  /* no usado aquí */
+}
+
+.modal-content .btn-filled {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background-color: #2d8b57;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal-content .btn-filled:hover {
+  background-color: #237043;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  color: #666;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.feedback {
+  color: #b00020;
+  font-size: 14px;
+  min-height: 20px;
+  margin-top: 8px;
+}
+
+.feedback.success {
+  color: #2d8b57;
+}
+
+.password-field {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.eyeIcon {
+  width: 24px;
+  height: 24px;
+  stroke: #666;
+  fill: none;
+}

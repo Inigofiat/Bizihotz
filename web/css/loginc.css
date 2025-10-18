@@ -115,3 +115,18 @@ body {
 .eye-button:hover svg {
   fill: #ffffff;
 }
+
+.login-message {
+  min-height: 24px;
+  margin-top: 16px;
+  color: #083f20;
+  font-size: 16px;
+}
+
+.login-message.is-error {
+  color: #b00020;
+}
+
+.login-message.is-success {
+  color: #0b6e3f;
+}

@@ -1,18 +1,37 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
+
 const { connectDB } = require('./config/db');
 const pacienteRutas = require('./rutas/pacienteRutas');
 const citaRutas = require('./rutas/citasRutas');
 const historialRoutes = require('./rutas/historialRutas');
 const registroRoutes = require('./rutas/registroRutas');
 const pacienteUsuarioRoutes = require('./rutas/pacienteUsuarioRutas');
-const swaggerDocument = require('./docs/openapi.json');
+const authRoutes = require('./rutas/authRutas');
 
 const PORT = process.env.PORT || 4001;
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+let swaggerDocument = null;
+const swaggerPath = path.join(__dirname, 'docs', 'openapi.json');
+
+try {
+  const rawSpec = fs.readFileSync(swaggerPath, 'utf-8');
+  swaggerDocument = JSON.parse(rawSpec);
+} catch (error) {
+  console.warn(
+    '[Swagger] No se pudo cargar docs/openapi.json. La documentación Swagger quedará deshabilitada.',
+    error.message
+  );
+}
 
 const healthCheck = async (_req, res) => {
   if (mongoose.connection.readyState !== 1) {
@@ -38,17 +57,30 @@ app.use('/api/citas', citaRutas);
 app.use('/api/historiales', historialRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/pacientes-usuarios', pacienteUsuarioRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/docs/swagger.json', (_req, res) => {
+  if (!swaggerDocument) {
+    return res.status(503).json({
+      mensaje: 'Documentación Swagger no disponible actualmente'
+    });
+  }
+
   res.json(swaggerDocument);
 });
 
 app.get('/docs', (_req, res) => {
+  if (!swaggerDocument) {
+    return res
+      .status(503)
+      .send('<h1>Documentación Swagger no disponible</h1><p>Revisa docs/openapi.json.</p>');
+  }
+
   res.send(`<!DOCTYPE html>
   <html lang="es">
     <head>
       <meta charset="utf-8" />
-      <title>Bizihotz · Documentación API</title>
+      <title>Bizihotz - Documentación API</title>
       <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
       <style>
         body { margin: 0; background-color: #fafafa; }
@@ -93,7 +125,7 @@ app.use((error, _req, res, _next) => {
 const startServer = async () => {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`Microservicio de gestión escuchando en el puerto ${PORT}`);
+    console.log(`Microservicio de gestion escuchando en el puerto ${PORT}`);
   });
 };
 
