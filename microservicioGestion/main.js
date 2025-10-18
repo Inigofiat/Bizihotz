@@ -12,6 +12,7 @@ const historialRoutes = require('./rutas/historialRutas');
 const registroRoutes = require('./rutas/registroRutas');
 const pacienteUsuarioRoutes = require('./rutas/pacienteUsuarioRutas');
 const authRoutes = require('./rutas/authRutas');
+const { ensureDefaultUsers } = require('./services/ensureDefaultUsers');
 
 const PORT = process.env.PORT || 4001;
 const app = express();
@@ -124,6 +125,16 @@ app.use((error, _req, res, _next) => {
 
 const startServer = async () => {
   await connectDB();
+
+  try {
+    const inicializados = await ensureDefaultUsers();
+    if (inicializados) {
+      console.log('[Bootstrap] Coleccion usuarios inicializada. Cambia DEFAULT_USER_PASSWORD tras el despliegue.');
+    }
+  } catch (error) {
+    console.error('[Bootstrap] No se pudieron crear los usuarios iniciales:', error.message);
+  }
+
   app.listen(PORT, () => {
     console.log(`Microservicio de gestion escuchando en el puerto ${PORT}`);
   });
