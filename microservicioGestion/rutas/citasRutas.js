@@ -59,8 +59,40 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const citas = await Cita.find(filtro).sort({ fechaCita: 1, hora: 1 });
-    return res.json(citas);
+    const citas = await Cita.find(filtro)
+      .populate({ path: "idPaciente", select: "nombrePaciente apellidos" })
+      .populate({ path: "idUsuario", select: "nombre nombreUsuario apellidos" })
+      .sort({ fechaCita: 1, hora: 1 })
+      .lean({ virtuals: true });
+
+    const transformadas = citas.map((cita) => {
+      const pacienteRef = cita.idPaciente;
+      const usuarioRef = cita.idUsuario;
+
+      const pacienteNombre =
+        pacienteRef && pacienteRef.nombrePaciente
+          ? pacienteRef.nombrePaciente
+          : "";
+      const pacienteApellidos =
+        pacienteRef && pacienteRef.apellidos ? pacienteRef.apellidos : "";
+      const profesionalNombre =
+        usuarioRef && (usuarioRef.nombre || usuarioRef.nombreUsuario)
+          ? [usuarioRef.nombre, usuarioRef.apellidos]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || usuarioRef.nombreUsuario
+          : "";
+
+      return {
+        ...cita,
+        paciente: [pacienteNombre, pacienteApellidos].filter(Boolean).join(" ").trim(),
+        motivo: cita.tipoConsulta,
+        profesional: profesionalNombre,
+        estado: cita.atendida ? "Atendida" : "Pendiente"
+      };
+    });
+
+    return res.json(transformadas);
   } catch (error) {
     return handleError(res, error, 'Error al obtener las citas');
   }
@@ -169,3 +201,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+

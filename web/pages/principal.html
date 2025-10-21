@@ -10,7 +10,9 @@
   <div class="panel-container">
     <header class="header">
       <div class="profile">
-        <div class="avatar"></div>
+        <div class="avatar">
+          <img id="headerAvatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar del usuario" />
+        </div>
         <div>
           <h2 id="userName">Cargando...</h2>
           <p id="userLocation">---</p>
@@ -35,7 +37,7 @@
         <div class="nav-item"><button class="nav-button"><span class="emoji">➕</span><span>Nuevo paciente</span></button></div>
         <div class="nav-item"><button class="nav-button"><span class="emoji">💬</span><span>Mensajes</span></button></div>
         <div class="nav-item"><button class="nav-button"><span class="emoji">📄</span><span>Documentos</span></button></div>
-        <div class="nav-item"><button class="nav-button"><span class="emoji">🩺</span><span>Historial clinico</span></button></div>
+        <div class="nav-item"><button class="nav-button"><span class="emoji">🩺</span><span>Historial clínico</span></button></div>
         <div class="nav-item"><button class="nav-button"><span class="emoji">🥗</span><span>Dietas</span></button></div>
       </div>
     </nav>
@@ -59,9 +61,9 @@
 
   <div id="logoutModal" class="modal-overlay">
     <div class="modal-content">
-      <p>Estas seguro de que deseas cerrar sesion?</p>
+      <p>¿Estas seguro de que deseas cerrar sesión?</p>
       <div class="modal-actions">
-        <button id="confirmLogout" class="btn-confirm">Si, cerrar sesion</button>
+        <button id="confirmLogout" class="btn-confirm">Si, cerrar sesión</button>
         <button id="cancelLogout" class="btn-cancel">Cancelar</button>
       </div>
     </div>
@@ -76,32 +78,32 @@
         <p><strong>Nombre:</strong> <span id="profileName">-</span></p>
         <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
         <p><strong>Telefono:</strong> <span id="profilePhone">-</span></p>
-        <p><strong>Rol:</strong> <span id="profileRole">-</span></p>
+        <p id="profileRoleWrapper"><span id="profileRole">-</span></p>
         <p class="profile-note" id="profilePasswordStatus"></p>
       </div>
 
       <div class="profile-actions">
-        <button type="button" id="startPasswordChange" class="btn-confirm">Cambiar contrasena</button>
+        <button type="button" id="startPasswordChange" class="btn-confirm">Cambiar contraseña</button>
         <button type="button" id="closeProfile" class="btn-cancel">Cerrar</button>
       </div>
 
       <form id="passwordForm" autocomplete="off" class="password-form" hidden>
         <div class="form-group">
-          <label for="currentPassword">Contrasena actual</label>
+          <label for="currentPassword">Contraseña actual</label>
           <div class="input-with-toggle">
             <input type="password" id="currentPassword" minlength="6" />
             <button type="button" class="visibility-toggle" data-target="currentPassword">Mostrar</button>
           </div>
         </div>
         <div class="form-group">
-          <label for="newPassword">Nueva contrasena</label>
+          <label for="newPassword">Nueva contraseña</label>
           <div class="input-with-toggle">
             <input type="password" id="newPassword" minlength="8" />
             <button type="button" class="visibility-toggle" data-target="newPassword">Mostrar</button>
           </div>
         </div>
         <div class="form-group">
-          <label for="confirmPassword">Confirmar nueva contrasena</label>
+          <label for="confirmPassword">Confirmar nueva contraseña</label>
           <div class="input-with-toggle">
             <input type="password" id="confirmPassword" minlength="8" />
             <button type="button" class="visibility-toggle" data-target="confirmPassword">Mostrar</button>
@@ -109,13 +111,14 @@
         </div>
         <p id="passwordFeedback" class="modal-feedback"></p>
         <div class="modal-actions">
-          <button type="submit" class="btn-confirm">Guardar contrasena</button>
+          <button type="submit" class="btn-confirm">Guardar contraseña</button>
           <button type="button" id="cancelPasswordChange" class="btn-cancel">Cancelar</button>
         </div>
       </form>
     </div>
   </div>
 
+  <script src="../js/perfil-modal.js"></script>
   <script src="../js/principal.js"></script>
 </body>
 </html>

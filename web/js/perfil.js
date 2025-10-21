@@ -24,15 +24,39 @@ const API_FALLBACK_URL =
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
+const DEFAULT_AVATAR_URL = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
+const buildAvatarSrc = (fotoPath) => {
+  if (!fotoPath) {
+    return DEFAULT_AVATAR_URL;
+  }
+  if (/^https?:\/\//i.test(fotoPath)) {
+    return fotoPath;
+  }
+  const normalized = fotoPath.startsWith("/") ? fotoPath : `/${fotoPath}`;
+  return `${API_BASE_URL}${normalized}`;
+};
 
 let usuarioActual = null;
+let avatarArchivoPendiente = null;
+let avatarPreviewTemporal = null;
 
 function abrirModal(id) {
   document.getElementById(id).style.display = "flex";
 }
 
 function cerrarModal(id) {
-  document.getElementById(id).style.display = "none";
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = "none";
+  }
+  if (id === "modalEditar") {
+    avatarArchivoPendiente = null;
+    avatarPreviewTemporal = null;
+    if (usuarioActual) {
+      actualizarPerfilUI();
+    }
+  }
 }
 
 const getStoredUser = () => {
@@ -56,34 +80,56 @@ const actualizarUsuarioLocal = (parciales = {}) => {
   localStorage.setItem("bizihotzUsuario", JSON.stringify(usuarioActual));
 };
 
-const actualizarPerfilUI = () => {
+function actualizarPerfilUI() {
   const nombre = localStorage.getItem("perfil_nombre") ?? usuarioActual?.nombre ?? "";
   const apellidos =
     localStorage.getItem("perfil_apellidos") ?? usuarioActual?.apellidos ?? "";
   const telefono =
     localStorage.getItem("perfil_telefono") ?? usuarioActual?.telefono ?? "";
+  const email = localStorage.getItem("perfil_email") ?? usuarioActual?.email ?? "";
+  const nombreUsuario =
+    localStorage.getItem("perfil_nombreUsuario") ?? usuarioActual?.nombreUsuario ?? "";
+  const rol = localStorage.getItem("perfil_rol") ?? usuarioActual?.rol ?? "";
 
-  if (nombre && apellidos) {
-    document.getElementById("profileName").textContent = `${nombre} ${apellidos}`;
-  } else if (usuarioActual?.nombreUsuario) {
-    document.getElementById("profileName").textContent = usuarioActual.nombreUsuario;
+  const visibleName = [nombre, apellidos].filter(Boolean).join(" ").trim() || nombreUsuario;
+
+  if (visibleName) {
+    document.getElementById("profileName").textContent = visibleName;
+  } else if (usuarioActual?.email) {
+    document.getElementById("profileName").textContent = usuarioActual.email;
+  } else {
+    document.getElementById("profileName").textContent = "Usuario";
   }
 
   document.getElementById("profileInfo").innerHTML = `
     <p><span class="label">Nombre:</span> <span class="value">${nombre || "-"}</span></p>
     <p><span class="label">Apellidos:</span> <span class="value">${apellidos || "-"}</span></p>
     <p><span class="label">Telefono:</span> <span class="value">${telefono || "-"}</span></p>
-    <p><span class="label">Rol:</span> <span class="value">${usuarioActual?.rol || "-"}</span></p>
+    <p><span class="label">Rol:</span> <span class="value">${rol || "-"}</span></p>
     <p><span class="label">Nombre de usuario:</span> <span class="value">${
-      usuarioActual?.nombreUsuario || "-"
+      nombreUsuario || "-"
     }</span></p>
-    <p><span class="label">Email:</span> <span class="value">${usuarioActual?.email || "-"}</span></p>
+    <p><span class="label">Email:</span> <span class="value">${email || "-"}</span></p>
   `;
 
   document.getElementById("inputNombre").value = nombre;
   document.getElementById("inputApellidos").value = apellidos;
   document.getElementById("inputTelefono").value = telefono;
-};
+  document.getElementById("inputEmail").value = email;
+  document.getElementById("inputNombreUsuario").value = nombreUsuario;
+  document.getElementById("inputRol").value = rol;
+  const avatarImageNode = document.getElementById("avatarImage");
+  const fotoActual = usuarioActual?.foto ?? "";
+  const avatarSrc = avatarPreviewTemporal ?? buildAvatarSrc(fotoActual);
+  if (avatarImageNode) {
+    avatarImageNode.src = avatarSrc;
+  }
+  const storedName =
+    avatarArchivoPendiente?.name ??
+    localStorage.getItem("perfil_avatar_nombre") ??
+    (fotoActual ? fotoActual.split("/").pop() : "");
+  actualizarNombreArchivoAvatar(storedName);
+}
 
 const cargarUsuario = () => {
   const user = getStoredUser();
@@ -96,12 +142,15 @@ const cargarUsuario = () => {
   return user;
 };
 
-function guardarPerfil(event) {
+async function guardarPerfil(event) {
   event.preventDefault();
 
   const nombre = document.getElementById("inputNombre").value.trim();
   const apellidos = document.getElementById("inputApellidos").value.trim();
   const telefono = document.getElementById("inputTelefono").value.trim();
+  const email = document.getElementById("inputEmail").value.trim().toLowerCase();
+  const nombreUsuario = document.getElementById("inputNombreUsuario").value.trim();
+  const rol = document.getElementById("inputRol").value.trim();
 
   if (!nombre || !apellidos) {
     alert("Nombre y apellidos son obligatorios.");
@@ -111,13 +160,66 @@ function guardarPerfil(event) {
   localStorage.setItem("perfil_nombre", nombre);
   localStorage.setItem("perfil_apellidos", apellidos);
   localStorage.setItem("perfil_telefono", telefono);
+  localStorage.setItem("perfil_email", email);
+  localStorage.setItem("perfil_nombreUsuario", nombreUsuario);
+  localStorage.setItem("perfil_rol", rol);
 
-  actualizarUsuarioLocal({ nombre, apellidos, telefono });
+  actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario, rol });
+  try {
+    if (avatarArchivoPendiente) {
+      const resultado = await subirAvatar(avatarArchivoPendiente);
+      const fotoUrl = resultado?.fotoUrl ?? resultado?.foto ?? "";
+      if (fotoUrl) {
+        actualizarUsuarioLocal({ foto: fotoUrl });
+      }
+      localStorage.setItem("perfil_avatar_nombre", avatarArchivoPendiente.name);
+      avatarArchivoPendiente = null;
+      avatarPreviewTemporal = null;
+    }
+  } catch (error) {
+    console.error("Error subiendo avatar:", error);
+    alert(error.message || "No se pudo actualizar la foto de perfil.");
+    return;
+  }
+
   actualizarPerfilUI();
 
   cerrarModal("modalEditar");
   alert("Perfil actualizado correctamente.");
 }
+
+const subirAvatar = async (file) => {
+  const endpoints = [`${API_URL}/usuarios/${usuarioActual.idUsuario}/avatar`];
+  if (API_FALLBACK) {
+    endpoints.push(`${API_FALLBACK}/usuarios/${usuarioActual.idUsuario}/avatar`);
+  }
+
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || `Error subiendo avatar (${response.status}).`);
+      }
+
+      return data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("No se pudo subir la foto de perfil.");
+};
 
 async function guardarContrasena(event) {
   event.preventDefault();
@@ -131,7 +233,7 @@ async function guardarContrasena(event) {
   feedback.classList.remove("success");
 
   if (!usuarioActual) {
-    feedback.textContent = "Sesion no valida. Vuelve a iniciar sesion.";
+    feedback.textContent = "Sesión no valida. Vuelve a iniciar sesión.";
     return;
   }
 
@@ -141,12 +243,12 @@ async function guardarContrasena(event) {
   }
 
   if (nueva.length < 8) {
-    feedback.textContent = "La nueva contrasena debe tener al menos 8 caracteres.";
+    feedback.textContent = "La nueva contraseña debe tener al menos 8 caracteres.";
     return;
   }
 
   if (nueva !== confirm) {
-    feedback.textContent = "Las contrasenas no coinciden.";
+    feedback.textContent = "Las contraseñas no coinciden.";
     return;
   }
 
@@ -168,7 +270,7 @@ async function guardarContrasena(event) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.mensaje || "No se pudo cambiar la contrasena.");
+      throw new Error(data.mensaje || "No se pudo cambiar la contraseña.");
     }
 
     actualizarUsuarioLocal({
@@ -176,16 +278,16 @@ async function guardarContrasena(event) {
       ultimoCambioPassword: new Date().toISOString()
     });
 
-    feedback.textContent = "Contrasena actualizada correctamente.";
+    feedback.textContent = "Contraseña actualizada correctamente.";
     feedback.classList.add("success");
 
     setTimeout(() => {
       cerrarModal("modalContrasena");
-      alert("Contrasena actualizada correctamente.");
+      alert("Contraseña actualizada correctamente.");
     }, 700);
   } catch (error) {
-    console.warn("Error actualizando contrasena:", error);
-    feedback.textContent = error.message || "No se pudo cambiar la contrasena.";
+    console.warn("Error actualizando contraseña:", error);
+    feedback.textContent = error.message || "No se pudo cambiar la contraseña.";
     feedback.classList.remove("success");
   } finally {
     document.getElementById("currentPassword").value = "";
@@ -225,16 +327,84 @@ document.querySelectorAll(".togglePassword").forEach((btn) => {
   });
 });
 
-document.getElementById("avatarInput").addEventListener("change", function () {
-  const file = this.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    document.getElementById("avatarImage").src = e.target.result;
-    localStorage.setItem("perfil_avatar", e.target.result);
-  };
-  reader.readAsDataURL(file);
-});
+const avatarInput = document.getElementById("avatarInput");
+const avatarButton = document.getElementById("btnSelectAvatar");
+const avatarFilename = document.getElementById("avatarFilename");
+
+function actualizarNombreArchivoAvatar(nombre) {
+  if (avatarFilename) {
+    avatarFilename.textContent = nombre || "Ningun archivo seleccionado";
+  }
+}
+
+if (avatarButton && avatarInput) {
+  avatarButton.addEventListener("click", () => avatarInput.click());
+}
+
+if (avatarInput) {
+  avatarInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      avatarPreviewTemporal = e.target.result;
+      const avatarNode = document.getElementById("avatarImage");
+      if (avatarNode) {
+        avatarNode.src = avatarPreviewTemporal;
+      }
+    };
+    avatarArchivoPendiente = file;
+    actualizarNombreArchivoAvatar(file.name);
+    reader.readAsDataURL(file);
+  });
+}
+
+
+const closePerfilPageButton = document.getElementById("closePerfilPage");
+
+if (closePerfilPageButton) {
+  closePerfilPageButton.addEventListener("click", () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "principal.html";
+    }
+  });
+}
+
+const openEditProfileButton = document.getElementById("openEditProfile");
+if (openEditProfileButton) {
+  openEditProfileButton.addEventListener("click", () => abrirModal("modalEditar"));
+}
+
+const openPasswordModalButton = document.getElementById("openPasswordModal");
+if (openPasswordModalButton) {
+  openPasswordModalButton.addEventListener("click", () => abrirModal("modalContrasena"));
+}
+
+const closeModalEditarButton = document.getElementById("closeModalEditar");
+if (closeModalEditarButton) {
+  closeModalEditarButton.addEventListener("click", () => cerrarModal("modalEditar"));
+}
+
+const closeModalContrasenaButton = document.getElementById("closeModalContrasena");
+if (closeModalContrasenaButton) {
+  closeModalContrasenaButton.addEventListener("click", () => cerrarModal("modalContrasena"));
+}
+
+const formEditarPerfil = document.getElementById("formEditarPerfil");
+if (formEditarPerfil) {
+  formEditarPerfil.addEventListener("submit", (event) => {
+    guardarPerfil(event);
+  });
+}
+
+const formCambiarContrasena = document.getElementById("formCambiarContrasena");
+if (formCambiarContrasena) {
+  formCambiarContrasena.addEventListener("submit", (event) => {
+    guardarContrasena(event);
+  });
+}
 
 window.addEventListener("DOMContentLoaded", () => {
   const user = cargarUsuario();
@@ -242,8 +412,17 @@ window.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const avatar = localStorage.getItem("perfil_avatar");
-  if (avatar) {
-    document.getElementById("avatarImage").src = avatar;
+  avatarArchivoPendiente = null;
+  avatarPreviewTemporal = null;
+
+  const fotoActual = usuarioActual?.foto ?? "";
+  const avatarNode = document.getElementById("avatarImage");
+  if (avatarNode) {
+    avatarNode.src = buildAvatarSrc(fotoActual);
   }
+
+  const avatarNombre =
+    localStorage.getItem("perfil_avatar_nombre") ??
+    (fotoActual ? fotoActual.split("/").pop() : "");
+  actualizarNombreArchivoAvatar(avatarNombre);
 });

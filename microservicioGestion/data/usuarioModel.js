@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const usuarioSchema = new mongoose.Schema(
   {
     nombreUsuario: { type: String, required: true, trim: true },
+    nombre: { type: String, default: "", trim: true },
+    apellidos: { type: String, default: "", trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     telefono: { type: String, default: "", trim: true },
     rol: { type: String, required: true, default: "profesional", trim: true },

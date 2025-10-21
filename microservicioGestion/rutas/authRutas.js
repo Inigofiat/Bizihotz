@@ -48,11 +48,14 @@ router.post("/login", async (req, res, next) => {
       usuario: {
         idUsuario: usuarioPlano.idUsuario,
         nombreUsuario: usuarioPlano.nombreUsuario,
+        nombre: usuarioPlano.nombre ?? "",
+        apellidos: usuarioPlano.apellidos ?? "",
         email: usuarioPlano.email,
         rol: usuarioPlano.rol,
         telefono: usuarioPlano.telefono ?? "",
         foto: usuarioPlano.foto ?? "",
-        debeActualizarPassword: usuarioPlano.debeActualizarPassword ?? false
+        debeActualizarPassword: usuarioPlano.debeActualizarPassword ?? false,
+        ultimoCambioPassword: usuarioPlano.ultimoCambioPassword ?? null
       }
     });
   } catch (error) {

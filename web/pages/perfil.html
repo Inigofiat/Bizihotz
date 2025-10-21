@@ -8,25 +8,26 @@
 </head>
 <body>
   <div class="profile-container">
+    <button type="button" class="page-close" id="closePerfilPage" aria-label="Volver">&times;</button>
     <div class="profile-card">
-      <div class="avatar-wrapper" onclick="document.getElementById('avatarInput').click()">
+      <div class="avatar-wrapper">
         <img id="avatarImage" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar" class="avatar" />
-        <input type="file" id="avatarInput" accept="image/*" style="display:none" />
       </div>
 
-      <h1 class="profile-name" id="profileName">Iñigo Fiat Sarasola</h1>
+      <h1 class="profile-name" id="profileName">Usuario</h1>
 
       <div class="profile-info" id="profileInfo">
-        <p><span class="label">Nombre:</span> <span class="value">Iñigo</span></p>
-        <p><span class="label">Apellidos:</span> <span class="value">Fiat Sarasola</span></p>
-        <p><span class="label">Teléfono:</span> <span class="value">123456789</span></p>
-        <p><span class="label">Rol:</span> <span class="value">nutricionista</span></p>
-        <p><span class="label">Nombre de usuario:</span> <span class="value">inigofiat</span></p>
+        <p><span class="label">Nombre:</span> <span class="value">-</span></p>
+        <p><span class="label">Apellidos:</span> <span class="value">-</span></p>
+        <p><span class="label">Telefono:</span> <span class="value">-</span></p>
+        <p><span class="label">Rol:</span> <span class="value">-</span></p>
+        <p><span class="label">Nombre de usuario:</span> <span class="value">-</span></p>
+        <p><span class="label">Email:</span> <span class="value">-</span></p>
       </div>
 
       <div class="btn-group">
-        <button class="btn edit" onclick="abrirModal('modalEditar')">Editar perfil</button>
-        <button class="btn password" onclick="abrirModal('modalContrasena')">Cambiar contraseña</button>
+        <button class="btn edit" id="openEditProfile">Editar perfil</button>
+        <button class="btn password" id="openPasswordModal">Cambiar contrasena</button>
       </div>
     </div>
   </div>
@@ -34,46 +35,68 @@
   <!-- Modal Editar Perfil -->
   <div class="modal" id="modalEditar">
     <div class="modal-content">
-      <button class="close" onclick="cerrarModal('modalEditar')" aria-label="Cerrar">&times;</button>
+      <button class="close" id="closeModalEditar" aria-label="Cerrar">&times;</button>
       <h2>Editar Perfil</h2>
-      <form onsubmit="guardarPerfil(event)">
-        <label>Nombre</label>
-        <input type="text" id="inputNombre" value="Iñigo" />
-        <label>Apellidos</label>
-        <input type="text" id="inputApellidos" value="Fiat Sarasola" />
-        <label>Teléfono</label>
-        <input type="text" id="inputTelefono" value="123456789" />
+      <form id="formEditarPerfil">
+        <label for="inputNombre">Nombre</label>
+        <input type="text" id="inputNombre" value="" placeholder="Nombre" />
+
+        <label for="inputApellidos">Apellidos</label>
+        <input type="text" id="inputApellidos" value="" placeholder="Apellidos" />
+
+        <label for="inputTelefono">Telefono</label>
+        <input type="text" id="inputTelefono" value="" placeholder="Telefono" />
+
+        <label for="inputEmail">Email</label>
+        <input type="email" id="inputEmail" value="" placeholder="Email" />
+
+        <label for="inputNombreUsuario">Nombre de usuario</label>
+        <input type="text" id="inputNombreUsuario" value="" placeholder="Nombre de usuario" />
+
+        <label for="inputRol">Rol</label>
+        <input type="text" id="inputRol" value="" placeholder="Rol" />
+
+        <div class="avatar-field">
+          <label for="avatarInput">Foto de perfil</label>
+          <div class="avatar-upload">
+            <button type="button" id="btnSelectAvatar">Seleccionar imagen</button>
+            <span id="avatarFilename" class="avatar-filename">Ningun archivo seleccionado</span>
+          </div>
+        </div>
+
+        <input type="file" id="avatarInput" accept="image/*" hidden />
+
         <button type="submit" class="btn-filled">Guardar</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Cambiar Contraseña -->
+  <!-- Modal Cambiar Contrasena -->
   <div class="modal" id="modalContrasena">
     <div class="modal-content">
-      <button class="close" onclick="cerrarModal('modalContrasena')" aria-label="Cerrar">&times;</button>
-      <h2>Cambiar Contraseña</h2>
-      <form onsubmit="guardarContrasena(event)">
-        <label for="currentPassword">Contraseña actual</label>
+      <button class="close" id="closeModalContrasena" aria-label="Cerrar">&times;</button>
+      <h2>Cambiar Contrasena</h2>
+      <form id="formCambiarContrasena">
+        <label for="currentPassword">Contrasena actual</label>
         <div class="password-field">
           <input type="password" id="currentPassword" />
-          <button type="button" class="togglePassword" data-input="currentPassword" aria-label="Mostrar u ocultar contraseña">
+          <button type="button" class="togglePassword" data-input="currentPassword" aria-label="Mostrar u ocultar contrasena">
             <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
           </button>
         </div>
 
-        <label for="newPassword">Nueva contraseña</label>
+        <label for="newPassword">Nueva contrasena</label>
         <div class="password-field">
           <input type="password" id="newPassword" />
-          <button type="button" class="togglePassword" data-input="newPassword" aria-label="Mostrar u ocultar contraseña">
+          <button type="button" class="togglePassword" data-input="newPassword" aria-label="Mostrar u ocultar contrasena">
             <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
           </button>
         </div>
 
-        <label for="confirmPassword">Confirmar nueva contraseña</label>
+        <label for="confirmPassword">Confirmar nueva contrasena</label>
         <div class="password-field">
           <input type="password" id="confirmPassword" />
-          <button type="button" class="togglePassword" data-input="confirmPassword" aria-label="Mostrar u ocultar contraseña">
+          <button type="button" class="togglePassword" data-input="confirmPassword" aria-label="Mostrar u ocultar contrasena">
             <svg class="eyeIcon" viewBox="0 0 24 24"></svg>
           </button>
         </div>

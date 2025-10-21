@@ -2,16 +2,16 @@
 
 const API_BASE_URL = (() => {
   const gatewayBase = "http://localhost:5000/gestion";
-  const localFallback = "http://localhost:4002";
+  const serviceBase = "http://localhost:4002";
 
   if (window.location.protocol === "file:") {
-    return gatewayBase;
+    return serviceBase;
   }
 
   const host = window.location.hostname || "localhost";
 
   if (host === "localhost" || host === "127.0.0.1") {
-    return gatewayBase;
+    return serviceBase;
   }
 
   return `${window.location.protocol}//${window.location.host}/gestion`;
@@ -19,14 +19,40 @@ const API_BASE_URL = (() => {
 
 const API_FALLBACK_URL =
   window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:4002"
+    ? "http://localhost:5000/gestion"
     : null;
 
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
+const DEFAULT_AVATAR_URL = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
 let usuarioActual = null;
+
+const obtenerRangoDiaUTC = (fechaReferencia = new Date()) => {
+  const inicio = new Date(
+    fechaReferencia.getFullYear(),
+    fechaReferencia.getMonth(),
+    fechaReferencia.getDate(),
+    0,
+    0,
+    0,
+    0
+  );
+  const fin = new Date(
+    fechaReferencia.getFullYear(),
+    fechaReferencia.getMonth(),
+    fechaReferencia.getDate(),
+    23,
+    59,
+    59,
+    999
+  );
+  return {
+    inicio: inicio.toISOString(),
+    fin: fin.toISOString()
+  };
+};
 
 const updateDateTime = () => {
   const now = new Date();
@@ -68,6 +94,80 @@ const getStoredUser = () => {
   }
 };
 
+const buildAvatarSrc = (fotoPath) => {
+  if (!fotoPath) {
+    return DEFAULT_AVATAR_URL;
+  }
+
+  if (/^https?:\/\//i.test(fotoPath)) {
+    return fotoPath;
+  }
+
+  const normalized = fotoPath.startsWith("/") ? fotoPath : `/${fotoPath}`;
+  return `${API_BASE_URL}${normalized}`;
+};
+
+const obtenerNombreVisible = (usuario) => {
+  if (!usuario) {
+    return "";
+  }
+
+  const partes = [];
+  if (usuario.nombre) {
+    partes.push(usuario.nombre);
+  }
+  if (usuario.apellidos) {
+    partes.push(usuario.apellidos);
+  }
+
+  const nombreCompleto = partes.join(" ").trim();
+  return nombreCompleto || usuario.nombreUsuario || "";
+};
+
+const normalizarIdentificador = (valor = "") =>
+  valor
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+const obtenerSlugUsuarioActual = () =>
+  normalizarIdentificador(
+    usuarioActual?.nombreUsuario || usuarioActual?.email || usuarioActual?.nombre || ""
+  );
+
+const resolverProfesionalId = (cita = {}) => {
+  const ref = cita?.idUsuario;
+  if (!ref) {
+    return null;
+  }
+  if (typeof ref === "string") {
+    return ref;
+  }
+  if (typeof ref === "object") {
+    return ref.idUsuario || ref._id || ref.id || null;
+  }
+  return null;
+};
+
+const resolverSlugProfesional = (cita = {}) => {
+  const ref = cita?.idUsuario;
+  if (!ref) {
+    return "";
+  }
+  const candidatos = [
+    ref.nombreUsuario,
+    ref.email,
+    `${ref.nombre ?? ""} ${ref.apellidos ?? ""}`,
+    ref.nombre
+  ];
+  const slug = candidatos
+    .map((valor) => normalizarIdentificador(valor))
+    .find((valor) => valor.length > 0);
+  return slug || "";
+};
+
 const cargarUsuario = () => {
   const user = getStoredUser();
 
@@ -82,11 +182,18 @@ const cargarUsuario = () => {
   const locationNode = document.getElementById("userLocation");
 
   if (nameNode) {
-    nameNode.textContent = user.nombreUsuario || user.nombre || "Usuario";
+    const visibleName = obtenerNombreVisible(user);
+    nameNode.textContent = visibleName || "Usuario";
+  }
+
+  const avatarNode = document.querySelector(".avatar img");
+  if (avatarNode) {
+    avatarNode.src = buildAvatarSrc(user.foto);
+    avatarNode.alt = obtenerNombreVisible(user) || "Avatar de usuario";
   }
 
   if (locationNode) {
-    locationNode.textContent = user.rol ? `Rol: ${user.rol}` : "-";
+    locationNode.textContent = user.rol || "-";
   }
 
   return user;
@@ -99,10 +206,24 @@ const cargarCitas = async () => {
     return;
   }
 
+  if (!usuarioActual?.idUsuario) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No se pudo determinar el usuario actual.</td></tr>`;
+    return;
+  }
+
+  const { inicio, fin } = obtenerRangoDiaUTC(new Date());
+  const params = new URLSearchParams({
+    idUsuario: usuarioActual.idUsuario,
+    fechaDesde: inicio,
+    fechaHasta: fin
+  });
+  const primaryUrl = `${API_URL}/citas?${params.toString()}`;
+  const fallbackUrl = API_FALLBACK ? `${API_FALLBACK}/citas?${params.toString()}` : null;
+
   try {
-    const res = await fetch(`${API_URL}/citas`).catch((error) => {
-      if (API_FALLBACK) {
-        return fetch(`${API_FALLBACK}/citas`);
+    const res = await fetch(primaryUrl).catch((error) => {
+      if (fallbackUrl) {
+        return fetch(fallbackUrl);
       }
       throw error;
     });
@@ -110,7 +231,55 @@ const cargarCitas = async () => {
       throw new Error(`Estado inesperado ${res.status}`);
     }
 
-    const citas = await res.json();
+    let citas = await res.json();
+    if (!Array.isArray(citas)) {
+      citas = [];
+    }
+
+    if (!citas.length && usuarioActual) {
+      const slugBuscado = obtenerSlugUsuarioActual();
+      if (slugBuscado) {
+        const paramsSinId = new URLSearchParams({
+          fechaDesde: inicio,
+          fechaHasta: fin
+        });
+        const alternativas = [`${API_URL}/citas?${paramsSinId.toString()}`];
+        if (API_FALLBACK) {
+          alternativas.push(`${API_FALLBACK}/citas?${paramsSinId.toString()}`);
+        }
+        for (let index = 0; index < alternativas.length; index += 1) {
+          const url = alternativas[index];
+          try {
+            const respuestaAlternativa = await fetch(url);
+            if (!respuestaAlternativa.ok) {
+              throw new Error(`Estado inesperado ${respuestaAlternativa.status}`);
+            }
+            const datosAlternativos = await respuestaAlternativa.json();
+            if (Array.isArray(datosAlternativos) && datosAlternativos.length) {
+              const coincidencias = datosAlternativos.filter(
+                (cita) => resolverSlugProfesional(cita) === slugBuscado
+              );
+              if (coincidencias.length) {
+                const nuevoId = resolverProfesionalId(coincidencias[0]);
+                if (nuevoId && nuevoId !== usuarioActual.idUsuario) {
+                  actualizarUsuarioLocal({ idUsuario: nuevoId });
+                  usuarioActual.idUsuario = nuevoId;
+                }
+                citas = coincidencias;
+              }
+            }
+            if (citas.length) {
+              break;
+            }
+          } catch (errorAlternativo) {
+            if (index === alternativas.length - 1) {
+              console.warn("No se pudo resolver el profesional desde los datos:", errorAlternativo);
+            }
+          }
+        }
+      }
+    }
+
     tbody.innerHTML = "";
 
     if (!Array.isArray(citas) || citas.length === 0) {
@@ -183,239 +352,27 @@ const prepararLogoutModal = () => {
   return handleLogout;
 };
 
-const setupVisibilityToggle = (button) => {
-  const target = document.getElementById(button.dataset.target);
-  if (!target) {
-    return;
-  }
-
-  button.addEventListener("click", () => {
-    const showing = target.type === "text";
-    target.type = showing ? "password" : "text";
-    button.textContent = showing ? "Mostrar" : "Ocultar";
-  });
-};
-
-const prepararModalPerfil = (handleLogout) => {
-  const modal = document.getElementById("profileModal");
-  const profileBtn = document.getElementById("profileBtn");
-  const closeProfile = document.getElementById("closeProfile");
-  const closeProfileModal = document.getElementById("closeProfileModal");
-  const passwordForm = document.getElementById("passwordForm");
-  const cancelPasswordChange = document.getElementById("cancelPasswordChange");
-  const passwordFeedback = document.getElementById("passwordFeedback");
-  const currentPassword = document.getElementById("currentPassword");
-  const newPassword = document.getElementById("newPassword");
-  const confirmPassword = document.getElementById("confirmPassword");
-  const profileName = document.getElementById("profileName");
-  const profileEmail = document.getElementById("profileEmail");
-  const profilePhone = document.getElementById("profilePhone");
-  const profileRole = document.getElementById("profileRole");
-  const profileStatus = document.getElementById("profilePasswordStatus");
-  const startPasswordChange = document.getElementById("startPasswordChange");
-
-  if (
-    !modal ||
-    !profileBtn ||
-    !closeProfile ||
-    !closeProfileModal ||
-    !passwordForm ||
-    !cancelPasswordChange ||
-    !passwordFeedback ||
-    !currentPassword ||
-    !newPassword ||
-    !confirmPassword ||
-    !profileName ||
-    !profileEmail ||
-    !profilePhone ||
-    !profileRole ||
-    !profileStatus ||
-    !startPasswordChange
-  ) {
-    return { mostrar: () => {}, ocultar: () => {} };
-  }
-
-  modal.querySelectorAll(".visibility-toggle").forEach(setupVisibilityToggle);
-  passwordForm.hidden = true;
-
-  const state = { forced: false };
-
-  const resetForm = () => {
-    passwordForm.reset();
-    passwordFeedback.textContent = "";
-    passwordFeedback.classList.remove("is-success");
-  };
-
-  const rellenarResumen = () => {
-    if (!usuarioActual) {
-      profileName.textContent = "-";
-      profileEmail.textContent = "-";
-      profilePhone.textContent = "-";
-      profileRole.textContent = "-";
-      profileStatus.textContent = "";
-      return;
-    }
-
-    profileName.textContent = usuarioActual.nombreUsuario || "-";
-    profileEmail.textContent = usuarioActual.email || "-";
-    profilePhone.textContent = usuarioActual.telefono || "-";
-    profileRole.textContent = usuarioActual.rol || "-";
-
-    if (usuarioActual.debeActualizarPassword) {
-      profileStatus.textContent = "Debes actualizar tu contraseña.";
-    } else if (usuarioActual.ultimoCambioPassword) {
-      profileStatus.textContent = `Ultimo cambio: ${new Date(
-        usuarioActual.ultimoCambioPassword
-      ).toLocaleDateString("es-ES")}`;
-    } else {
-      profileStatus.textContent = "Contraseña confirmada.";
-    }
-  };
-
-  const mostrarFormulario = () => {
-    passwordForm.hidden = false;
-    currentPassword.focus();
-  };
-
-  const mostrar = (forzado = false) => {
-    if (!usuarioActual) {
-      return;
-    }
-
-    if (!forzado) {
-      window.location.href = "perfil.html";
-      return;
-    }
-
-    if (!modal) {
-      window.location.href = "perfil.html?force=1";
-      return;
-    }
-
-    state.forced = true;
-    modal.dataset.forzado = "1";
-    resetForm();
-    rellenarResumen();
-
-    passwordForm.hidden = false;
-    cancelPasswordChange.style.display = "none";
-    closeProfile.style.display = "none";
-
-    modal.style.display = "flex";
-    mostrarFormulario();
-  };
-
-  const ocultar = () => {
-    modal.style.display = "none";
-  };
-
-  const cerrarModal = () => {
-    if (state.forced) {
-      handleLogout();
-    } else {
-      ocultar();
-    }
-  };
-
-  profileBtn.addEventListener("click", () => mostrar(false));
-  closeProfile.addEventListener("click", cerrarModal);
-  closeProfileModal.addEventListener("click", cerrarModal);
-
-  startPasswordChange.addEventListener("click", () => {
-    mostrarFormulario();
-  });
-
-  cancelPasswordChange.addEventListener("click", () => {
-    if (state.forced) {
-      handleLogout();
-    } else {
-      passwordForm.hidden = true;
-      passwordFeedback.textContent = "";
-    }
-  });
-
-  passwordForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    if (!usuarioActual) {
-      passwordFeedback.textContent = "Sesión no valida. Vuelve a iniciar sesión.";
-      return;
-    }
-
-    const actual = currentPassword.value.trim();
-    const nueva = newPassword.value.trim();
-    const confirmacion = confirmPassword.value.trim();
-
-    if (!actual || !nueva || !confirmacion) {
-      passwordFeedback.textContent = "Completa todos los campos.";
-      return;
-    }
-
-    if (nueva.length < 8) {
-      passwordFeedback.textContent = "La nueva contraseña debe tener al menos 8 caracteres.";
-      return;
-    }
-
-    if (nueva !== confirmacion) {
-      passwordFeedback.textContent = "Las contraseñas nuevas no coinciden.";
-      return;
-    }
-
-    try {
-      const requestInit = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: usuarioActual.email,
-          passwordActual: actual,
-          passwordNueva: nueva
-        })
-      };
-
-      const response = await fetch(`${API_URL}/auth/cambiar-password`, requestInit).catch(
-        async (error) => {
-          if (!API_FALLBACK) {
-            throw error;
-          }
-          return fetch(`${API_FALLBACK}/auth/cambiar-password`, requestInit);
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.mensaje || "No se pudo cambiar la contraseña.");
-      }
-
-      actualizarUsuarioLocal({
-        debeActualizarPassword: false,
-        ultimoCambioPassword: new Date().toISOString()
-      });
-
-      passwordFeedback.textContent = "Contraseña actualizada correctamente.";
-      passwordFeedback.classList.add("is-success");
-      setTimeout(() => {
-        ocultar();
-        alert("Contraseña actualizada correctamente.");
-      }, 800);
-    } catch (error) {
-      console.warn("Error actualizando contraseña:", error);
-      passwordFeedback.textContent = error.message || "No se pudo cambiar la contraseña.";
-      passwordFeedback.classList.remove("is-success");
-    } finally {
-      passwordForm.reset();
-      passwordForm.hidden = true;
-    }
-  });
-
-  return { mostrar, ocultar };
-};
 
 document.addEventListener("DOMContentLoaded", () => {
   const handleLogout = prepararLogoutModal();
   const user = cargarUsuario();
   cargarCitas();
 
-  const profileModalControl = prepararModalPerfil(handleLogout);
+  const agendaButton = document.querySelector(".nav-button");
+  if (agendaButton) {
+    agendaButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "agenda.html";
+    });
+  }
+
+  PerfilModal.prepararModalPerfil(handleLogout, {
+    getUsuarioActual: () => usuarioActual,
+    actualizarUsuarioLocal,
+    obtenerNombreVisible,
+    apiUrl: API_URL,
+    apiFallback: API_FALLBACK
+  });
 
   if (user?.debeActualizarPassword) {
     window.location.href = "perfil.html?force=1";

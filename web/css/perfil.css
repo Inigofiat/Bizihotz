@@ -11,6 +11,7 @@ body {
 .profile-container {
   background-color: #effff3;
   padding: 40px;
+  position: relative;
 }
 
 .profile-card {
@@ -25,7 +26,7 @@ body {
 
 .avatar-wrapper {
   margin-bottom: 16px;
-  cursor: pointer;
+  cursor: default;
 }
 
 .avatar {
@@ -60,12 +61,14 @@ body {
 }
 
 .btn {
-  padding: 10px 16px;
+  flex: 1;
+  padding: 12px 16px;
   border-radius: 6px;
   font-weight: bold;
   border: none;
   cursor: pointer;
   font-size: 14px;
+  min-width: 0;
 }
 
 .edit {
@@ -126,21 +129,18 @@ body {
 
 .modal-content input {
   width: 100%;
-  padding: 12px 40px 12px 14px;
+  padding: 12px 14px;
   margin-top: 6px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 15px;
   background-color: #fdfdfd;
+  box-sizing: border-box;
 }
 
 .modal-content input:focus {
   border-color: #2d8b57;
   outline: none;
-}
-
-btn-filled {
-  /* no usado aquí */
 }
 
 .modal-content .btn-filled {
@@ -187,15 +187,25 @@ btn-filled {
   margin-bottom: 12px;
 }
 
+.password-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 48px;
+}
+
 .togglePassword {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 48px;
   border: none;
-  padding: 0;
+  background: transparent;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 8px 8px 0;
 }
 
 .eyeIcon {
@@ -203,4 +213,62 @@ btn-filled {
   height: 24px;
   stroke: #666;
   fill: none;
+}
+
+.avatar-field label {
+  display: block;
+  font-weight: bold;
+  margin-top: 16px;
+  color: #333;
+}
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.avatar-upload button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 2px solid #2d8b57;
+  background-color: transparent;
+  color: #2d8b57;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.avatar-upload button:hover {
+  background-color: #ebf6ee;
+}
+
+.avatar-filename {
+  font-size: 14px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #2f3e34;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.page-close:hover {
+  background-color: rgba(0, 0, 0, 0.16);
 }

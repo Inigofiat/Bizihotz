@@ -12,6 +12,7 @@ const historialRoutes = require('./rutas/historialRutas');
 const registroRoutes = require('./rutas/registroRutas');
 const pacienteUsuarioRoutes = require('./rutas/pacienteUsuarioRutas');
 const authRoutes = require('./rutas/authRutas');
+const usuarioRoutes = require('./rutas/usuarioRutas');
 const { ensureDefaultUsers } = require('./services/ensureDefaultUsers');
 
 const PORT = process.env.PORT || 4001;
@@ -20,6 +21,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const uploadsPath = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsPath));
 
 let swaggerDocument = null;
 const swaggerPath = path.join(__dirname, 'docs', 'openapi.json');
@@ -59,6 +66,7 @@ app.use('/api/historiales', historialRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/pacientes-usuarios', pacienteUsuarioRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 app.get('/docs/swagger.json', (_req, res) => {
   if (!swaggerDocument) {
