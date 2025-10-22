@@ -2,6 +2,7 @@ const express = require('express');
 const Cita = require('../data/citaModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
+const { ensureEstadoValido, deriveEstadoDesdeAtendida } = require('../utils/estadoCita');
 
 const router = express.Router();
 
@@ -23,6 +24,25 @@ const handleError = (res, error, defaultMessage) => {
   const status = error.status || 500;
   const mensaje = error.message || defaultMessage;
   return res.status(status).json({ mensaje });
+};
+
+const buildCitaPayload = (payload = {}) => {
+  const prepared = { ...payload };
+
+  if (Object.prototype.hasOwnProperty.call(prepared, 'estado')) {
+    const { estado, atendida } = ensureEstadoValido(prepared.estado);
+    prepared.estado = estado;
+    prepared.atendida = atendida;
+  } else if (Object.prototype.hasOwnProperty.call(prepared, 'atendida')) {
+    const rawValue = prepared.atendida;
+    const atendida = typeof rawValue === 'string'
+      ? rawValue.trim().toLowerCase() === 'true'
+      : Boolean(rawValue);
+    prepared.atendida = atendida;
+    prepared.estado = deriveEstadoDesdeAtendida(atendida, prepared.estado);
+  }
+
+  return prepared;
 };
 
 router.get('/', async (req, res) => {
@@ -88,7 +108,7 @@ router.get('/', async (req, res) => {
         paciente: [pacienteNombre, pacienteApellidos].filter(Boolean).join(" ").trim(),
         motivo: cita.tipoConsulta,
         profesional: profesionalNombre,
-        estado: cita.atendida ? "Atendida" : "Pendiente"
+        estado: deriveEstadoDesdeAtendida(Boolean(cita.atendida), cita.estado)
       };
     });
 
@@ -120,8 +140,8 @@ router.post('/', async (req, res) => {
     ensureValidObjectId(idPaciente, 'paciente');
     ensureValidObjectId(idUsuario, 'usuario');
 
-    const cita = new Cita(req.body);
-    const nuevaCita = await cita.save();
+    const payload = buildCitaPayload(req.body);
+    const cita = new Cita(payload);    const nuevaCita = await cita.save();
     return res.status(201).json(nuevaCita);
   } catch (error) {
     return handleError(res, error, 'Error al crear la cita');
@@ -140,8 +160,8 @@ router.put('/:id', async (req, res) => {
       ensureValidObjectId(req.body.idUsuario, 'usuario');
     }
 
-    const actualizada = await Cita.findByIdAndUpdate(id, req.body, {
-      new: true,
+    const updates = buildCitaPayload(req.body);
+    const actualizada = await Cita.findByIdAndUpdate(id, updates, {      new: true,
       runValidators: true,
     });
 
@@ -154,6 +174,45 @@ router.put('/:id', async (req, res) => {
     return handleError(res, error, 'Error al actualizar la cita');
   }
 });
+
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    ensureValidObjectId(id, 'cita');
+
+    const updates = {};
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'notas')) {
+      updates.notas = req.body.notas;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'estado')) {
+      const { estado, atendida } = ensureEstadoValido(req.body.estado);
+      updates.estado = estado;
+      updates.atendida = atendida;
+    }
+
+    if (!Object.keys(updates).length) {
+      const error = new Error('No se han proporcionado campos válidos para actualizar');
+      error.status = 400;
+      throw error;
+    }
+
+    const actualizada = await Cita.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true
+    });
+
+    if (!actualizada) {
+      throw createNotFoundError('Cita', id);
+    }
+
+    return res.json(actualizada);
+  } catch (error) {
+    return handleError(res, error, 'Error al actualizar la cita');
+  }
+});
+
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -216,10 +275,11 @@ router.patch('/:id/atendida', async (req, res) => {
     }
 
     ensureValidObjectId(id, 'cita');
+    const estado = deriveEstadoDesdeAtendida(atendida);
 
     const actualizada = await Cita.findByIdAndUpdate(
       id,
-      { atendida },
+      { atendida, estado },
       { new: true, runValidators: true }
     );
 
