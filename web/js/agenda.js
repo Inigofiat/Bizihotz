@@ -1,24 +1,21 @@
 "use strict";
 
+/**
+ * SIEMPRE vía Gateway:
+ * - Local / file://  -> http://localhost:5000/gestion
+ * - Prod             -> https://<host>/gestion
+ */
 const API_BASE_URL = (() => {
-  const gatewayBase = "http://localhost:5000/gestion";
-  const serviceBase = "http://localhost:4002";
-
-  if (window.location.protocol == "file:") {
-    return serviceBase;
-  }
-
+  const isFile = window.location.protocol === "file:";
   const host = window.location.hostname || "localhost";
-  if (host === "localhost" || host === "127.0.0.1") {
-    return serviceBase;
+  if (isFile || host === "localhost" || host === "127.0.0.1") {
+    return "http://localhost:5000/gestion";
   }
   return `${window.location.protocol}//${window.location.host}/gestion`;
 })();
 
-const API_FALLBACK_URL =
-  window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:5000/gestion"
-    : null;
+// ❌ Sin fallback directo a microservicios
+const API_FALLBACK_URL = null;
 
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
@@ -225,7 +222,9 @@ const fetchJson = async (path, options = {}) => {
       const headers = Object.assign({}, options.headers || {});
       try {
         const stored = getStoredUser();
-        const token = (stored && (stored.token || stored.accessToken || stored.authToken)) || (usuarioActual && (usuarioActual.token || usuarioActual.accessToken || usuarioActual.authToken));
+        const token =
+          (stored && (stored.token || stored.accessToken || stored.authToken)) ||
+          (usuarioActual && (usuarioActual.token || usuarioActual.accessToken || usuarioActual.authToken));
         if (token) headers.Authorization = `Bearer ${token}`;
       } catch (e) {
         // ignore
@@ -531,41 +530,31 @@ const handleEditFormSubmit = async (ev) => {
   agendaElements.editFeedback.textContent = "Guardando...";
 
   try {
-    // Hacer fetch directo incluyendo Authorization si existe token
-    const endpoint = `${API_URL}/citas/${encodeURIComponent(id)}`;
-    const headers = { "Content-Type": "application/json" };
-    try {
-      const stored = getStoredUser();
-      const token = (stored && (stored.token || stored.accessToken || stored.authToken)) || (usuarioActual && (usuarioActual.token || usuarioActual.accessToken || usuarioActual.authToken));
-      if (token) headers.Authorization = `Bearer ${token}`;
-    } catch (e) {
-      // ignore
-    }
-
-    const resp = await fetch(endpoint, {
-      method: "PATCH",
-      headers,
+    // PUT hacia Gateway -> /gestion/api/citas/:id
+    await fetchJson(`/citas/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: nuevoEstado, notas: nuevasNotas })
     });
-    if (!resp.ok) {
-      let bodyText = null;
-      try { bodyText = await resp.text(); } catch (e) { /* ignore */ }
-      const msg = bodyText || `HTTP ${resp.status}`;
-      throw new Error(msg);
-    }
 
-    // actualizar estado local y re-render
-    const idx = agendaState.citas.findIndex((c) => c.id === id || c._id === id);
-    if (idx >= 0) {
-      agendaState.citas[idx].estado = nuevoEstado;
-      agendaState.citas[idx].notas = nuevasNotas;
-      // volver a agrupar y renderizar
-      agendaState.citasPorDia = agruparCitasPorDia(agendaState.citas);
-      renderSelectedDay({ openPanel: true });
+    // Recargar desde el servidor para reflejar exactamente lo que hay en BD
+    try {
+      await cargarCitasMensuales(agendaState.panelOpen);
+      agendaElements.editFeedback.textContent = "Guardado correctamente.";
+      setTimeout(closeEditModal, 600);
+    } catch (reloadErr) {
+      // Fallback: aplicar el cambio localmente si la recarga falla
+      const idx = agendaState.citas.findIndex((c) => c.id === id || c._id === id);
+      if (idx >= 0) {
+        agendaState.citas[idx].estado = nuevoEstado;
+        agendaState.citas[idx].notas = nuevasNotas;
+        agendaState.citasPorDia = agruparCitasPorDia(agendaState.citas);
+        renderSelectedDay({ openPanel: true });
+      }
+      console.warn('No se pudieron recargar las citas tras la actualización:', reloadErr);
+      agendaElements.editFeedback.textContent = "Guardado (sin recarga).";
+      setTimeout(closeEditModal, 900);
     }
-
-    agendaElements.editFeedback.textContent = "Guardado correctamente.";
-    setTimeout(closeEditModal, 600);
   } catch (err) {
     console.error("Error al guardar cita:", err);
     agendaElements.editFeedback.textContent = "Error al guardar. Intenta de nuevo.";
@@ -1004,8 +993,16 @@ const cargarCitasMensuales = async (options) => {
     params.set("idUsuario", agendaState.professionalId);
   }
 
+  // DEBUG: mostrar rango de fechas que pedimos
+  console.log("Solicitando citas:", {
+    desde: inicioMes.toLocaleString(),
+    hasta: finMes.toLocaleString(),
+    profesional: agendaState.professionalId
+  });
+
   try {
     const citas = await fetchJson(`/citas?${params.toString()}`);
+    console.log("Citas recibidas:", citas.length);
     procesarCitas(Array.isArray(citas) ? citas : []);
     renderCalendar();
     renderSelectedDay(shouldOpenPanel);

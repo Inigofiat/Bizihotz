@@ -48,7 +48,9 @@ const forwardRequest = (service, req, res, next) => {
     method: req.method,
     headers: {
       ...req.headers,
-      host: targetUrl.host
+      host: targetUrl.host,
+      // Identificador que permite al microservicio reconocer peticiones proxied por el Gateway
+      'x-forwarded-by': 'bizihotz-gateway'
     }
   };
 

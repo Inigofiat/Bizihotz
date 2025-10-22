@@ -151,6 +151,17 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
+    // Verificar que la petición venga del Gateway en ambientes de producción.
+    // Permitir accesos directos solo si la variable ALLOW_DIRECT está establecida a 'true' (desarrollo).
+    const allowDirect = String(process.env.ALLOW_DIRECT || '').toLowerCase() === 'true';
+    if (!allowDirect) {
+      const forwarded = req.headers['x-forwarded-by'] || req.headers['x-forwarded-host'];
+      if (forwarded !== 'bizihotz-gateway') {
+        const error = new Error('Acceso directo al microservicio no permitido. Use el API Gateway.');
+        error.status = 403;
+        throw error;
+      }
+    }
     const { id } = req.params;
     ensureValidObjectId(id, 'cita');
 
