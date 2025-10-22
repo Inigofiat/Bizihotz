@@ -51,7 +51,6 @@
         <div class="side-header">
           <div>
             <h2 id="panelTitle">Citas del <span id="prettyDate"></span></h2>
-            <div class="pill" id="proBadge"></div>
           </div>
           <div class="pill" id="totalBadge" title="Total del dia">0 citas</div>
         </div>
@@ -62,6 +61,33 @@
   </div>
   <script src="../js/perfil-modal.js"></script>
   <script src="../js/agenda.js"></script>
+  <!-- Edit appointment modal -->
+  <div class="modal-overlay" id="editAppointmentModal" hidden>
+    <div class="modal-content edit-appointment">
+      <button type="button" class="modal-close" id="closeEditAppointment">&times;</button>
+      <h3>Editar cita</h3>
+      <form id="editAppointmentForm" autocomplete="off">
+        <input type="hidden" id="editCitaId" />
+        <div class="form-group">
+          <label for="editEstado">Estado</label>
+          <select id="editEstado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Atendida">Atendida</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editNotas">Observaciones</label>
+          <textarea id="editNotas" rows="4" placeholder="Notas o detalles adicionales"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="saveEditAppointment">Guardar</button>
+          <button type="button" class="btn" id="cancelEditAppointment">Cancelar</button>
+        </div>
+        <p class="modal-feedback" id="editAppointmentFeedback"></p>
+      </form>
+    </div>
+  </div>
   <div class="modal-overlay" id="addAppointmentModal" hidden>
     <div class="modal-content add-appointment">
       <button type="button" class="modal-close" id="closeAddAppointment">&times;</button>

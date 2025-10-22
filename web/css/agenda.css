@@ -215,8 +215,9 @@ body.modal-open {
   box-shadow: 0 4px 12px rgba(31, 55, 40, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 .day.placeholder {
-  background: transparent;
-  border: 1px dashed rgba(32, 57, 42, 0.15);
+  /* mismo tamaño/espaciado que un día normal, pero visualmente atenuado */
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow: none;
   pointer-events: none;
   cursor: default;
@@ -226,7 +227,23 @@ body.modal-open {
   box-shadow: none;
 }
 .day.placeholder .num {
-  color: #9aa99f;
+  color: rgba(24, 46, 36, 0.18);
+  position: relative;
+  z-index: 2;
+}
+.day.placeholder .summary {
+  display: block;
+  font-size: 12px;
+  color: rgba(24, 46, 36, 0.22);
+  background: transparent;
+  border-radius: 10px;
+  padding: 6px 8px;
+  position: relative;
+  z-index: 2;
+  margin-top: 8px;
+}
+.day.placeholder .badge {
+  display: none;
 }
 .day.placeholder.weekend {
   background: rgba(239, 245, 241, 0.6);
@@ -281,11 +298,22 @@ body.modal-open {
   color: #4b6557;
   font-weight: 500;
 }
+.day.weekend {
+  background: transparent;
+  border: none;
+}
+
 .day .summary.weekend {
-  background: rgba(214, 226, 217, 0.3);
-  color: #6b7d74;
-  font-weight: 500;
+  background: transparent;
+  color: #4f6b5e;
+  font-weight: 700;
   cursor: default;
+}
+
+/* Si el fin de semana no pertenece al mes, mantener el estilo de placeholder (atenuado) */
+.day.placeholder.weekend {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 /* --- BADGES (CARGAS) --- */
@@ -368,9 +396,6 @@ body.modal-open {
 #panelTitle span {
   color: inherit;
 }
-#proBadge {
-  display: none;
-}
 #totalBadge {
   display: inline-flex;
   flex-direction: column;
@@ -445,31 +470,53 @@ body.modal-open {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(30, 70, 45, 0.15);
 }
+.apt:hover { cursor: pointer; }
 .apt {
   display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 12px;
-  padding: 12px 14px;
+  grid-template-columns: 64px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
   background: rgba(244, 250, 246, 0.96);
-  border: 1px solid rgba(50, 82, 62, 0.14);
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(24, 58, 32, 0.12);
-  min-height: 120px;
+  border: 1px solid rgba(50, 82, 62, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(24, 58, 32, 0.10);
+  min-height: 96px;
+  max-height: 96px;
+  overflow: hidden;
+  align-items: center;
 }
 .time {
   font-weight: 700;
-  color:#4c6157 ;
-  font-size: 16px;
+  color: #4c6157;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.apt .content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  justify-content: center;
 }
 .apt h3 {
   margin: 0 0 4px 0;
   color: #203429;
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.1;
 }
 .apt .meta {
   color: #203429;
   font-size: 13px;
   margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  /* estándar */
+  line-clamp: 2;
 }
 .apt-header {
   display: flex;
@@ -536,7 +583,7 @@ body.modal-open {
 .close-panel:hover,
 .close-panel:focus-visible {
   background: rgba(16, 36, 24, 0.08);
-  color: var(--brand-2);
+  color: #3d5c4f;
   outline: none;
 }
 .side-backdrop {
@@ -586,6 +633,21 @@ body.modal-open {
   box-shadow: 0 16px 40px rgba(20, 40, 28, 0.22);
   position: relative;
 }
+.modal-content.edit-appointment {
+  background: linear-gradient(180deg, #ffffff, #f7fbf7);
+  border-radius: 14px;
+  padding: 18px 20px;
+  max-width: 560px;
+  width: min(560px, 100%);
+  box-shadow: 0 20px 50px rgba(10, 30, 20, 0.2);
+  position: relative;
+}
+.modal-content.edit-appointment h3 {
+  margin: 0 0 12px 0;
+  color: #163e2a;
+}
+.form-group label { font-weight: 700; color: #375848; }
+.modal-feedback { color: #6b2a2a; margin-top: 8px; }
 .modal-content.add-appointment h3 {
   margin: 0 0 16px;
   font-size: 22px;
