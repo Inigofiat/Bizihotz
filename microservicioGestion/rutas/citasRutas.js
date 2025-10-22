@@ -141,7 +141,8 @@ router.post('/', async (req, res) => {
     ensureValidObjectId(idUsuario, 'usuario');
 
     const payload = buildCitaPayload(req.body);
-    const cita = new Cita(payload);    const nuevaCita = await cita.save();
+    const cita = new Cita(payload);    
+    const nuevaCita = await cita.save();
     return res.status(201).json(nuevaCita);
   } catch (error) {
     return handleError(res, error, 'Error al crear la cita');
@@ -161,7 +162,8 @@ router.put('/:id', async (req, res) => {
     }
 
     const updates = buildCitaPayload(req.body);
-    const actualizada = await Cita.findByIdAndUpdate(id, updates, {      new: true,
+    const actualizada = await Cita.findByIdAndUpdate(id, updates, {      
+      new: true,
       runValidators: true,
     });
 
@@ -190,57 +192,6 @@ router.patch('/:id', async (req, res) => {
       const { estado, atendida } = ensureEstadoValido(req.body.estado);
       updates.estado = estado;
       updates.atendida = atendida;
-    }
-
-    if (!Object.keys(updates).length) {
-      const error = new Error('No se han proporcionado campos válidos para actualizar');
-      error.status = 400;
-      throw error;
-    }
-
-    const actualizada = await Cita.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true
-    });
-
-    if (!actualizada) {
-      throw createNotFoundError('Cita', id);
-    }
-
-    return res.json(actualizada);
-  } catch (error) {
-    return handleError(res, error, 'Error al actualizar la cita');
-  }
-});
-
-router.patch('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    ensureValidObjectId(id, 'cita');
-
-    const updates = {};
-
-    if (Object.prototype.hasOwnProperty.call(req.body, 'notas')) {
-      updates.notas = req.body.notas;
-    }
-
-    if (Object.prototype.hasOwnProperty.call(req.body, 'estado')) {
-      const estado = String(req.body.estado || '').trim().toLowerCase();
-      if (!estado) {
-        const error = new Error('El campo estado no puede estar vacío');
-        error.status = 400;
-        throw error;
-      }
-
-      if (estado === 'atendida') {
-        updates.atendida = true;
-      } else if (estado === 'pendiente') {
-        updates.atendida = false;
-      } else {
-        const error = new Error('El campo estado debe ser "Pendiente" o "Atendida"');
-        error.status = 400;
-        throw error;
-      }
     }
 
     if (!Object.keys(updates).length) {
