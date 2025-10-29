@@ -19,7 +19,7 @@ class Dieta(Base):
     calorias_objetivo: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
     fecha_inicio: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
-    paciente_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    paciente_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     usuario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     es_plantilla: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)

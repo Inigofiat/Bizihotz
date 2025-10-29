@@ -9,12 +9,12 @@
 <body>
   <div class="app-shell">
     <header class="diet-topbar">
-      <button type="button" class="diet-topbar__back" id="backToDashboard" aria-label="Volver al panel principal">
+      <a class="diet-topbar__back" id="backToDashboard" href="principal.html" aria-label="Volver al panel principal">
         <img src="../images/2.png" alt="Panel principal" />
-      </button>
+      </a>
       <div class="diet-topbar__titles">
         <h1>Planes Alimenticios</h1>
-        <p>Gesti&oacute;n de dietas, recetas y alimentos</p>
+        <p>GestiÃ³n de dietas, recetas y alimentos</p>
       </div>
       <div class="diet-topbar__stats">
         <div class="stat-card">
@@ -73,11 +73,11 @@
                 <select id="filterEstado">
                   <option value="todas">Todas</option>
                   <option value="activas">Activas</option>
-                  <option value="inactivas">Hist&oacute;ricas</option>
+                  <option value="inactivas">HistÃ³ricas</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="filterAsignacion">Asignaci&oacute;n</label>
+                <label for="filterAsignacion">AsignaciÃ³n</label>
                 <select id="filterAsignacion">
                   <option value="todas">Todas</option>
                   <option value="asignadas">Asignadas</option>
@@ -271,7 +271,6 @@
         </div>
         <div class="form-grid two">
           <div class="form-group">
-            <label for="dietaPacienteId">Paciente</label>
             <select id="dietaPacienteId" name="dietaPacienteId" data-patient-select disabled>
               <option value="">Selecciona un paciente</option>
             </select>

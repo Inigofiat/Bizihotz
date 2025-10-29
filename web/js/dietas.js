@@ -1,48 +1,28 @@
-﻿"use strict";
+"use strict";
 
 (() => {
   const UNIQUE = (values) => [...new Set(values.filter(Boolean).map((value) => value.replace(/\/\/+$/, "")))];
 
-  const resolveNutritionBase = () => {
-    if (window.location.protocol === "file:") {
-      return "http://localhost:5002";
+  const resolveGatewayBase = () => {
+    const protocol = window.location.protocol;
+    const hostname = (window.location.hostname || "").toLowerCase();
+    if (protocol === "file:") {
+      return "http://localhost:5000";
     }
-    const host = window.location.hostname || "localhost";
-    if (host === "localhost" || host === "127.0.0.1") {
-      return "http://localhost:5002";
+    if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
+      const baseHost = hostname || "localhost";
+      return `${protocol}//${baseHost}:5000`;
     }
-    return `${window.location.protocol}//${window.location.host}/nutricion`;
+    return `${protocol}//${window.location.host}`;
   };
 
-  const resolveNutritionGateway = () => {
-    if (window.location.protocol === "file:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "http://localhost:5000/nutricion";
-    }
-    return `${window.location.protocol}//${window.location.host}/nutricion`;
-  };
+  const resolveNutritionGateway = () => `${resolveGatewayBase()}/nutricion`;
+  const resolveGestionGateway = () => `${resolveGatewayBase()}/gestion`;
+  const DEFAULT_NUTRICION_USUARIO_ID = 1;
+  const isGestionObjectId = (value) => typeof value === "string" && /^[a-f0-9]{24}$/i.test(value.trim());
 
-  const resolveGestionBase = () => {
-    if (window.location.protocol === "file:") {
-      return "http://localhost:4002";
-    }
-    const host = window.location.hostname || "localhost";
-    if (host === "localhost" || host === "127.0.0.1") {
-      return "http://localhost:4002";
-    }
-    return `${window.location.protocol}//${window.location.host}/gestion`;
-  };
-
-  const resolveGestionGateway = () => {
-    if (window.location.protocol === "file:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "http://localhost:5000/gestion";
-    }
-    return `${window.location.protocol}//${window.location.host}/gestion`;
-  };
-
-  const LOCAL_GESTION_FALLBACKS = ["http://localhost:4001", "http://127.0.0.1:4001"];
-
-  const NUTRICION_API_BASES = UNIQUE([resolveNutritionBase(), resolveNutritionGateway()]).map((base) => `${base}/api`);
-  const GESTION_API_BASES = UNIQUE([resolveGestionBase(), resolveGestionGateway(), ...LOCAL_GESTION_FALLBACKS]).map((base) => `${base}/api`);
+  const NUTRICION_API_BASES = UNIQUE([resolveNutritionGateway()]).map((base) => `${base}/api`);
+  const GESTION_API_BASES = UNIQUE([resolveGestionGateway()]).map((base) => `${base}/api`);
 
   const LOGIN_PAGE = "login.html";
   const EMPTY_STATE_MESSAGES = {
@@ -111,11 +91,35 @@
     if (typeof value === "number" && Number.isFinite(value)) {
       return value;
     }
-  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
-    return Number.parseInt(value, 10);
-  }
-  return Number.NaN;
-};
+    if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+      return Number.parseInt(value, 10);
+    }
+    return Number.NaN;
+  };
+
+  const resolveUsuarioId = (usuario) => {
+    if (!usuario || typeof usuario !== "object") {
+      return DEFAULT_NUTRICION_USUARIO_ID;
+    }
+    const candidates = [
+      usuario.idUsuario,
+      usuario.usuarioId,
+      usuario.id_usuario,
+      usuario.id,
+      usuario._id,
+      usuario?.usuario?.idUsuario,
+      usuario?.usuario?.id,
+      usuario?.idNutricion,
+      usuario?.nutricionId
+    ];
+    for (const candidate of candidates) {
+      const numeric = toNumericId(candidate);
+      if (Number.isFinite(numeric)) {
+        return numeric;
+      }
+    }
+    return DEFAULT_NUTRICION_USUARIO_ID;
+  };
 
   const normalizePatientId = (value) => {
     if (value === null || typeof value === "undefined") return null;
@@ -336,6 +340,7 @@
     if (!pacienteId) {
       return null;
     }
+    const isObjectId = isGestionObjectId(pacienteId);
     const numericId = toNumericId(pacienteId);
     const nombre = [
       paciente.nombrePaciente || paciente.nombre || "",
@@ -346,8 +351,17 @@
       .join(" ");
     const fallbackHint = getStaticPatientName(pacienteId);
     const fallbackNombre = fallbackHint?.completo || "";
-    let nombreCompleto = nombre || fallbackNombre || (Number.isFinite(numericId) ? `Paciente #${numericId}` : "Paciente sin nombre");
-    if (isHint && /^Paciente\s*#\d+$/i.test(nombreCompleto)) {
+    let nombreCompleto = nombre || fallbackNombre;
+    if (!nombreCompleto) {
+      if (Number.isFinite(numericId)) {
+        nombreCompleto = `Paciente #${numericId}`;
+      } else if (!isObjectId) {
+        nombreCompleto = pacienteId;
+      } else {
+        nombreCompleto = "Paciente sin nombre";
+      }
+    }
+    if (isHint && isObjectId && /^Paciente\s*#\d+$/i.test(nombreCompleto)) {
       nombreCompleto = "";
     }
     const email = (paciente.emailPaciente || paciente.email || "").trim();
@@ -388,6 +402,19 @@
       return Promise.resolve();
     }
     if (patientCache.has(normalizedId)) {
+      return Promise.resolve();
+    }
+    if (!isGestionObjectId(normalizedId)) {
+      if (!patientCache.has(normalizedId)) {
+        storePatientRecord(
+          {
+            idPaciente: normalizedId,
+            nombrePaciente: "",
+            apellidos: ""
+          },
+          { isHint: true }
+        );
+      }
       return Promise.resolve();
     }
     if (patientPromises.has(normalizedId)) {
@@ -454,30 +481,47 @@
   const formatPatientName = (pacienteId, fallback = "") => {
     const normalizedId = normalizePatientId(pacienteId);
     if (!normalizedId) {
-      return fallback;
+      return fallback || "";
     }
     const record = patientCache.get(normalizedId);
-    if (record?.nombreCompleto && !/^Paciente\s*#\d+$/i.test(record.nombreCompleto)) {
+    if (record?.nombreCompleto) {
       return record.nombreCompleto;
     }
-    const staticHint = getStaticPatientName(normalizePatientId(normalizedId));
+    const staticHint = getStaticPatientName(normalizedId);
     if (staticHint?.completo) {
       patientCache.set(normalizedId, {
         id: normalizedId,
         nombreCompleto: staticHint.completo,
-        numericId: Number.isFinite(toNumericId(normalizedId)) ? toNumericId(normalizedId) : null
+        numericId: Number.isFinite(toNumericId(normalizedId)) ? toNumericId(normalizedId) : null,
+        email: "",
+        telefono: "",
+        isHint: true
       });
       return staticHint.completo;
     }
-    if (record?.nombreCompleto) {
-      return fallback || "";
-    }
     const numericId = toNumericId(normalizedId);
     if (Number.isFinite(numericId)) {
-      if (!patientCache.has(normalizedId)) {
-        patientCache.set(normalizedId, { id: normalizedId, nombreCompleto: "", numericId, isHint: true });
-      }
-      return fallback || "";
+      const nombre = `Paciente #${numericId}`;
+      patientCache.set(normalizedId, {
+        id: normalizedId,
+        nombreCompleto: nombre,
+        numericId,
+        email: "",
+        telefono: "",
+        isHint: true
+      });
+      return nombre;
+    }
+    if (!isGestionObjectId(normalizedId)) {
+      patientCache.set(normalizedId, {
+        id: normalizedId,
+        nombreCompleto: normalizedId,
+        numericId: null,
+        email: "",
+        telefono: "",
+        isHint: true
+      });
+      return normalizedId;
     }
     return fallback || "";
   };
@@ -675,19 +719,21 @@
         return;
       }
     }
+    await ensurePatientLoaded(normalizedId);
+    const labelFallback = formatPatientName(normalizedId) || normalizedId;
+    const record = patientCache.get(normalizedId);
+    const pseudoPaciente = {
+      idPaciente: normalizedId,
+      nombrePaciente: record?.nombreCompleto || labelFallback,
+      emailPaciente: record?.email || "",
+      telefono: record?.telefono || ""
+    };
+    const label = buildPatientOptionLabel(pseudoPaciente, labelFallback).trim();
+    if (!label) {
+      select.value = "";
+      return;
+    }
     if (!select.querySelector(`option[value="${normalizedId}"]`)) {
-      await ensurePatientLoaded(normalizedId);
-      const record = patientCache.get(normalizedId);
-      const pseudoPaciente = {
-        idPaciente: normalizedId,
-        nombrePaciente: record?.nombreCompleto || "",
-        emailPaciente: record?.email || "",
-        telefono: record?.telefono || ""
-      };
-      const label = buildPatientOptionLabel(pseudoPaciente, record?.nombreCompleto || "").trim();
-      if (!label) {
-        return;
-      }
       const option = document.createElement("option");
       option.value = normalizedId;
       option.textContent = label;
@@ -1499,14 +1545,24 @@
       const query = params.toString() ? `?${params.toString()}` : "";
       state.dietasRaw = (await requestJson(`/dietas${query}`)) || [];
       state.dietasRaw.forEach((dieta) => {
-        storePatientHint(
-          dieta?.paciente_id,
-          extractNombre(dieta),
-          extractApellidos(dieta)
-        );
-        (Array.isArray(dieta?.asignaciones) ? dieta.asignaciones : []).forEach((item) => {
-          storePatientHint(item?.paciente_id, extractNombre(item), extractApellidos(item));
+      const pacienteIdNormalizado = normalizePatientId(dieta?.paciente_id);
+      if (pacienteIdNormalizado) {
+        storePatientHint(pacienteIdNormalizado, extractNombre(dieta), extractApellidos(dieta));
+        dieta.paciente_id = pacienteIdNormalizado;
+      } else {
+        dieta.paciente_id = null;
+      }
+      if (Array.isArray(dieta?.asignaciones)) {
+        dieta.asignaciones = dieta.asignaciones.filter((item) => {
+          const asignacionId = normalizePatientId(item?.paciente_id);
+          if (!asignacionId) {
+            return false;
+          }
+          storePatientHint(asignacionId, extractNombre(item), extractApellidos(item));
+          item.paciente_id = asignacionId;
+          return true;
         });
+      }
       });
       await preloadDietPatients(state.dietasRaw);
       if (state.initialPacienteFilter) {
@@ -1579,6 +1635,30 @@
       });
     });
     return recetas;
+  };
+
+  const ensureRecetasUnicas = (recetas) => {
+    if (!Array.isArray(recetas) || recetas.length === 0) {
+      return;
+    }
+    const combinaciones = new Set();
+    for (const item of recetas) {
+      const recetaId = toNumericId(item?.receta_id);
+      if (!Number.isFinite(recetaId)) {
+        continue;
+      }
+      const dia = (item?.dia_semana || "").trim().toLowerCase();
+      const momento = (item?.momento || "").trim().toLowerCase();
+      const diaKey = dia || "-";
+      const momentoKey = momento || "-";
+      const key = `${recetaId}::${diaKey}::${momentoKey}`;
+      if (combinaciones.has(key)) {
+        throw new Error(
+          "No puedes repetir la misma receta en el mismo dia y momento. Ajusta o elimina las filas duplicadas."
+        );
+      }
+      combinaciones.add(key);
+    }
   };
   const resetAlimentoForm = () => {
     const form = document.getElementById("alimentoForm");
@@ -1791,7 +1871,7 @@
       form.dietaEsPlantilla.checked = Boolean(dieta.es_plantilla);
       const esPlantilla = form.dietaEsPlantilla.checked;
       pacienteSelect.disabled = esPlantilla;
-      if (!esPlantilla) {
+      if (!esPlantilla && dieta.paciente_id) {
         await ensureSelectHasPatientOption(pacienteSelect, dieta.paciente_id);
       } else {
         pacienteSelect.value = "";
@@ -1840,7 +1920,7 @@
     const alimentoId = toNumericId(alimento?.id ?? alimento?.alimento_id ?? alimento);
     if (!Number.isFinite(alimentoId)) return;
     const nombre = (alimento && alimento.nombre) || `#${alimentoId}`;
-    if (!window.confirm(`¿Eliminar el alimento ${nombre}?`)) {
+    if (!window.confirm(`?Eliminar el alimento ${nombre}?`)) {
       return;
     }
     try {
@@ -1859,7 +1939,7 @@
     const recetaId = toNumericId(receta?.id ?? receta?.receta_id ?? receta);
     if (!Number.isFinite(recetaId)) return;
     const nombre = (receta && receta.nombre) || `#${recetaId}`;
-    if (!window.confirm(`¿Eliminar la receta ${nombre}?`)) {
+    if (!window.confirm(`?Eliminar la receta ${nombre}?`)) {
       return;
     }
     try {
@@ -1877,7 +1957,7 @@
     const dietaId = toNumericId(dieta?.id ?? dieta);
     if (!Number.isFinite(dietaId)) return;
     const nombre = (dieta && dieta.nombre) || `#${dietaId}`;
-    if (!window.confirm(`¿Eliminar la dieta ${nombre}?`)) {
+    if (!window.confirm(`?Eliminar la dieta ${nombre}?`)) {
       return;
     }
     try {
@@ -1998,12 +2078,14 @@
     feedback && (feedback.textContent = "");
     try {
       const recetas = collectDietaRecetas();
+      ensureRecetasUnicas(recetas);
       const esPlantilla = form.dietaEsPlantilla.checked;
       const pacienteId = normalizePatientId(form.dietaPacienteId.value);
       if (!esPlantilla && !pacienteId) {
         throw new Error("Selecciona un paciente.");
       }
 
+      const usuarioId = resolveUsuarioId(state.usuario);
       const payload = {
         nombre: form.dietaNombre.value.trim(),
         objetivo: form.dietaObjetivo.value.trim() || null,
@@ -2012,14 +2094,14 @@
         fecha_inicio: form.dietaFechaInicio.value || null,
         fecha_fin: form.dietaFechaFin.value || null,
         paciente_id: esPlantilla ? null : pacienteId,
-        usuario_id: state.usuario?.idUsuario || state.usuario?.id,
+        usuario_id: usuarioId,
         es_plantilla: esPlantilla,
         notas: form.dietaNotas.value.trim() || null,
         recetas
       };
 
       if (!payload.nombre) throw new Error("Introduce un nombre para la dieta.");
-      if (!Number.isFinite(payload.usuario_id)) throw new Error("No se pudo determinar el usuario responsable.");
+      if (!Number.isFinite(usuarioId)) throw new Error("No se pudo determinar el usuario responsable.");
 
       const dietaId = state.editing.dietaId;
       const isUpdate = Number.isFinite(dietaId);
@@ -2095,13 +2177,19 @@
       return;
     }
 
+    const usuarioId = resolveUsuarioId(state.usuario);
+    if (!Number.isFinite(usuarioId)) {
+      feedback && (feedback.textContent = "No se pudo determinar el usuario responsable.");
+      return;
+    }
+
     try {
       await requestJson(`/dietas/${dietaId}/asignaciones`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paciente_id: pacienteId,
-          usuario_id: state.usuario?.idUsuario || state.usuario?.id,
+          usuario_id: usuarioId,
           fecha_inicio: form.assignFechaInicio.value || null,
           fecha_fin: form.assignFechaFin.value || null,
           notas: form.assignNotas.value.trim() || null,
@@ -2151,12 +2239,18 @@
       return;
     }
 
+    const usuarioId = resolveUsuarioId(state.usuario);
+    if (!Number.isFinite(usuarioId)) {
+      feedback && (feedback.textContent = "No se pudo determinar el usuario responsable.");
+      return;
+    }
+
     try {
       await requestJson(`/dietas/${dietaId}/versionar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usuario_id: state.usuario?.idUsuario || state.usuario?.id,
+          usuario_id: usuarioId,
           nombre: form.versionombre.value.trim() || null,
           calorias_objetivo: form.versionCalorias.value ? Number.parseFloat(form.versionCalorias.value) : null,
           fecha_inicio: form.versionFechaInicio.value || null,
@@ -2565,12 +2659,13 @@
 
     await Promise.all([loadAlimentos(), loadRecetas(), loadDietas()]);
     loadPacientes().catch(() => {
-      // El aviso ya se gestionó anteriormente si falla.
+      // El aviso ya se gestiono anteriormente si falla.
     });
   };
 
   document.addEventListener("DOMContentLoaded", init);
 })();
+
 
 
 

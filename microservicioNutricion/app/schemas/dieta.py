@@ -20,7 +20,7 @@ class DietaBase(ORMModel):
 
 
 class DietaCreate(DietaBase):
-    paciente_id: Optional[int] = None
+    paciente_id: Optional[str] = None
     usuario_id: int
     es_plantilla: bool = False
     parent_id: Optional[int] = None
@@ -37,7 +37,7 @@ class DietaUpdate(ORMModel):
     fecha_inicio: Optional[date] = None
     fecha_fin: Optional[date] = None
     notas: Optional[str] = None
-    paciente_id: Optional[int] = None
+    paciente_id: Optional[str] = None
     usuario_id: Optional[int] = None
     es_plantilla: Optional[bool] = None
     estado: Optional[str] = None
@@ -60,7 +60,7 @@ class DietaVersionPayload(ORMModel):
 
 
 class DietaAsignacionCreate(DietaVersionPayload):
-    paciente_id: int
+    paciente_id: str
 
 
 class DietaNotificacionRequest(ORMModel):
@@ -74,7 +74,7 @@ class DietaNotificacionRequest(ORMModel):
 
 class DietaAsignacionRead(ORMModel):
     id: int
-    paciente_id: int
+    paciente_id: str
     usuario_id: int
     version: int
     es_actual: bool
@@ -92,7 +92,7 @@ class DietaRead(ORMModel):
     fecha_inicio: Optional[date] = None
     fecha_fin: Optional[date] = None
     notas: Optional[str] = None
-    paciente_id: Optional[int] = None
+    paciente_id: Optional[str] = None
     usuario_id: int
     es_plantilla: bool
     version: int

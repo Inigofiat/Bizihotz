@@ -35,6 +35,26 @@ app.get("/health", (_req, res) => {
   });
 });
 
+const setCorsHeaders = (res, origin, allowHeaders = null, allowMethods = null) => {
+  const normalizedOrigin = origin || "*";
+  res.setHeader("Access-Control-Allow-Origin", normalizedOrigin);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    allowHeaders || "Authorization, Content-Type, X-Requested-With, Accept"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    allowMethods || "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  const currentExpose = res.getHeader("Access-Control-Expose-Headers");
+  if (!currentExpose) {
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+  }
+  const vary = res.getHeader("Vary");
+  res.setHeader("Vary", vary ? `${vary}, Origin` : "Origin");
+};
+
 const forwardRequest = (service, req, res, next) => {
   const routePattern = new RegExp("^" + service.route);
   const targetPath = req.originalUrl.replace(routePattern, "") || "/";
@@ -59,6 +79,7 @@ const forwardRequest = (service, req, res, next) => {
   const proxyRequest = agent.request(options, (proxyResponse) => {
     const headers = { ...proxyResponse.headers };
     delete headers["transfer-encoding"];
+    setCorsHeaders(res, req.headers.origin);
 
     res.writeHead(proxyResponse.statusCode ?? 500, proxyResponse.statusMessage ?? "", headers);
 
@@ -84,6 +105,12 @@ const forwardRequest = (service, req, res, next) => {
 config.services.forEach((service) => {
   app.use(service.route, (req, res, next) => {
     if (req.method === "OPTIONS") {
+      setCorsHeaders(
+        res,
+        req.headers.origin,
+        req.headers["access-control-request-headers"],
+        req.headers["access-control-request-method"]
+      );
       res.status(204).end();
       return;
     }

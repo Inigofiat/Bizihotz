@@ -57,7 +57,11 @@ def _sincronizar_recetas(
     dieta: Dieta,
     recetas_data: Optional[List[DietaRecetaCreate]],
 ) -> None:
+    tenia_recetas = bool(dieta.recetas)
     dieta.recetas.clear()
+    if tenia_recetas:
+        # Asegura que las recetas anteriores se eliminen en la BD antes de insertar las nuevas.
+        session.flush()
 
     if not recetas_data:
         return
@@ -107,7 +111,7 @@ def _clonar_dieta(
     origen: Dieta,
     overrides: Optional[DietaVersionPayload],
     *,
-    paciente_id: Optional[int],
+    paciente_id: Optional[str],
     usuario_id: int,
     parent: Optional[Dieta],
     version: int,
@@ -168,7 +172,9 @@ def _clonar_dieta(
     return nueva
 
 
-def _desactivar_asignaciones(session: Session, paciente_id: int, excluir_dieta_id: Optional[int] = None) -> None:
+def _desactivar_asignaciones(
+    session: Session, paciente_id: str, excluir_dieta_id: Optional[int] = None
+) -> None:
     stmt = select(AsignacionDieta).where(
         AsignacionDieta.paciente_id == paciente_id,
         AsignacionDieta.es_actual.is_(True),
@@ -206,7 +212,7 @@ def _obtener_dieta(session: Session, dieta_id: int) -> Dieta:
 
 @router.get("", response_model=List[DietaRead])
 def listar_dietas(
-    paciente_id: Optional[int] = Query(default=None),
+    paciente_id: Optional[str] = Query(default=None),
     usuario_id: Optional[int] = Query(default=None),
     es_plantilla: Optional[bool] = Query(default=None),
     estado: Optional[str] = Query(default=None),
@@ -218,8 +224,9 @@ def listar_dietas(
     session: Session = Depends(get_session),
 ):
     stmt = _dieta_base_stmt()
-    if paciente_id is not None:
-        stmt = stmt.where(Dieta.paciente_id == paciente_id)
+    paciente_id_filter = paciente_id.strip() if paciente_id else None
+    if paciente_id_filter is not None:
+        stmt = stmt.where(Dieta.paciente_id == paciente_id_filter)
     if usuario_id is not None:
         stmt = stmt.where(Dieta.usuario_id == usuario_id)
     if es_plantilla is not None:
@@ -239,7 +246,8 @@ def listar_dietas(
 
 @router.post("", response_model=DietaRead, status_code=status.HTTP_201_CREATED)
 def crear_dieta(payload: DietaCreate, session: Session = Depends(get_session)):
-    if not payload.es_plantilla and payload.paciente_id is None:
+    paciente_id = payload.paciente_id.strip() if payload.paciente_id else None
+    if not payload.es_plantilla and not paciente_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Las dietas personalizadas deben indicar paciente_id.",
@@ -255,7 +263,7 @@ def crear_dieta(payload: DietaCreate, session: Session = Depends(get_session)):
         calorias_objetivo=_to_decimal(payload.calorias_objetivo),
         fecha_inicio=payload.fecha_inicio or date.today(),
         fecha_fin=payload.fecha_fin,
-        paciente_id=payload.paciente_id,
+        paciente_id=paciente_id,
         usuario_id=payload.usuario_id,
         es_plantilla=payload.es_plantilla,
         estado=estado,
@@ -320,7 +328,8 @@ def actualizar_dieta(
     if payload.notas is not None:
         dieta.notas = payload.notas
     if payload.paciente_id is not None:
-        dieta.paciente_id = payload.paciente_id
+        paciente_actualizado = payload.paciente_id.strip()
+        dieta.paciente_id = paciente_actualizado or None
     if payload.usuario_id is not None:
         dieta.usuario_id = payload.usuario_id
     if payload.es_plantilla is not None:
@@ -372,9 +381,16 @@ def asignar_dieta(
     payload: DietaAsignacionCreate,
     session: Session = Depends(get_session),
 ):
+    paciente_id = payload.paciente_id.strip()
+    if not paciente_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe proporcionar un identificador de paciente válido.",
+        )
+
     origen = _obtener_dieta(session, dieta_id)
 
-    if not origen.es_plantilla and origen.paciente_id not in (None, payload.paciente_id):
+    if not origen.es_plantilla and origen.paciente_id not in (None, paciente_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="La dieta ya está asociada a otro paciente.",
@@ -384,7 +400,7 @@ def asignar_dieta(
         session,
         origen,
         payload,
-        paciente_id=payload.paciente_id,
+        paciente_id=paciente_id,
         usuario_id=payload.usuario_id,
         parent=origen,
         version=1,
@@ -397,11 +413,11 @@ def asignar_dieta(
     session.add(nueva)
     session.flush()  # asegurar que nueva.id esté disponible para la asignación
 
-    _desactivar_asignaciones(session, payload.paciente_id)
+    _desactivar_asignaciones(session, paciente_id)
 
     asignacion = AsignacionDieta(
         dieta=nueva,
-        paciente_id=payload.paciente_id,
+        paciente_id=paciente_id,
         usuario_id=payload.usuario_id,
         version=nueva.version,
         comentario=payload.comentario,
@@ -548,3 +564,7 @@ def notificar_dieta(
         session.commit()
 
     return {"resultado": resultado}
+
+
+
+

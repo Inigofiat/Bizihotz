@@ -1,18 +1,18 @@
-### Microservicio de Nutricion (M2)
+### Microservicio de Nutrición (M2)
 
-API REST construida con FastAPI y PostgreSQL para gestionar alimentos, recetas y planes de dieta dentro del ecosistema Bizihotz.
+API REST construida con FastAPI y PostgreSQL para gestiónar alimentos, recetas y planes de dieta dentro del ecosistema Bizihotz.
 
 #### Endpoints principales
 
-- `GET /health` - estado del servicio y comprobacion de la base de datos.
+- `GET /health` - estado del servicio y comprobación de la base de datos.
 - `GET/POST/PUT/DELETE /api/alimentos` - CRUD de alimentos (valores por 100 g).
 - `GET /api/alimentos/externo/buscar?q=` - consulta a la API externa (Edamam por defecto).
-- `GET/POST/PUT/DELETE /api/recetas` - gestion de recetas con ingredientes.
-- `GET/POST/PUT/DELETE /api/dietas` - gestion de dietas (plantillas y personalizadas).
+- `GET/POST/PUT/DELETE /api/recetas` - gestión de recetas con ingredientes.
+- `GET/POST/PUT/DELETE /api/dietas` - gestión de dietas (plantillas y personalizadas).
 - `POST /api/dietas/{id}/asignaciones` - publica una dieta para un paciente a partir de una plantilla.
-- `POST /api/dietas/{id}/versionar` - genera una nueva version para mantener el historial por paciente.
-- `GET /api/dietas/{id}/exportar?formato=pdf|csv` - exportacion del plan nutricional.
-- `POST /api/dietas/{id}/notificar` - envio del plan al paciente via servicio externo.
+- `POST /api/dietas/{id}/versiónar` - genera una nueva versión para mantener el historial por paciente.
+- `GET /api/dietas/{id}/exportar?formato=pdf|csv` - exportación del plan nutriciónal.
+- `POST /api/dietas/{id}/notificar` - envío del plan al paciente via servicio externo.
 - `scripts/seed_demo.py` - script utilitario que genera alimentos, recetas, una plantilla y una dieta personalizada de ejemplo.
 
 ## Formas de ejecuciÃ³n
@@ -28,15 +28,15 @@ El microservicio puede levantarse dentro del stack Docker (recomendado) o de man
    ```
    Esto crea:
    - `postgres` accesible desde el host en `localhost:5434`
-   - `microservicio-nutricion` corriendo `uvicorn app:app` en `http://localhost:5002`
+   - `microservicio-nutrición` corriendo `uvicorn app:app` en `http://localhost:5002`
 3. **Carga datos de ejemplo (opcional):**
    ```bash
-   docker compose exec microservicio-nutricion python scripts/seed_demo.py
+   docker compose exec microservicio-nutrición python scripts/seed_demo.py
    ```
 4. **Verifica:** `GET http://localhost:5002/api/health` deberÃ­a devolver `{"status": "ok"}`.
 5. **Logs / apagado:**
    ```bash
-   docker compose logs -f microservicio-nutricion
+   docker compose logs -f microservicio-nutrición
    docker compose down
    ```
 
@@ -47,8 +47,8 @@ El microservicio puede levantarse dentro del stack Docker (recomendado) o de man
    pip install -r requirements.txt
    ```
 2. **Define `DATABASE_URL` en un `.env`:**
-   - PostgreSQL local: `postgresql+psycopg://postgres:postgres@localhost:5432/nutricion`
-   - SQLite (modo rÃ¡pido): `sqlite:///nutricion.db`
+   - PostgreSQL local: `postgresql+psycopg://postgres:postgres@localhost:5432/nutrición`
+   - SQLite (modo rÃ¡pido): `sqlite:///nutrición.db`
 3. **Levanta el servidor:**
    ```bash
    uvicorn app:app --reload --port 5002
@@ -59,18 +59,30 @@ El microservicio puede levantarse dentro del stack Docker (recomendado) o de man
    python scripts/seed_demo.py
    ```
 
-> Nota: si cambias el esquema y necesitas limpiar la base PostgreSQL, elimina y recrea la BD con `DROP DATABASE nutricion` y `CREATE DATABASE nutricion`, o usa tu cliente favorito (pgAdmin, psql, etc.).
+### MigraciÃ³n a identificadores alfanumÃ©ricos
+
+A partir de la integraciÃ³n con el microservicio de gestiÃ³n, `paciente_id` ahora almacena el identificador externo (ObjectId). Si ya tenÃ­as tablas creadas debes actualizar el tipo de columna a texto:
+
+```bash
+docker compose exec microservicio-nutrición python scripts/migrate_patient_ids_to_text.py
+# o en local
+python scripts/migrate_patient_ids_to_text.py
+```
+
+El script aplica `ALTER TABLE` para PostgreSQL/MySQL y deja un aviso si usas otro motor.
+
+> Nota: si cambias el esquema y necesitas limpiar la base PostgreSQL, elimina y recrea la BD con `DROP DATABASE nutrición` y `CREATE DATABASE nutrición`, o usa tu cliente favorito (pgAdmin, psql, etc.).
 
 ### Acceso a la base de datos
 
-- Con Docker: usa `localhost:5434`, usuario `postgres`, clave `postgres`, base `nutricion`.
+- Con Docker: usa `localhost:5434`, usuario `postgres`, clave `postgres`, base `nutrición`.
 - Sin Docker (segÃºn tu configuraciÃ³n): usa la URL que hayas definido en `DATABASE_URL`.
 
 #### Caracteristicas
 
 - Calculos de calorias, macros y micronutrientes a partir del catalogo de alimentos.
-- Integracion opcional con proveedores externos de datos nutricionales mediante las variables `EXTERNAL_NUTRITION_*`.
-- Versionado de dietas por paciente, historial de asignaciones y exportacion CSV/PDF lista para compartir.
+- Integracion opcional con proveedores externos de datos nutriciónales mediante las variables `EXTERNAL_NUTRITION_*`.
+- Versionado de dietas por paciente, historial de asignaciones y exportación CSV/PDF lista para compartir.
 - Webhook de notificaciones configurable (`NOTIFICATIONS_SERVICE_URL`) para comunicar cambios al paciente.
 - Script de datos de ejemplo (`python scripts/seed_demo.py`) para contar con un escenario base tras iniciar la base de datos.
 - Arquitectura preparada para convivir con un API Gateway encargado de autenticacion y autorizacion.

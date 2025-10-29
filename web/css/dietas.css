@@ -1446,7 +1446,17 @@ main.layout {
   }
 
   .diet-topbar__back {
-    justify-self: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: rgba(236, 245, 236, 0.85);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .diet-topbar__back img {
+    width: 28px;
+    height: auto;
+    display: block;
   }
 
   .diet-topbar__stats {

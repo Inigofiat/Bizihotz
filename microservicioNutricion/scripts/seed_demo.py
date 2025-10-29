@@ -72,7 +72,7 @@ def ensure_dieta(
     es_plantilla: bool,
     version: int,
     usuario_id: int,
-    paciente_id: int | None,
+    paciente_id: str | None,
     objetivo: str | None,
     descripcion: str | None,
     notas: str | None,

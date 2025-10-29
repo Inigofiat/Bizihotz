@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -15,7 +15,7 @@ class AsignacionDieta(Base):
     dieta_id: Mapped[int] = mapped_column(
         ForeignKey("dietas.id", ondelete="CASCADE"), nullable=False
     )
-    paciente_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    paciente_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     usuario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     es_actual: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
