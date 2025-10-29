@@ -358,11 +358,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const user = cargarUsuario();
   cargarCitas();
 
-  const agendaButton = document.querySelector(".nav-button");
+  const agendaButton = document.querySelector('.nav-button[data-nav="agenda"]');
   if (agendaButton) {
     agendaButton.addEventListener("click", (event) => {
       event.preventDefault();
       window.location.href = "agenda.html";
+    });
+  }
+
+  const nuevoPacienteButton = document.querySelector('.nav-button[data-nav="nuevo-paciente"]');
+  if (nuevoPacienteButton) {
+    nuevoPacienteButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "nuevoPaciente.html";
+    });
+  }
+
+  const historialButton = document.querySelector('.nav-button[data-nav="historial"]');
+  if (historialButton) {
+    historialButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "historialClinico.html";
+    });
+  }
+
+  const dietasButton = document.querySelector('.nav-button[data-nav="dietas"]');
+  if (dietasButton) {
+    dietasButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "dietas.html";
     });
   }
 

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gesti&oacute;n de Dietas</title>
+  <link rel="stylesheet" href="../css/dietas.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="diet-topbar">
+      <button type="button" class="diet-topbar__back" id="backToDashboard" aria-label="Volver al panel principal">
+        <img src="../images/2.png" alt="Panel principal" />
+      </button>
+      <div class="diet-topbar__titles">
+        <h1>Planes Alimenticios</h1>
+        <p>Gesti&oacute;n de dietas, recetas y alimentos</p>
+      </div>
+      <div class="diet-topbar__stats">
+        <div class="stat-card">
+          <span class="stat-card__label">Plantillas</span>
+          <span class="stat-card__value" id="statPlantillas">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__label">Dietas activas</span>
+          <span class="stat-card__value" id="statDietasActivas">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__label">Pacientes con dieta</span>
+          <span class="stat-card__value" id="statPacientes">--</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="globalAlert" class="global-alert" hidden></div>
+
+    <main class="layout">
+      <section class="panel panel--dietas">
+        <div class="panel__header">
+          <div>
+            <h2>Dietas</h2>
+            <p>Lista de planes alimenticios</p>
+          </div>
+          <div class="panel__actions">
+            <button type="button" class="btn" id="refreshDietas">Actualizar</button>
+            <button type="button" class="btn primary" id="openDietaModal">+ Nueva dieta</button>
+          </div>
+        </div>
+        <div class="diet-tabs" role="tablist" aria-label="Vistas de gesti&oacute;n de dietas">
+          <button type="button" class="diet-tab is-active" role="tab" aria-selected="true" data-tab="catalogo">Dietas</button>
+          <button type="button" class="diet-tab" role="tab" aria-selected="false" data-tab="asignaciones">Asignaciones</button>
+        </div>
+        <div class="diet-tabpanel is-active" role="tabpanel" data-tab-panel="catalogo">
+          <div class="diet-filters">
+            <div class="diet-filters__row">
+              <div class="form-group">
+                <label for="dietSearch">Buscar</label>
+                <input type="search" id="dietSearch" placeholder="Nombre, objetivo o paciente">
+              </div>
+              <fieldset class="diet-filters__types">
+                <legend>Tipos</legend>
+                <label class="chip-option">
+                  <input type="checkbox" id="filterPlantillas" checked>
+                  <span>Plantillas</span>
+                </label>
+                <label class="chip-option">
+                  <input type="checkbox" id="filterPersonales" checked>
+                  <span>Personalizadas</span>
+                </label>
+              </fieldset>
+              <div class="form-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado">
+                  <option value="todas">Todas</option>
+                  <option value="activas">Activas</option>
+                  <option value="inactivas">Hist&oacute;ricas</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="filterAsignacion">Asignaci&oacute;n</label>
+                <select id="filterAsignacion">
+                  <option value="todas">Todas</option>
+                  <option value="asignadas">Asignadas</option>
+                  <option value="sin-asignar">Sin asignar</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="diet-workspace">
+            <div class="diet-workspace__list" id="dietCatalogList" data-empty="Todavia no hay dietas registradas."></div>
+            <aside class="diet-workspace__detail" id="dietDetailPanel" aria-live="polite">
+              <div class="diet-detail__placeholder">
+                <h3>Selecciona una dieta</h3>
+                <p>Consulta los detalles, recetas y pacientes asignados desde este panel.</p>
+                <button type="button" class="btn primary btn--new-dieta" id="openDietaModalEmpty">Crear nueva dieta</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <div class="diet-tabpanel" role="tabpanel" data-tab-panel="asignaciones" hidden>
+          <div class="assignment-toolbar">
+            <div class="form-group">
+              <label for="assignmentSearch">Buscar</label>
+              <input type="search" id="assignmentSearch" placeholder="Paciente o dieta">
+            </div>
+            <div class="form-group">
+              <label for="assignmentEstado">Estado</label>
+              <select id="assignmentEstado">
+                <option value="vigentes">Vigentes</option>
+                <option value="proximas">Pr&oacute;ximas/pendientes</option>
+                <option value="historicas">Hist&oacute;ricas</option>
+                <option value="todas">Todas</option>
+              </select>
+            </div>
+            <div class="assignment-toolbar__actions">
+              <button type="button" class="btn" id="refreshAsignaciones">Actualizar</button>
+            </div>
+          </div>
+          <div class="assignment-list" id="dietAssignmentsList" data-empty="No hay asignaciones registradas."></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Recetas</h2>
+            <p>Recetario nutricional</p>
+          </div>
+          <div class="panel__actions">
+            <div class="form-group">
+              <label for="recetaSearch">Buscar</label>
+              <input type="search" id="recetaSearch" placeholder="Nombre o ingrediente">
+            </div>
+            <button type="button" class="btn" id="refreshRecetas">Actualizar</button>
+            <button type="button" class="btn primary" id="openRecetaModal">+ Nueva receta</button>
+          </div>
+        </div>
+        <div class="panel__body card-list" id="recetasList" data-empty="Todavia no hay recetas registradas."></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Alimentos</h2>
+            <p>Cat&aacute;logo de ingredientes</p>
+          </div>
+          <div class="panel__actions">
+            <div class="form-group">
+              <label for="alimentoSearch">Buscar</label>
+              <input type="search" id="alimentoSearch" placeholder="Nombre del alimento">
+            </div>
+            <button type="button" class="btn" id="refreshAlimentos">Actualizar</button>
+            <button type="button" class="btn primary" id="openAlimentoModal">+ Nuevo alimento</button>
+          </div>
+        </div>
+        <div class="panel__body card-list" id="alimentosList" data-empty="No hay alimentos registrados."></div>
+      </section>
+    </main>
+
+    <footer class="app-footer">Bizihotz &mdash; Panel de nutrici&oacute;n</footer>
+  </div>
+
+  <div class="modal-overlay" id="alimentoModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="alimentoModal">&times;</button>
+      <h3 id="alimentoModalTitle">Nuevo alimento</h3>
+      <p class="modal__subtitle">Define la informaci&oacute;n nutricional base del ingrediente.</p>
+      <form id="alimentoForm" class="form-grid" autocomplete="off">
+        <div class="form-group">
+          <label for="alimentoNombre">Nombre</label>
+          <input type="text" id="alimentoNombre" name="alimentoNombre" required>
+        </div>
+        <div class="form-group">
+          <label for="alimentoUnidad">Unidad base</label>
+          <input type="text" id="alimentoUnidad" name="alimentoUnidad" placeholder="g">
+        </div>
+        <div class="form-group">
+          <label for="alimentoDescripcion">Descripci&oacute;n</label>
+          <textarea id="alimentoDescripcion" name="alimentoDescripcion" rows="2" placeholder="Notas o especificaciones"></textarea>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="alimentoCalorias">Calor&iacute;as (kcal)</label>
+            <input type="number" id="alimentoCalorias" name="alimentoCalorias" min="0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="alimentoProteinas">Prote&iacute;nas (g)</label>
+            <input type="number" id="alimentoProteinas" name="alimentoProteinas" min="0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="alimentoGrasas">Grasas (g)</label>
+            <input type="number" id="alimentoGrasas" name="alimentoGrasas" min="0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="alimentoCarbohidratos">Carbohidratos (g)</label>
+            <input type="number" id="alimentoCarbohidratos" name="alimentoCarbohidratos" min="0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="alimentoFibra">Fibra (g)</label>
+            <input type="number" id="alimentoFibra" name="alimentoFibra" min="0" step="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="alimentoMicros">Micronutrientes</label>
+          <textarea id="alimentoMicros" name="alimentoMicros" rows="4" placeholder="Ejemplo: Hierro: 2.1&#10;Sodio: 15"></textarea>
+        </div>
+        <p class="modal-feedback" id="alimentoFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="alimentoModal">Cancelar</button>
+          <button type="submit" class="btn primary" id="alimentoSubmit">Guardar alimento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="recetaModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="recetaModal">&times;</button>
+      <h3 id="recetaModalTitle">Nueva receta</h3>
+      <p class="modal__subtitle">Combina alimentos y cantidades para crear una preparaci&oacute;n.</p>
+      <form id="recetaForm" class="form-grid" autocomplete="off">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="recetaNombre">Nombre</label>
+            <input type="text" id="recetaNombre" name="recetaNombre" required>
+          </div>
+          <div class="form-group">
+            <label for="recetaCalorias">Calor&iacute;as objetivo</label>
+            <input type="number" id="recetaCalorias" name="recetaCalorias" min="0" step="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="recetaDescripcion">Descripci&oacute;n</label>
+          <textarea id="recetaDescripcion" name="recetaDescripcion" rows="2" placeholder="Breve resumen de la receta"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="recetaInstrucciones">Instrucciones</label>
+          <textarea id="recetaInstrucciones" name="recetaInstrucciones" rows="4" placeholder="Pasos o recomendaciones"></textarea>
+        </div>
+        <div class="form-group">
+          <span class="modal__subtitle">Ingredientes</span>
+          <div id="recetaIngredientesContainer"></div>
+          <button type="button" class="btn" id="addRecetaIngrediente">+ A&ntilde;adir ingrediente</button>
+        </div>
+        <p class="modal-feedback" id="recetaFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="recetaModal">Cancelar</button>
+          <button type="submit" class="btn primary" id="recetaSubmit">Guardar receta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="dietaModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="dietaModal">&times;</button>
+      <h3 id="dietaModalTitle">Nueva dieta</h3>
+      <p class="modal__subtitle">Crea un plan alimenticio para un paciente o como plantilla reutilizable.</p>
+      <form id="dietaForm" class="form-grid" autocomplete="off">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="dietaNombre">Nombre</label>
+            <input type="text" id="dietaNombre" name="dietaNombre" required>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="dietaEsPlantilla" name="dietaEsPlantilla" checked>
+              Guardar como plantilla
+            </label>
+          </div>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="dietaPacienteId">Paciente</label>
+            <select id="dietaPacienteId" name="dietaPacienteId" data-patient-select disabled>
+              <option value="">Selecciona un paciente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="dietaCalorias">Calor&iacute;as objetivo</label>
+            <input type="number" id="dietaCalorias" name="dietaCalorias" min="0" step="1">
+          </div>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="dietaFechaInicio">Fecha de inicio</label>
+            <input type="date" id="dietaFechaInicio" name="dietaFechaInicio">
+          </div>
+          <div class="form-group">
+            <label for="dietaFechaFin">Fecha de fin</label>
+            <input type="date" id="dietaFechaFin" name="dietaFechaFin">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="dietaObjetivo">Objetivo</label>
+          <input type="text" id="dietaObjetivo" name="dietaObjetivo" placeholder="Ej. Reducci&oacute;n de peso, mantenimiento">
+        </div>
+        <div class="form-group">
+          <label for="dietaDescripcion">Descripci&oacute;n</label>
+          <textarea id="dietaDescripcion" name="dietaDescripcion" rows="3" placeholder="Resumen general de la dieta"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="dietaNotas">Notas adicionales</label>
+          <textarea id="dietaNotas" name="dietaNotas" rows="3" placeholder="Observaciones para el paciente"></textarea>
+        </div>
+        <div class="form-group">
+          <span class="modal__subtitle">Recetas incluidas</span>
+          <div id="dietaRecetasContainer"></div>
+          <button type="button" class="btn" id="addDietaReceta">+ A&ntilde;adir receta</button>
+        </div>
+        <p class="modal-feedback" id="dietaFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="dietaModal">Cancelar</button>
+          <button type="submit" class="btn primary" id="dietaSubmit">Guardar dieta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="assignModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="assignModal">&times;</button>
+      <h3>Asignar dieta</h3>
+      <p class="modal__subtitle">Asigna la dieta seleccionada a un paciente concreto.</p>
+      <form id="assignForm" class="form-grid" autocomplete="off">
+        <input type="hidden" id="assignDietaId" name="assignDietaId">
+        <div class="form-group">
+          <label for="assignPacienteId">Paciente</label>
+          <select id="assignPacienteId" name="assignPacienteId" data-patient-select required>
+            <option value="">Selecciona un paciente</option>
+          </select>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="assignFechaInicio">Fecha de inicio</label>
+            <input type="date" id="assignFechaInicio" name="assignFechaInicio">
+          </div>
+          <div class="form-group">
+            <label for="assignFechaFin">Fecha de fin</label>
+            <input type="date" id="assignFechaFin" name="assignFechaFin">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="assignNotas">Notas para el paciente</label>
+          <textarea id="assignNotas" name="assignNotas" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="assignComentario">Comentario interno</label>
+          <textarea id="assignComentario" name="assignComentario" rows="2"></textarea>
+        </div>
+        <p class="modal-feedback" id="assignFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="assignModal">Cancelar</button>
+          <button type="submit" class="btn primary">Asignar dieta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="versionModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="versionModal">&times;</button>
+      <h3>Generar nueva versi&oacute;n</h3>
+      <p class="modal__subtitle">Actualiza los datos antes de duplicar la dieta para seguimiento.</p>
+      <form id="versionForm" class="form-grid" autocomplete="off">
+        <input type="hidden" id="versionDietaId" name="versionDietaId">
+        <div class="form-group">
+          <label for="versionombre">Nombre</label>
+          <input type="text" id="versionombre" name="versionombre" required>
+        </div>
+        <div class="form-group">
+          <label for="versionObjetivo">Objetivo</label>
+          <input type="text" id="versionObjetivo" name="versionObjetivo">
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="versionCalorias">Calor&iacute;as objetivo</label>
+            <input type="number" id="versionCalorias" name="versionCalorias" min="0" step="1">
+          </div>
+          <div class="form-group">
+            <label for="versionFechaInicio">Fecha de inicio</label>
+            <input type="date" id="versionFechaInicio" name="versionFechaInicio">
+          </div>
+          <div class="form-group">
+            <label for="versionFechaFin">Fecha de fin</label>
+            <input type="date" id="versionFechaFin" name="versionFechaFin">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="versionotas">Notas para el paciente</label>
+          <textarea id="versionotas" name="versionotas" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="versionComentario">Comentario interno</label>
+          <textarea id="versionComentario" name="versionComentario" rows="2"></textarea>
+        </div>
+        <p class="modal-feedback" id="versionFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="versionModal">Cancelar</button>
+          <button type="submit" class="btn primary">Crear versi&oacute;n</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="notifyModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="notifyModal">&times;</button>
+      <h3>Notificar al paciente</h3>
+      <p class="modal__subtitle">Env&iacute;a el plan por el canal seleccionado con los adjuntos necesarios.</p>
+      <form id="notifyForm" class="form-grid" autocomplete="off">
+        <input type="hidden" id="notifyDietaId" name="notifyDietaId">
+        <div class="form-group">
+          <label for="notifyCanal">Canal</label>
+          <select id="notifyCanal" name="notifyCanal">
+            <option value="email">Correo electr&oacute;nico</option>
+            <option value="sms">SMS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="notifyAsunto">Asunto</label>
+          <input type="text" id="notifyAsunto" name="notifyAsunto">
+        </div>
+        <div class="form-group">
+          <label for="notifyMensaje">Mensaje</label>
+          <textarea id="notifyMensaje" name="notifyMensaje" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="notifyPdf" name="notifyPdf"> Adjuntar PDF</label>
+          <label><input type="checkbox" id="notifyCsv" name="notifyCsv"> Adjuntar CSV</label>
+          <label><input type="checkbox" id="notifyCopiaProfesional" name="notifyCopiaProfesional"> Enviar copia al profesional</label>
+        </div>
+        <p class="modal-feedback" id="notifyFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="notifyModal">Cancelar</button>
+          <button type="submit" class="btn primary">Enviar notificaci&oacute;n</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/dietas.js"></script>
+</body>
+</html>

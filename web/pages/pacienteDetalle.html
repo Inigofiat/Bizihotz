@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ficha del paciente</title>
+  <link rel="stylesheet" href="../css/pacienteDetalle.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <button type="button" class="back-btn" id="volverHistorial" aria-label="Volver al historial clínico">←</button>
+      <div class="patient-summary">
+        <h1 id="pacienteNombre">Paciente</h1>
+        <p id="pacienteMeta"></p>
+      </div>
+      <div id="pacienteBadges" class="patient-badges"></div>
+    </header>
+
+    <main class="content">
+      <section class="layout">
+        <article class="card primary">
+          <h2>Datos de contacto</h2>
+          <dl class="descriptor">
+            <div>
+              <dt>Nombre completo</dt>
+              <dd id="detalleNombre">—</dd>
+            </div>
+            <div>
+              <dt>Fecha de nacimiento</dt>
+              <dd id="detalleNacimiento">—</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd id="detalleEmail">—</dd>
+            </div>
+            <div>
+              <dt>Teléfono</dt>
+              <dd id="detalleTelefono">—</dd>
+            </div>
+            <div>
+              <dt>Última actualización</dt>
+              <dd id="detalleActualizacion">—</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="card secondary">
+          <h2>Próximas citas</h2>
+          <div class="card-actions">
+            <a class="btn secondary-link" id="verAgendaPaciente" href="agenda.html" target="_blank" rel="noopener">
+              <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 6.5v13A2.5 2.5 0 0 1 19.5 22h-15A2.5 2.5 0 0 1 2 19.5v-13A2.5 2.5 0 0 1 4.5 4H6V3a1 1 0 0 1 1-1Zm12.5 6H4.5a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5ZM8 12h3v3H8v-3Z"
+                />
+              </svg>
+              <span>Ver agenda</span>
+            </a>
+            <button type="button" class="btn primary" id="abrirModalCita">Programar cita</button>
+          </div>
+          <div id="proximasCitas" class="appointments" data-empty="No hay citas programadas."></div>
+        </article>
+        <article class="card wide full-span" id="dietPlanCard">
+          <div class="diet-card__header">
+            <h2>Plan nutricional</h2>
+            <button type="button" class="btn" id="abrirGestorDietas">Abrir gestor de dietas</button>
+          </div>
+          <div id="pacienteDietas" class="diet-summary" data-empty="No hay dietas asignadas actualmente."></div>
+        </article>
+
+    </section>
+
+      <section class="card wide">
+        <div class="card-header">
+          <h2>Citas del paciente</h2>
+          <span id="citasTotal" class="badge"></span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Profesional</th>
+                <th>Motivo / Tipo</th>
+                <th>Estado</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCitas" data-empty="No hay citas registradas."></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <div class="card-header">
+          <h2>Registro antropométrico</h2>
+          <span id="antResumenBadge" class="badge"></span>
+        </div>
+        <div id="antResumen" class="metrics-grid" data-empty="Sin registros.">
+          <div class="metric-card">
+            <span class="label">Última medición</span>
+            <strong id="antUltimaMedicion">—</strong>
+          </div>
+          <div class="metric-card">
+            <span class="label">Peso actual</span>
+            <strong id="antPesoActual">—</strong>
+            <small id="antVariacion30d" class="metric-diff"></small>
+          </div>
+          <div class="metric-card">
+            <span class="label">IMC</span>
+            <strong id="antImcActual">—</strong>
+          </div>
+          <div class="metric-card">
+            <span class="label">Grasa corporal</span>
+            <strong id="antGrasaActual">—</strong>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Peso (kg)</th>
+                <th>Altura (m)</th>
+                <th>IMC</th>
+                <th>Grasa %</th>
+                <th>Profesional / Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tablaAntropometria" data-empty="No hay registros antropométricos."></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="abrirModalAntropometria">Añadir registro</button>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <div class="card-header">
+          <h2>Historial clínico (últimos registros)</h2>
+          <span id="historialTotal" class="badge"></span>
+        </div>
+        <div id="historialLista" class="timeline" data-empty="Sin anotaciones registradas."></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modalAntropometria" hidden>
+    <div class="modal-content modal-ant">
+      <button type="button" class="modal-close" id="cerrarModalAnt">&times;</button>
+      <h3>Nuevo registro antropométrico</h3>
+      <form id="formAntropometria" novalidate>
+        <div class="form-group">
+          <label for="antFecha">Fecha de medición</label>
+          <input type="date" id="antFecha" required />
+        </div>
+        <div class="form-grid">
+          <label class="form-group">
+            <span>Peso (kg)</span>
+            <input type="number" step="0.01" min="0" id="antPeso" required />
+          </label>
+          <label class="form-group">
+            <span>Altura (m)</span>
+            <input type="number" step="0.01" min="0" id="antAltura" required />
+          </label>
+          <label class="form-group">
+            <span>IMC</span>
+            <input type="number" step="0.01" min="0" id="antImc" required />
+          </label>
+          <label class="form-group">
+            <span>Grasa corporal %</span>
+            <input type="number" step="0.01" min="0" id="antGrasa" />
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="antObservaciones">Observaciones</label>
+          <textarea id="antObservaciones" rows="3" placeholder="Notas relevantes de la medición"></textarea>
+        </div>
+        <p class="modal-feedback" id="antFeedback"></p>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Guardar registro</button>
+          <button type="button" class="btn" id="cancelarAntropometria">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalCita" hidden>
+    <div class="modal-content modal-appointment">
+      <button type="button" class="modal-close" id="cerrarModalCita">&times;</button>
+      <h3>Programar nueva cita</h3>
+      <form id="formCitaPaciente" novalidate autocomplete="off">
+        <div class="form-group">
+          <label for="citaFecha">Fecha</label>
+          <input type="date" id="citaFecha" required />
+        </div>
+        <div class="form-grid">
+          <label class="form-group">
+            <span>Hora</span>
+            <select id="citaHora" required>
+              <option value="" disabled selected>Selecciona un horario</option>
+            </select>
+          </label>
+          <label class="form-group">
+            <span>Tipo de consulta</span>
+            <input type="text" id="citaTipo" placeholder="Ej. Seguimiento nutricional" required />
+          </label>
+        </div>
+        <p class="form-hint" id="citaDisponibilidad">Selecciona una fecha para consultar los huecos disponibles.</p>
+        <div class="form-group">
+          <label for="citaNotas">Notas</label>
+          <textarea id="citaNotas" rows="3" placeholder="Notas relevantes para la cita"></textarea>
+        </div>
+        <p class="modal-feedback" id="citaFeedback"></p>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Guardar cita</button>
+          <button type="button" class="btn" id="cancelarCitaPaciente">Cancelar</button>
+        </div>
+        <p class="modal-hint">
+          Los horarios se calculan con la agenda estándar de la clínica. Abre la agenda para gestionar ajustes excepcionales.
+        </p>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalEliminarAnt" hidden>
+    <div class="modal-content modal-ant">
+      <button type="button" class="modal-close" id="cerrarModalEliminar">&times;</button>
+      <h3>Eliminar registro</h3>
+      <p id="eliminarMensaje" class="modal-message">
+        ¿Seguro que deseas eliminar este registro antropométrico?
+      </p>
+      <div class="form-actions">
+        <button type="button" class="btn primary" id="confirmarEliminarAnt">Eliminar</button>
+        <button type="button" class="btn" id="cancelarEliminarAnt">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/pacienteDetalle.js"></script>
+</body>
+</html>
+

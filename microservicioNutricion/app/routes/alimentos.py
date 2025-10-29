@@ -54,6 +54,7 @@ def crear_alimento(payload: AlimentoCreate, session: Session = Depends(get_sessi
         carbohidratos=_to_decimal(payload.carbohidratos),
         fibra=_to_decimal(payload.fibra),
         unidad_base=payload.unidad_base,
+        micronutrientes=payload.micronutrientes or {},
     )
 
     session.add(alimento)
@@ -96,6 +97,7 @@ def actualizar_alimento(
     alimento.carbohidratos = _to_decimal(payload.carbohidratos)
     alimento.fibra = _to_decimal(payload.fibra)
     alimento.unidad_base = payload.unidad_base
+    alimento.micronutrientes = payload.micronutrientes or {}
 
     try:
         session.commit()

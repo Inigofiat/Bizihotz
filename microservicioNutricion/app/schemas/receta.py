@@ -33,4 +33,4 @@ class RecetaRead(RecetaBase):
     creado_en: datetime
     actualizado_en: datetime
     ingredientes: List[RecetaIngredienteRead] = Field(default_factory=list)
-    totales: Dict[str, float] = Field(default_factory=dict)
+    totales: Dict[str, Dict[str, float]] = Field(default_factory=dict)

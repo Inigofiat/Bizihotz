@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Integer, Numeric, String, Text
+from sqlalchemy import DateTime, Integer, JSON, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -21,6 +21,9 @@ class Alimento(Base):
     carbohidratos: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
     fibra: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True, default=0)
     unidad_base: Mapped[str] = mapped_column(String(20), nullable=False, default="g")
+    micronutrientes: Mapped[dict[str, float] | None] = mapped_column(
+        JSON, nullable=True, default=dict
+    )
     creado_en: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

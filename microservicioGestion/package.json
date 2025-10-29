@@ -7,7 +7,8 @@
     "test": "cross-env NODE_ENV=test node --test",
     "start": "node main.js",
     "dev": "nodemon main.js",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "purge-weekend-citas": "node scripts/deleteWeekendCitas.js"
   },
   "keywords": [
     "node",

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historial clínico</title>
+  <link rel="stylesheet" href="../css/historialClinico.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <button type="button" class="back-btn has-logo" id="volverPanel" aria-label="Volver al panel">
+        <img src="../images/2.png" alt="Logo Bizihotz" />
+      </button>
+      <h1>Historial clínico</h1>
+      <a class="ghost-link" id="nuevoPacienteLink" href="nuevoPaciente.html">+ Nuevo paciente</a>
+    </header>
+
+    <main class="content">
+      <section class="filters card">
+        <form id="filtersForm" class="filters-form" autocomplete="off">
+          <label class="field search">
+            <span>Búsqueda</span>
+            <input type="search" id="buscarPacientes" placeholder="Nombre, apellidos, email o teléfono" />
+          </label>
+          <div class="status" id="listStatus" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>Edad</th>
+                <th>Contacto</th>
+                <th>Última actualización</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="patientsTableBody" data-empty="No se encontraron pacientes.">
+              <tr><td colspan="5" class="empty">Cargando pacientes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pager" id="pager" hidden>
+          <button type="button" class="pager-btn" id="prevPage">Anterior</button>
+          <span id="pagerInfo"></span>
+          <button type="button" class="pager-btn" id="nextPage">Siguiente</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/historialClinico.js"></script>
+</body>
+</html>
