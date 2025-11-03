@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gesti&oacute;n de Dietas</title>
+  <title>Gestión de Dietas</title>
   <link rel="stylesheet" href="../css/dietas.css">
 </head>
 <body>
   <div class="app-shell">
     <header class="diet-topbar">
-      <a class="diet-topbar__back" id="backToDashboard" href="principal.html" aria-label="Volver al panel principal">
+      <a class="diet-topbar__back" id="back-btn has-logo" href="principal.html" aria-label="Volver al panel principal">
         <img src="../images/2.png" alt="Panel principal" />
       </a>
       <div class="diet-topbar__titles">
         <h1>Planes Alimenticios</h1>
-        <p>GestiÃ³n de dietas, recetas y alimentos</p>
+        <p>Gestión de dietas, recetas y alimentos</p>
       </div>
       <div class="diet-topbar__stats">
         <div class="stat-card">
@@ -46,7 +46,7 @@
             <button type="button" class="btn primary" id="openDietaModal">+ Nueva dieta</button>
           </div>
         </div>
-        <div class="diet-tabs" role="tablist" aria-label="Vistas de gesti&oacute;n de dietas">
+        <div class="diet-tabs" role="tablist" aria-label="Vistas de gestión de dietas">
           <button type="button" class="diet-tab is-active" role="tab" aria-selected="true" data-tab="catalogo">Dietas</button>
           <button type="button" class="diet-tab" role="tab" aria-selected="false" data-tab="asignaciones">Asignaciones</button>
         </div>
@@ -73,11 +73,11 @@
                 <select id="filterEstado">
                   <option value="todas">Todas</option>
                   <option value="activas">Activas</option>
-                  <option value="inactivas">HistÃ³ricas</option>
+                  <option value="inactivas">Históricas</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="filterAsignacion">AsignaciÃ³n</label>
+                <label for="filterAsignacion">Asignación</label>
                 <select id="filterAsignacion">
                   <option value="todas">Todas</option>
                   <option value="asignadas">Asignadas</option>
@@ -107,8 +107,8 @@
               <label for="assignmentEstado">Estado</label>
               <select id="assignmentEstado">
                 <option value="vigentes">Vigentes</option>
-                <option value="proximas">Pr&oacute;ximas/pendientes</option>
-                <option value="historicas">Hist&oacute;ricas</option>
+                <option value="proximas">Próximas/pendientes</option>
+                <option value="historicas">Históricas</option>
                 <option value="todas">Todas</option>
               </select>
             </div>
@@ -142,7 +142,7 @@
         <div class="panel__header">
           <div>
             <h2>Alimentos</h2>
-            <p>Cat&aacute;logo de ingredientes</p>
+            <p>Catálogo de ingredientes</p>
           </div>
           <div class="panel__actions">
             <div class="form-group">
@@ -157,14 +157,14 @@
       </section>
     </main>
 
-    <footer class="app-footer">Bizihotz &mdash; Panel de nutrici&oacute;n</footer>
+    <footer class="app-footer">Bizihotz &mdash; Panel de nutrición</footer>
   </div>
 
   <div class="modal-overlay" id="alimentoModal" hidden>
     <div class="modal">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="alimentoModal">&times;</button>
       <h3 id="alimentoModalTitle">Nuevo alimento</h3>
-      <p class="modal__subtitle">Define la informaci&oacute;n nutricional base del ingrediente.</p>
+      <p class="modal__subtitle">Define la información nutricional base del ingrediente.</p>
       <form id="alimentoForm" class="form-grid" autocomplete="off">
         <div class="form-group">
           <label for="alimentoNombre">Nombre</label>
@@ -175,16 +175,16 @@
           <input type="text" id="alimentoUnidad" name="alimentoUnidad" placeholder="g">
         </div>
         <div class="form-group">
-          <label for="alimentoDescripcion">Descripci&oacute;n</label>
+          <label for="alimentoDescripcion">Descripción</label>
           <textarea id="alimentoDescripcion" name="alimentoDescripcion" rows="2" placeholder="Notas o especificaciones"></textarea>
         </div>
         <div class="form-grid two">
           <div class="form-group">
-            <label for="alimentoCalorias">Calor&iacute;as (kcal)</label>
+            <label for="alimentoCalorias">Calorías (kcal)</label>
             <input type="number" id="alimentoCalorias" name="alimentoCalorias" min="0" step="0.1" required>
           </div>
           <div class="form-group">
-            <label for="alimentoProteinas">Prote&iacute;nas (g)</label>
+            <label for="alimentoProteinas">Proteínas (g)</label>
             <input type="number" id="alimentoProteinas" name="alimentoProteinas" min="0" step="0.1" required>
           </div>
           <div class="form-group">
@@ -225,12 +225,12 @@
             <input type="text" id="recetaNombre" name="recetaNombre" required>
           </div>
           <div class="form-group">
-            <label for="recetaCalorias">Calor&iacute;as objetivo</label>
+            <label for="recetaCalorias">Calorías objetivo</label>
             <input type="number" id="recetaCalorias" name="recetaCalorias" min="0" step="1">
           </div>
         </div>
         <div class="form-group">
-          <label for="recetaDescripcion">Descripci&oacute;n</label>
+          <label for="recetaDescripcion">Descripción</label>
           <textarea id="recetaDescripcion" name="recetaDescripcion" rows="2" placeholder="Breve resumen de la receta"></textarea>
         </div>
         <div class="form-group">
@@ -240,7 +240,7 @@
         <div class="form-group">
           <span class="modal__subtitle">Ingredientes</span>
           <div id="recetaIngredientesContainer"></div>
-          <button type="button" class="btn" id="addRecetaIngrediente">+ A&ntilde;adir ingrediente</button>
+          <button type="button" class="btn" id="addRecetaIngrediente">+ Añadir ingrediente</button>
         </div>
         <p class="modal-feedback" id="recetaFeedback"></p>
         <div class="modal__actions">

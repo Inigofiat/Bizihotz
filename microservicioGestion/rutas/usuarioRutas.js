@@ -10,7 +10,11 @@ const Usuario = require("../data/usuarioModel");
 
 const router = express.Router();
 
-const avatarsDir = path.join(__dirname, "..", "uploads", "avatars");
+const uploadsBaseDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.join(process.cwd(), "uploads");
+
+const avatarsDir = path.join(uploadsBaseDir, "avatars");
 fs.mkdirSync(avatarsDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -40,7 +44,10 @@ const upload = multer({
 
 const resolveUploadPath = (filePath = "") => {
   const sanitized = filePath.replace(/^\/+/, "");
-  return path.join(__dirname, "..", sanitized);
+  const withoutUploadsPrefix = sanitized.startsWith("uploads/")
+    ? sanitized.slice("uploads/".length)
+    : sanitized;
+  return path.join(uploadsBaseDir, withoutUploadsPrefix);
 };
 
 const deleteFileIfExists = async (filePath) => {
@@ -92,6 +99,12 @@ router.post("/:id/avatar", upload.single("avatar"), async (req, res, next) => {
   } catch (error) {
     if (req.file) {
       await deleteFileIfExists(req.file.path);
+    }
+    if (["EIO", "EACCES", "EROFS"].includes(error.code)) {
+      return res.status(500).json({
+        mensaje:
+          "No se pudo guardar la imagen de perfil. Verifica que el servidor tenga permisos de escritura en la carpeta de avatares."
+      });
     }
     return next(error);
   }

@@ -24,7 +24,7 @@ const API_FALLBACK_URL =
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
-const DEFAULT_AVATAR_URL = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 
 const buildAvatarSrc = (fotoPath) => {
   if (!fotoPath) {
@@ -35,6 +35,36 @@ const buildAvatarSrc = (fotoPath) => {
   }
   const normalized = fotoPath.startsWith("/") ? fotoPath : `/${fotoPath}`;
   return `${API_BASE_URL}${normalized}`;
+};
+
+const ensureAvatarFallbackBinding = (imgNode) => {
+  if (!imgNode || imgNode.dataset.avatarFallbackBound === "1") {
+    return;
+  }
+  imgNode.dataset.avatarFallbackBound = "1";
+  imgNode.addEventListener("error", () => {
+    if (imgNode.dataset.avatarFallbackApplied === "1") {
+      return;
+    }
+    imgNode.dataset.avatarFallbackApplied = "1";
+    imgNode.src = DEFAULT_AVATAR_URL;
+  });
+};
+
+const setAvatarImage = (imgNode, src) => {
+  if (!imgNode) {
+    return;
+  }
+  ensureAvatarFallbackBinding(imgNode);
+  if (!src) {
+    imgNode.dataset.avatarFallbackApplied = "1";
+    imgNode.src = DEFAULT_AVATAR_URL;
+    return;
+  }
+  if (imgNode.dataset.avatarFallbackApplied === "1" && src !== DEFAULT_AVATAR_URL) {
+    delete imgNode.dataset.avatarFallbackApplied;
+  }
+  imgNode.src = src;
 };
 
 let usuarioActual = null;
@@ -121,9 +151,7 @@ function actualizarPerfilUI() {
   const avatarImageNode = document.getElementById("avatarImage");
   const fotoActual = usuarioActual?.foto ?? "";
   const avatarSrc = avatarPreviewTemporal ?? buildAvatarSrc(fotoActual);
-  if (avatarImageNode) {
-    avatarImageNode.src = avatarSrc;
-  }
+  setAvatarImage(avatarImageNode, avatarSrc);
   const storedName =
     avatarArchivoPendiente?.name ??
     localStorage.getItem("perfil_avatar_nombre") ??
@@ -349,9 +377,7 @@ if (avatarInput) {
     reader.onload = function (e) {
       avatarPreviewTemporal = e.target.result;
       const avatarNode = document.getElementById("avatarImage");
-      if (avatarNode) {
-        avatarNode.src = avatarPreviewTemporal;
-      }
+      setAvatarImage(avatarNode, avatarPreviewTemporal);
     };
     avatarArchivoPendiente = file;
     actualizarNombreArchivoAvatar(file.name);
@@ -417,9 +443,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const fotoActual = usuarioActual?.foto ?? "";
   const avatarNode = document.getElementById("avatarImage");
-  if (avatarNode) {
-    avatarNode.src = buildAvatarSrc(fotoActual);
-  }
+  setAvatarImage(avatarNode, buildAvatarSrc(fotoActual));
 
   const avatarNombre =
     localStorage.getItem("perfil_avatar_nombre") ??

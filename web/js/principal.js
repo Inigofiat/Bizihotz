@@ -25,7 +25,58 @@ const API_FALLBACK_URL =
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
-const DEFAULT_AVATAR_URL = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
+
+const CITA_ESTADOS = [
+  {
+    value: "Pendiente",
+    slug: "pendiente",
+    description: "Cita programada aún no iniciada."
+  },
+  {
+    value: "Atendida",
+    slug: "atendida",
+    description: "Consulta realizada y cerrada."
+  },
+  {
+    value: "Cancelada",
+    slug: "cancelada",
+    description: "La cita no se llevará a cabo."
+  }
+];
+
+const estadoToSlug = (estado) => {
+  const normalized = (estado || "").toString().trim().toLowerCase();
+  if (!normalized) {
+    return "pendiente";
+  }
+  const match = CITA_ESTADOS.find((item) => item.value.toLowerCase() === normalized);
+  return match ? match.slug : normalized.replace(/\s+/g, "-");
+};
+
+const resolveCitaId = (cita) => {
+  if (!cita) {
+    return "";
+  }
+  if (typeof cita === "string") {
+    return cita;
+  }
+  if (typeof cita._id === "object" && typeof cita._id.toString === "function") {
+    const objectId = cita._id.toString();
+    if (objectId) {
+      return objectId;
+    }
+  }
+  return (
+    cita._id ||
+    cita.id ||
+    cita.idCita ||
+    ""
+  );
+};
+
+let statusMenu = null;
+let statusMenuTrigger = null;
 
 let usuarioActual = null;
 
@@ -105,6 +156,313 @@ const buildAvatarSrc = (fotoPath) => {
 
   const normalized = fotoPath.startsWith("/") ? fotoPath : `/${fotoPath}`;
   return `${API_BASE_URL}${normalized}`;
+};
+
+const ensureAvatarFallbackBinding = (imgNode) => {
+  if (!imgNode || imgNode.dataset.avatarFallbackBound === "1") {
+    return;
+  }
+  imgNode.dataset.avatarFallbackBound = "1";
+  imgNode.addEventListener("error", () => {
+    if (imgNode.dataset.avatarFallbackApplied === "1") {
+      return;
+    }
+    imgNode.dataset.avatarFallbackApplied = "1";
+    imgNode.src = DEFAULT_AVATAR_URL;
+  });
+};
+
+const setAvatarImage = (imgNode, src) => {
+  if (!imgNode) {
+    return;
+  }
+  ensureAvatarFallbackBinding(imgNode);
+  if (!src) {
+    imgNode.dataset.avatarFallbackApplied = "1";
+    imgNode.src = DEFAULT_AVATAR_URL;
+    return;
+  }
+  if (imgNode.dataset.avatarFallbackApplied === "1" && src !== DEFAULT_AVATAR_URL) {
+    delete imgNode.dataset.avatarFallbackApplied;
+  }
+  imgNode.src = src;
+};
+
+const removeStatusVariantClasses = (chip) => {
+  if (!chip) {
+    return;
+  }
+  Array.from(chip.classList)
+    .filter((cls) => cls.startsWith("status-chip--"))
+    .forEach((cls) => chip.classList.remove(cls));
+};
+
+const buildStatusChip = (citaId, estadoInicial) => {
+  const estadoVisible = estadoInicial || "Pendiente";
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = `status-chip status-chip--${estadoToSlug(estadoVisible)}`;
+  chip.dataset.citaId = citaId || "";
+  chip.dataset.status = estadoVisible;
+  chip.setAttribute("aria-haspopup", "menu");
+  chip.setAttribute("aria-expanded", "false");
+  chip.setAttribute(
+    "aria-label",
+    `Estado de la cita: ${estadoVisible}. Selecciona para actualizar.`
+  );
+  chip.innerHTML = `
+    <span class="status-chip__dot" aria-hidden="true"></span>
+    <span class="status-chip__label">${estadoVisible}</span>
+    <span class="status-chip__chevron" aria-hidden="true"></span>
+  `;
+  if (!citaId) {
+    chip.disabled = true;
+    chip.classList.add("status-chip--disabled");
+    chip.removeAttribute("aria-haspopup");
+    chip.removeAttribute("aria-expanded");
+  }
+  return chip;
+};
+
+const setStatusChipLoading = (chip, isLoading) => {
+  if (!chip) {
+    return;
+  }
+  if (isLoading) {
+    chip.classList.add("is-loading");
+    chip.setAttribute("aria-busy", "true");
+    chip.disabled = true;
+  } else {
+    chip.classList.remove("is-loading");
+    chip.removeAttribute("aria-busy");
+    chip.disabled = false;
+  }
+};
+
+const applyStatusChipState = (chip, estado) => {
+  if (!chip) {
+    return;
+  }
+  const visibleEstado = estado || "Pendiente";
+  const slug = estadoToSlug(visibleEstado);
+  removeStatusVariantClasses(chip);
+  chip.classList.add("status-chip--" + slug);
+  chip.dataset.status = visibleEstado;
+  const label = chip.querySelector(".status-chip__label");
+  if (label) {
+    label.textContent = visibleEstado;
+  }
+  chip.setAttribute(
+    "aria-label",
+    `Estado de la cita: ${visibleEstado}. Selecciona para actualizar.`
+  );
+};
+
+const ensureStatusMenu = () => {
+  if (statusMenu) {
+    return statusMenu;
+  }
+  const menu = document.createElement("div");
+  menu.className = "status-menu";
+  menu.setAttribute("role", "menu");
+  menu.hidden = true;
+  menu.addEventListener("click", (event) => {
+    const option = event.target.closest(".status-menu__option");
+    if (!option) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const selectedValue = option.dataset.value;
+    const trigger = statusMenuTrigger;
+    const citaId = menu.dataset.citaId;
+    closeStatusMenu();
+    if (!trigger || !citaId) {
+      return;
+    }
+    if (trigger.dataset.status === selectedValue) {
+      trigger.focus();
+      return;
+    }
+    updateAppointmentStatus(citaId, selectedValue, trigger);
+  });
+  menu.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      const trigger = statusMenuTrigger;
+      closeStatusMenu();
+      trigger?.focus();
+    }
+    if (event.key === "Tab") {
+      closeStatusMenu();
+    }
+  });
+  document.body.appendChild(menu);
+  statusMenu = menu;
+  return menu;
+};
+
+const positionStatusMenu = (menu, trigger) => {
+  if (!menu || !trigger) {
+    return;
+  }
+  const rect = trigger.getBoundingClientRect();
+  const scrollX = window.scrollX || window.pageXOffset;
+  const scrollY = window.scrollY || window.pageYOffset;
+  const minWidth = Math.max(rect.width, 188);
+  menu.style.minWidth = `${minWidth}px`;
+  menu.hidden = false;
+  menu.classList.add("is-open");
+  const menuWidth = menu.offsetWidth;
+  const viewportWidth = document.documentElement.clientWidth;
+  const margin = 16;
+  let left = scrollX + rect.left;
+  const maxLeft = scrollX + viewportWidth - menuWidth - margin;
+  if (left > maxLeft) {
+    left = Math.max(maxLeft, margin + scrollX);
+  }
+  if (left < margin + scrollX) {
+    left = margin + scrollX;
+  }
+  const top = scrollY + rect.bottom + 10;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  const arrowOffset = Math.min(
+    Math.max(rect.left + rect.width / 2 - left, 12),
+    menuWidth - 12
+  );
+  menu.style.setProperty("--status-menu-arrow-left", `${arrowOffset}px`);
+};
+
+const closeStatusMenu = () => {
+  if (!statusMenu) {
+    return;
+  }
+  statusMenu.classList.remove("is-open");
+  statusMenu.hidden = true;
+  statusMenu.removeAttribute("data-cita-id");
+  statusMenu.removeAttribute("data-current-value");
+  if (statusMenuTrigger) {
+    statusMenuTrigger.setAttribute("aria-expanded", "false");
+  }
+  statusMenuTrigger = null;
+};
+
+const openStatusMenu = (trigger) => {
+  if (!trigger || trigger.disabled || trigger.classList.contains("is-loading")) {
+    return;
+  }
+  if (statusMenuTrigger && statusMenuTrigger !== trigger) {
+    closeStatusMenu();
+  }
+  const menu = ensureStatusMenu();
+  const currentValue = trigger.dataset.status || "Pendiente";
+  const currentSlug = estadoToSlug(currentValue);
+  menu.innerHTML = CITA_ESTADOS.map((estado) => {
+    const isActive = estado.slug === currentSlug;
+    return `
+      <button type="button"
+        class="status-menu__option${isActive ? " is-active" : ""}"
+        data-value="${estado.value}"
+        role="menuitemradio"
+        aria-checked="${isActive ? "true" : "false"}">
+        <span class="status-menu__label">${estado.value}</span>
+        <span class="status-menu__hint">${estado.description}</span>
+      </button>
+    `;
+  }).join("");
+  menu.dataset.citaId = trigger.dataset.citaId || "";
+  menu.dataset.currentValue = currentValue;
+  statusMenuTrigger = trigger;
+  trigger.setAttribute("aria-expanded", "true");
+  positionStatusMenu(menu, trigger);
+  requestAnimationFrame(() => {
+    const activeOption =
+      menu.querySelector(".status-menu__option.is-active") ||
+      menu.querySelector(".status-menu__option");
+    activeOption?.focus();
+  });
+};
+
+const patchCitaEstado = async (citaId, nuevoEstado) => {
+  const payload = { estado: nuevoEstado };
+  const endpoints = [`${API_URL}/citas/${citaId}`];
+  if (API_FALLBACK) {
+    endpoints.push(`${API_FALLBACK}/citas/${citaId}`);
+  }
+  let lastError = null;
+  for (let index = 0; index < endpoints.length; index += 1) {
+    const endpoint = endpoints[index];
+    try {
+      const response = await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data?.mensaje || `No se pudo actualizar la cita (HTTP ${response.status}).`;
+        throw new Error(message);
+      }
+      return data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("No se pudo actualizar la cita.");
+};
+
+const updateAppointmentStatus = async (citaId, nuevoEstado, trigger) => {
+  if (!citaId || !trigger) {
+    return;
+  }
+  const estadoAnterior = trigger.dataset.status || "Pendiente";
+  if (estadoAnterior === nuevoEstado) {
+    return;
+  }
+  setStatusChipLoading(trigger, true);
+  try {
+    const respuesta = await patchCitaEstado(citaId, nuevoEstado);
+    const estadoFinal = respuesta?.estado || nuevoEstado;
+    applyStatusChipState(trigger, estadoFinal);
+  } catch (error) {
+    console.error("No se pudo actualizar el estado de la cita:", error);
+    applyStatusChipState(trigger, estadoAnterior);
+    alert(error.message || "No se pudo actualizar el estado de la cita.");
+  } finally {
+    setStatusChipLoading(trigger, false);
+    trigger.focus();
+  }
+};
+
+const handleDocumentClick = (event) => {
+  if (statusMenu && statusMenu.contains(event.target)) {
+    return;
+  }
+  const trigger = event.target.closest(".status-chip");
+  if (trigger) {
+    event.preventDefault();
+    if (statusMenuTrigger === trigger && statusMenu?.classList.contains("is-open")) {
+      closeStatusMenu();
+    } else {
+      openStatusMenu(trigger);
+    }
+    return;
+  }
+  closeStatusMenu();
+};
+
+const handleGlobalKeydown = (event) => {
+  if (event.key === "Escape") {
+    const trigger = statusMenuTrigger;
+    closeStatusMenu();
+    trigger?.focus();
+  }
+};
+
+const handleGlobalScroll = () => {
+  closeStatusMenu();
 };
 
 const obtenerNombreVisible = (usuario) => {
@@ -188,7 +546,7 @@ const cargarUsuario = () => {
 
   const avatarNode = document.querySelector(".avatar img");
   if (avatarNode) {
-    avatarNode.src = buildAvatarSrc(user.foto);
+    setAvatarImage(avatarNode, buildAvatarSrc(user.foto));
     avatarNode.alt = obtenerNombreVisible(user) || "Avatar de usuario";
   }
 
@@ -205,6 +563,8 @@ const cargarCitas = async () => {
   if (!tbody) {
     return;
   }
+
+  closeStatusMenu();
 
   if (!usuarioActual?.idUsuario) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No se pudo determinar el usuario actual.</td></tr>`;
@@ -287,16 +647,35 @@ const cargarCitas = async () => {
       return;
     }
 
+    const fragment = document.createDocumentFragment();
     citas.forEach((cita) => {
       const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${cita.hora || "--:--"}</td>
-        <td>${cita.paciente || "Sin nombre"}</td>
-        <td>${cita.motivo || "Sin motivo"}</td>
-        <td class="${(cita.estado || "pendiente").toLowerCase()}">${cita.estado || "Pendiente"}</td>
-      `;
-      tbody.appendChild(fila);
+      const citaId = resolveCitaId(cita);
+      if (citaId) {
+        fila.dataset.citaId = citaId;
+      }
+
+      const horaCell = document.createElement("td");
+      horaCell.textContent = cita.hora ? String(cita.hora) : "--:--";
+      fila.appendChild(horaCell);
+
+      const pacienteCell = document.createElement("td");
+      pacienteCell.textContent = cita.paciente ? String(cita.paciente) : "Sin nombre";
+      fila.appendChild(pacienteCell);
+
+      const motivoCell = document.createElement("td");
+      motivoCell.textContent = cita.motivo ? String(cita.motivo) : "Sin motivo";
+      fila.appendChild(motivoCell);
+
+      const estadoCell = document.createElement("td");
+      estadoCell.className = "status-cell";
+      const estadoChip = buildStatusChip(citaId, cita.estado || "Pendiente");
+      estadoCell.appendChild(estadoChip);
+      fila.appendChild(estadoCell);
+
+      fragment.appendChild(fila);
     });
+    tbody.appendChild(fragment);
   } catch (error) {
     console.warn("No se pudieron cargar las citas:", error);
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Error al cargar citas</td></tr>`;
@@ -351,6 +730,11 @@ const prepararLogoutModal = () => {
 
   return handleLogout;
 };
+
+document.addEventListener("click", handleDocumentClick);
+document.addEventListener("keydown", handleGlobalKeydown);
+window.addEventListener("resize", closeStatusMenu);
+window.addEventListener("scroll", handleGlobalScroll, true);
 
 
 document.addEventListener("DOMContentLoaded", () => {

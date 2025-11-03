@@ -269,54 +269,56 @@ def seed() -> None:
             ],
         )
 
+        paciente_demo_id: str | None = None
         personalizada = ensure_dieta(
             session,
-            nombre="Plan Equilibrado Semanal - Paciente 101",
+            nombre="Plan Equilibrado Semanal Personalizado",
             es_plantilla=False,
             version=1,
             usuario_id=1,
-            paciente_id=101,
+            paciente_id=paciente_demo_id,
             objetivo="Descenso de peso gradual con enfoque en saciedad.",
             descripcion="Derivada de la plantilla base, ajustada a las preferencias del paciente.",
             notas="Recordar reforzar hidratacion diaria.",
             fecha_inicio=hoy,
             fecha_fin=hoy + timedelta(days=14),
-            estado="publicada",
-            activa=True,
+            estado="publicada" if paciente_demo_id is not None else "borrador",
+            activa=bool(paciente_demo_id),
             parent=plantilla,
             recetas=[
                 {"receta": recetas["Desayuno energetico"], "dia": "Lunes", "momento": "Desayuno", "orden": 1},
                 {"receta": recetas["Bol de quinoa y pollo"], "dia": "Lunes", "momento": "Almuerzo", "orden": 2},
             ],
         )
-        personalizada.publicada_en = datetime.utcnow()
+        personalizada.publicada_en = datetime.utcnow() if paciente_demo_id is not None else None
 
         session.flush()
 
-        for registro in session.query(AsignacionDieta).filter(
-            AsignacionDieta.paciente_id == personalizada.paciente_id
-        ):
-            registro.es_actual = False
+        if paciente_demo_id is not None:
+            for registro in session.query(AsignacionDieta).filter(
+                AsignacionDieta.paciente_id == paciente_demo_id
+            ):
+                registro.es_actual = False
 
-        asignacion = (
-            session.query(AsignacionDieta)
-            .filter_by(dieta_id=personalizada.id, paciente_id=personalizada.paciente_id)
-            .first()
-        )
-        if asignacion is None:
-            asignacion = AsignacionDieta(
-                dieta=personalizada,
-                paciente_id=personalizada.paciente_id,
-                usuario_id=personalizada.usuario_id,
-                version=personalizada.version,
-                es_actual=True,
-                comentario="Plan inicial generado desde script de pruebas.",
+            asignacion = (
+                session.query(AsignacionDieta)
+                .filter_by(dieta_id=personalizada.id, paciente_id=paciente_demo_id)
+                .first()
             )
-            session.add(asignacion)
-        else:
-            asignacion.es_actual = True
-            asignacion.version = personalizada.version
-            asignacion.comentario = "Plan actualizado desde script de pruebas."
+            if asignacion is None:
+                asignacion = AsignacionDieta(
+                    dieta=personalizada,
+                    paciente_id=paciente_demo_id,
+                    usuario_id=personalizada.usuario_id,
+                    version=personalizada.version,
+                    es_actual=True,
+                    comentario="Plan inicial generado desde script de pruebas.",
+                )
+                session.add(asignacion)
+            else:
+                asignacion.es_actual = True
+                asignacion.version = personalizada.version
+                asignacion.comentario = "Plan actualizado desde script de pruebas."
 
     print("Datos de demostracion cargados en la base de nutricion.")
 
