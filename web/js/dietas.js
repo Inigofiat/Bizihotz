@@ -5439,6 +5439,17 @@
       }
     }
 
+    const backButton = document.getElementById("volverPanel");
+    if (backButton) {
+      backButton.addEventListener("click", () => {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "principal.html";
+        }
+      });
+    }
+
     document.getElementById("recetaSearch")?.addEventListener("input", (event) => {
       state.recetaSearch = event.target.value || "";
       renderRecetas();

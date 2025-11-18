@@ -45,6 +45,17 @@ a {
   background-color: var(--color-background);
 }
 
+.back-btn {
+  justify-self: start;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .back-btn.has-logo {
   width: 44px;
   height: 44px;
