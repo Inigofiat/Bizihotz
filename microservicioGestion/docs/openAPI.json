@@ -1,943 +1,937 @@
 {
-    "openapi":  "3.0.3",
-    "info":  {
-                 "title":  "Bizihotz · Microservicio de Gestión",
-                 "version":  "1.0.0",
-                 "description":  "Documentación de la API para el microservicio de gestión de pacientes, citas e historiales."
-             },
-    "servers":  [
-                    {
-                        "url":  "http://localhost:4001",
-                        "description":  "Servidor local"
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bizihotz · Microservicio de Gestión",
+    "version": "1.0.0",
+    "description": "Documentación de la API para el microservicio de gestión de pacientes, citas e historiales."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4001",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Pacientes"
+    },
+    {
+      "name": "Citas"
+    },
+    {
+      "name": "Historiales"
+    },
+    {
+      "name": "Registros antropométricos"
+    },
+    {
+      "name": "Pacientes-Usuarios"
+    },
+    {
+      "name": "Auth"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Comprobar el estado del servicio",
+        "responses": {
+          "200": {
+            "description": "Servicio operativo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
                     }
-                ],
-    "tags":  [
-                 {
-                     "name":  "Pacientes"
-                 },
-                 {
-                     "name":  "Citas"
-                 },
-                 {
-                     "name":  "Historiales"
-                 },
-                 {
-                     "name":  "Registros antropométricos"
-                 },
-                 {
-                     "name":  "Pacientes-Usuarios"
-                 },
-                 {
-                     "name":  "Auth"
-                 }
-             ],
-    "paths":  {
-                  "/health":  {
-                                  "get":  {
-                                              "summary":  "Comprobar el estado del servicio",
-                                              "responses":  {
-                                                                "200":  {
-                                                                            "description":  "Servicio operativo",
-                                                                            "content":  {
-                                                                                            "application/json":  {
-                                                                                                                     "schema":  {
-                                                                                                                                    "type":  "object",
-                                                                                                                                    "properties":  {
-                                                                                                                                                       "status":  {
-                                                                                                                                                                      "type":  "string",
-                                                                                                                                                                      "example":  "ok"
-                                                                                                                                                                  }
-                                                                                                                                                   }
-                                                                                                                                }
-                                                                                                                 }
-                                                                                        }
-                                                                        }
-                                                            }
-                                          }
-                              },
-                  "/api/pacientes":  {
-                                         "get":  {
-                                                     "tags":  [
-                                                                  "Pacientes"
-                                                              ],
-                                                     "summary":  "Listar pacientes",
-                                                     "parameters":  [
-                                                                        {
-                                                                            "name":  "buscar",
-                                                                            "in":  "query",
-                                                                            "schema":  {
-                                                                                           "type":  "string"
-                                                                                       },
-                                                                            "description":  "Texto para buscar por nombre, apellidos o email"
-                                                                        }
-                                                                    ],
-                                                     "responses":  {
-                                                                       "200":  {
-                                                                                   "description":  "Listado de pacientes",
-                                                                                   "content":  {
-                                                                                                   "application/json":  {
-                                                                                                                            "schema":  {
-                                                                                                                                           "type":  "array",
-                                                                                                                                           "items":  {
-                                                                                                                                                         "$ref":  "#/components/schemas/Paciente"
-                                                                                                                                                     }
-                                                                                                                                       }
-                                                                                                                        }
-                                                                                               }
-                                                                               }
-                                                                   }
-                                                 },
-                                         "post":  {
-                                                      "tags":  [
-                                                                   "Pacientes"
-                                                               ],
-                                                      "summary":  "Crear paciente",
-                                                      "requestBody":  {
-                                                                          "required":  true,
-                                                                          "content":  {
-                                                                                          "application/json":  {
-                                                                                                                   "schema":  {
-                                                                                                                                  "$ref":  "#/components/schemas/PacienteInput"
-                                                                                                                              }
-                                                                                                               }
-                                                                                      }
-                                                                      },
-                                                      "responses":  {
-                                                                        "201":  {
-                                                                                    "description":  "Paciente creado",
-                                                                                    "content":  {
-                                                                                                    "application/json":  {
-                                                                                                                             "schema":  {
-                                                                                                                                            "$ref":  "#/components/schemas/Paciente"
-                                                                                                                                        }
-                                                                                                                         }
-                                                                                                }
-                                                                                },
-                                                                        "400":  {
-                                                                                    "$ref":  "#/components/responses/ValidationError"
-                                                                                }
-                                                                    }
-                                                  }
-                                     },
-                  "/api/pacientes/{id}":  {
-                                              "get":  {
-                                                          "tags":  [
-                                                                       "Pacientes"
-                                                                   ],
-                                                          "summary":  "Obtener paciente por ID",
-                                                          "parameters":  [
-                                                                             {
-                                                                                 "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                             }
-                                                                         ],
-                                                          "responses":  {
-                                                                            "200":  {
-                                                                                        "description":  "Paciente encontrado",
-                                                                                        "content":  {
-                                                                                                        "application/json":  {
-                                                                                                                                 "schema":  {
-                                                                                                                                                "$ref":  "#/components/schemas/Paciente"
-                                                                                                                                            }
-                                                                                                                             }
-                                                                                                    }
-                                                                                    },
-                                                                            "404":  {
-                                                                                        "$ref":  "#/components/responses/NotFound"
-                                                                                    }
-                                                                        }
-                                                      },
-                                              "put":  {
-                                                          "tags":  [
-                                                                       "Pacientes"
-                                                                   ],
-                                                          "summary":  "Actualizar paciente",
-                                                          "parameters":  [
-                                                                             {
-                                                                                 "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                             }
-                                                                         ],
-                                                          "requestBody":  {
-                                                                              "required":  true,
-                                                                              "content":  {
-                                                                                              "application/json":  {
-                                                                                                                       "schema":  {
-                                                                                                                                      "$ref":  "#/components/schemas/PacienteInput"
-                                                                                                                                  }
-                                                                                                                   }
-                                                                                          }
-                                                                          },
-                                                          "responses":  {
-                                                                            "200":  {
-                                                                                        "description":  "Paciente actualizado",
-                                                                                        "content":  {
-                                                                                                        "application/json":  {
-                                                                                                                                 "schema":  {
-                                                                                                                                                "$ref":  "#/components/schemas/Paciente"
-                                                                                                                                            }
-                                                                                                                             }
-                                                                                                    }
-                                                                                    },
-                                                                            "404":  {
-                                                                                        "$ref":  "#/components/responses/NotFound"
-                                                                                    }
-                                                                        }
-                                                      },
-                                              "delete":  {
-                                                             "tags":  [
-                                                                          "Pacientes"
-                                                                      ],
-                                                             "summary":  "Eliminar paciente",
-                                                             "parameters":  [
-                                                                                {
-                                                                                    "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                }
-                                                                            ],
-                                                             "responses":  {
-                                                                               "204":  {
-                                                                                           "description":  "Paciente eliminado"
-                                                                                       },
-                                                                               "404":  {
-                                                                                           "$ref":  "#/components/responses/NotFound"
-                                                                                       }
-                                                                           }
-                                                         }
-                                          },
-                  "/api/citas":  {
-                                     "get":  {
-                                                 "tags":  [
-                                                              "Citas"
-                                                          ],
-                                                 "summary":  "Listar citas",
-                                                 "parameters":  [
-                                                                    {
-                                                                        "name":  "idPaciente",
-                                                                        "in":  "query",
-                                                                        "schema":  {
-                                                                                       "type":  "string"
-                                                                                   }
-                                                                    },
-                                                                    {
-                                                                        "name":  "idUsuario",
-                                                                        "in":  "query",
-                                                                        "schema":  {
-                                                                                       "type":  "string"
-                                                                                   }
-                                                                    },
-                                                                    {
-                                                                        "name":  "fechaDesde",
-                                                                        "in":  "query",
-                                                                        "schema":  {
-                                                                                       "type":  "string",
-                                                                                       "format":  "date"
-                                                                                   }
-                                                                    },
-                                                                    {
-                                                                        "name":  "fechaHasta",
-                                                                        "in":  "query",
-                                                                        "schema":  {
-                                                                                       "type":  "string",
-                                                                                       "format":  "date"
-                                                                                   }
-                                                                    },
-                                                                    {
-                                                                        "name":  "atendida",
-                                                                        "in":  "query",
-                                                                        "schema":  {
-                                                                                       "type":  "boolean"
-                                                                                   }
-                                                                    }
-                                                                ],
-                                                 "responses":  {
-                                                                   "200":  {
-                                                                               "description":  "Listado de citas",
-                                                                               "content":  {
-                                                                                               "application/json":  {
-                                                                                                                        "schema":  {
-                                                                                                                                       "type":  "array",
-                                                                                                                                       "items":  {
-                                                                                                                                                     "$ref":  "#/components/schemas/Cita"
-                                                                                                                                                 }
-                                                                                                                                   }
-                                                                                                                    }
-                                                                                           }
-                                                                           }
-                                                               }
-                                             },
-                                     "post":  {
-                                                  "tags":  [
-                                                               "Citas"
-                                                           ],
-                                                  "summary":  "Crear cita",
-                                                  "requestBody":  {
-                                                                      "required":  true,
-                                                                      "content":  {
-                                                                                      "application/json":  {
-                                                                                                               "schema":  {
-                                                                                                                              "$ref":  "#/components/schemas/CitaInput"
-                                                                                                                          }
-                                                                                                           }
-                                                                                  }
-                                                                  },
-                                                  "responses":  {
-                                                                    "201":  {
-                                                                                "description":  "Cita creada",
-                                                                                "content":  {
-                                                                                                "application/json":  {
-                                                                                                                         "schema":  {
-                                                                                                                                        "$ref":  "#/components/schemas/Cita"
-                                                                                                                                    }
-                                                                                                                     }
-                                                                                            }
-                                                                            },
-                                                                    "400":  {
-                                                                                "$ref":  "#/components/responses/ValidationError"
-                                                                            }
-                                                                }
-                                              }
-                                 },
-                  "/api/citas/{id}":  {
-                                          "get":  {
-                                                      "tags":  [
-                                                                   "Citas"
-                                                               ],
-                                                      "summary":  "Obtener cita por ID",
-                                                      "parameters":  [
-                                                                         {
-                                                                             "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                         }
-                                                                     ],
-                                                      "responses":  {
-                                                                        "200":  {
-                                                                                    "description":  "Cita encontrada",
-                                                                                    "content":  {
-                                                                                                    "application/json":  {
-                                                                                                                             "schema":  {
-                                                                                                                                            "$ref":  "#/components/schemas/Cita"
-                                                                                                                                        }
-                                                                                                                         }
-                                                                                                }
-                                                                                },
-                                                                        "404":  {
-                                                                                    "$ref":  "#/components/responses/NotFound"
-                                                                                }
-                                                                    }
-                                                  },
-                                          "put":  {
-                                                      "tags":  [
-                                                                   "Citas"
-                                                               ],
-                                                      "summary":  "Actualizar cita",
-                                                      "parameters":  [
-                                                                         {
-                                                                             "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                         }
-                                                                     ],
-                                                      "requestBody":  {
-                                                                          "required":  true,
-                                                                          "content":  {
-                                                                                          "application/json":  {
-                                                                                                                   "schema":  {
-                                                                                                                                  "$ref":  "#/components/schemas/CitaInput"
-                                                                                                                              }
-                                                                                                               }
-                                                                                      }
-                                                                      },
-                                                      "responses":  {
-                                                                        "200":  {
-                                                                                    "description":  "Cita actualizada",
-                                                                                    "content":  {
-                                                                                                    "application/json":  {
-                                                                                                                             "schema":  {
-                                                                                                                                            "$ref":  "#/components/schemas/Cita"
-                                                                                                                                        }
-                                                                                                                         }
-                                                                                                }
-                                                                                },
-                                                                        "404":  {
-                                                                                    "$ref":  "#/components/responses/NotFound"
-                                                                                }
-                                                                    }
-                                                  },
-                                          "delete":  {
-                                                         "tags":  [
-                                                                      "Citas"
-                                                                  ],
-                                                         "summary":  "Eliminar cita",
-                                                         "parameters":  [
-                                                                            {
-                                                                                "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                            }
-                                                                        ],
-                                                         "responses":  {
-                                                                           "204":  {
-                                                                                       "description":  "Cita eliminada"
-                                                                                   },
-                                                                           "404":  {
-                                                                                       "$ref":  "#/components/responses/NotFound"
-                                                                                   }
-                                                                       }
-                                                     }
-                                      },
-                  "/api/citas/{id}/atendida":  {
-                                                   "patch":  {
-                                                                 "tags":  [
-                                                                              "Citas"
-                                                                          ],
-                                                                 "summary":  "Actualizar estado de atención",
-                                                                 "parameters":  [
-                                                                                    {
-                                                                                        "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                    }
-                                                                                ],
-                                                                 "requestBody":  {
-                                                                                     "required":  true,
-                                                                                     "content":  {
-                                                                                                     "application/json":  {
-                                                                                                                              "schema":  {
-                                                                                                                                             "type":  "object",
-                                                                                                                                             "properties":  {
-                                                                                                                                                                "atendida":  {
-                                                                                                                                                                                 "type":  "boolean"
-                                                                                                                                                                             }
-                                                                                                                                                            },
-                                                                                                                                             "required":  [
-                                                                                                                                                              "atendida"
-                                                                                                                                                          ]
-                                                                                                                                         }
-                                                                                                                          }
-                                                                                                 }
-                                                                                 },
-                                                                 "responses":  {
-                                                                                   "200":  {
-                                                                                               "description":  "Cita actualizada",
-                                                                                               "content":  {
-                                                                                                               "application/json":  {
-                                                                                                                                        "schema":  {
-                                                                                                                                                       "$ref":  "#/components/schemas/Cita"
-                                                                                                                                                   }
-                                                                                                                                    }
-                                                                                                           }
-                                                                                           },
-                                                                                   "400":  {
-                                                                                               "$ref":  "#/components/responses/ValidationError"
-                                                                                           },
-                                                                                   "404":  {
-                                                                                               "$ref":  "#/components/responses/NotFound"
-                                                                                           }
-                                                                               }
-                                                             }
-                                               },
-                  "/api/historiales":  {
-                                           "get":  {
-                                                       "tags":  [
-                                                                    "Historiales"
-                                                                ],
-                                                       "summary":  "Listar historiales",
-                                                       "parameters":  [
-                                                                          {
-                                                                              "name":  "idPaciente",
-                                                                              "in":  "query",
-                                                                              "schema":  {
-                                                                                             "type":  "string"
-                                                                                         }
-                                                                          },
-                                                                          {
-                                                                              "name":  "idUsuario",
-                                                                              "in":  "query",
-                                                                              "schema":  {
-                                                                                             "type":  "string"
-                                                                                         }
-                                                                          },
-                                                                          {
-                                                                              "name":  "idCita",
-                                                                              "in":  "query",
-                                                                              "schema":  {
-                                                                                             "type":  "string"
-                                                                                         }
-                                                                          }
-                                                                      ],
-                                                       "responses":  {
-                                                                         "200":  {
-                                                                                     "description":  "Listado de historiales",
-                                                                                     "content":  {
-                                                                                                     "application/json":  {
-                                                                                                                              "schema":  {
-                                                                                                                                             "type":  "array",
-                                                                                                                                             "items":  {
-                                                                                                                                                           "$ref":  "#/components/schemas/Historial"
-                                                                                                                                                       }
-                                                                                                                                         }
-                                                                                                                          }
-                                                                                                 }
-                                                                                 }
-                                                                     }
-                                                   },
-                                           "post":  {
-                                                        "tags":  [
-                                                                     "Historiales"
-                                                                 ],
-                                                        "summary":  "Crear historial",
-                                                        "requestBody":  {
-                                                                            "required":  true,
-                                                                            "content":  {
-                                                                                            "application/json":  {
-                                                                                                                     "schema":  {
-                                                                                                                                    "$ref":  "#/components/schemas/HistorialInput"
-                                                                                                                                }
-                                                                                                                 }
-                                                                                        }
-                                                                        },
-                                                        "responses":  {
-                                                                          "201":  {
-                                                                                      "description":  "Historial creado",
-                                                                                      "content":  {
-                                                                                                      "application/json":  {
-                                                                                                                               "schema":  {
-                                                                                                                                              "$ref":  "#/components/schemas/Historial"
-                                                                                                                                          }
-                                                                                                                           }
-                                                                                                  }
-                                                                                  },
-                                                                          "400":  {
-                                                                                      "$ref":  "#/components/responses/ValidationError"
-                                                                                  }
-                                                                      }
-                                                    }
-                                       },
-                  "/api/historiales/{id}":  {
-                                                "get":  {
-                                                            "tags":  [
-                                                                         "Historiales"
-                                                                     ],
-                                                            "summary":  "Obtener historial",
-                                                            "parameters":  [
-                                                                               {
-                                                                                   "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                               }
-                                                                           ],
-                                                            "responses":  {
-                                                                              "200":  {
-                                                                                          "description":  "Historial encontrado",
-                                                                                          "content":  {
-                                                                                                          "application/json":  {
-                                                                                                                                   "schema":  {
-                                                                                                                                                  "$ref":  "#/components/schemas/Historial"
-                                                                                                                                              }
-                                                                                                                               }
-                                                                                                      }
-                                                                                      },
-                                                                              "404":  {
-                                                                                          "$ref":  "#/components/responses/NotFound"
-                                                                                      }
-                                                                          }
-                                                        },
-                                                "put":  {
-                                                            "tags":  [
-                                                                         "Historiales"
-                                                                     ],
-                                                            "summary":  "Actualizar historial",
-                                                            "parameters":  [
-                                                                               {
-                                                                                   "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                               }
-                                                                           ],
-                                                            "requestBody":  {
-                                                                                "required":  true,
-                                                                                "content":  {
-                                                                                                "application/json":  {
-                                                                                                                         "schema":  {
-                                                                                                                                        "$ref":  "#/components/schemas/HistorialInput"
-                                                                                                                                    }
-                                                                                                                     }
-                                                                                            }
-                                                                            },
-                                                            "responses":  {
-                                                                              "200":  {
-                                                                                          "description":  "Historial actualizado",
-                                                                                          "content":  {
-                                                                                                          "application/json":  {
-                                                                                                                                   "schema":  {
-                                                                                                                                                  "$ref":  "#/components/schemas/Historial"
-                                                                                                                                              }
-                                                                                                                               }
-                                                                                                      }
-                                                                                      },
-                                                                              "404":  {
-                                                                                          "$ref":  "#/components/responses/NotFound"
-                                                                                      }
-                                                                          }
-                                                        },
-                                                "delete":  {
-                                                               "tags":  [
-                                                                            "Historiales"
-                                                                        ],
-                                                               "summary":  "Eliminar historial",
-                                                               "parameters":  [
-                                                                                  {
-                                                                                      "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                  }
-                                                                              ],
-                                                               "responses":  {
-                                                                                 "204":  {
-                                                                                             "description":  "Historial eliminado"
-                                                                                         },
-                                                                                 "404":  {
-                                                                                             "$ref":  "#/components/responses/NotFound"
-                                                                                         }
-                                                                             }
-                                                           }
-                                            },
-                  "/api/registros":  {
-                                         "get":  {
-                                                     "tags":  [
-                                                                  "Registros antropométricos"
-                                                              ],
-                                                     "summary":  "Listar registros antropométricos",
-                                                     "parameters":  [
-                                                                        {
-                                                                            "name":  "idPaciente",
-                                                                            "in":  "query",
-                                                                            "schema":  {
-                                                                                           "type":  "string"
-                                                                                       }
-                                                                        },
-                                                                        {
-                                                                            "name":  "idUsuario",
-                                                                            "in":  "query",
-                                                                            "schema":  {
-                                                                                           "type":  "string"
-                                                                                       }
-                                                                        }
-                                                                    ],
-                                                     "responses":  {
-                                                                       "200":  {
-                                                                                   "description":  "Listado de registros",
-                                                                                   "content":  {
-                                                                                                   "application/json":  {
-                                                                                                                            "schema":  {
-                                                                                                                                           "type":  "array",
-                                                                                                                                           "items":  {
-                                                                                                                                                         "$ref":  "#/components/schemas/Registro"
-                                                                                                                                                     }
-                                                                                                                                       }
-                                                                                                                        }
-                                                                                               }
-                                                                               }
-                                                                   }
-                                                 },
-                                         "post":  {
-                                                      "tags":  [
-                                                                   "Registros antropométricos"
-                                                               ],
-                                                      "summary":  "Crear registro",
-                                                      "requestBody":  {
-                                                                          "required":  true,
-                                                                          "content":  {
-                                                                                          "application/json":  {
-                                                                                                                   "schema":  {
-                                                                                                                                  "$ref":  "#/components/schemas/RegistroInput"
-                                                                                                                              }
-                                                                                                               }
-                                                                                      }
-                                                                      },
-                                                      "responses":  {
-                                                                        "201":  {
-                                                                                    "description":  "Registro creado",
-                                                                                    "content":  {
-                                                                                                    "application/json":  {
-                                                                                                                             "schema":  {
-                                                                                                                                            "$ref":  "#/components/schemas/Registro"
-                                                                                                                                        }
-                                                                                                                         }
-                                                                                                }
-                                                                                },
-                                                                        "400":  {
-                                                                                    "$ref":  "#/components/responses/ValidationError"
-                                                                                }
-                                                                    }
-                                                  }
-                                     },
-                  "/api/registros/{id}":  {
-                                              "get":  {
-                                                          "tags":  [
-                                                                       "Registros antropométricos"
-                                                                   ],
-                                                          "summary":  "Obtener registro",
-                                                          "parameters":  [
-                                                                             {
-                                                                                 "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                             }
-                                                                         ],
-                                                          "responses":  {
-                                                                            "200":  {
-                                                                                        "description":  "Registro encontrado",
-                                                                                        "content":  {
-                                                                                                        "application/json":  {
-                                                                                                                                 "schema":  {
-                                                                                                                                                "$ref":  "#/components/schemas/Registro"
-                                                                                                                                            }
-                                                                                                                             }
-                                                                                                    }
-                                                                                    },
-                                                                            "404":  {
-                                                                                        "$ref":  "#/components/responses/NotFound"
-                                                                                    }
-                                                                        }
-                                                      },
-                                              "put":  {
-                                                          "tags":  [
-                                                                       "Registros antropométricos"
-                                                                   ],
-                                                          "summary":  "Actualizar registro",
-                                                          "parameters":  [
-                                                                             {
-                                                                                 "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                             }
-                                                                         ],
-                                                          "requestBody":  {
-                                                                              "required":  true,
-                                                                              "content":  {
-                                                                                              "application/json":  {
-                                                                                                                       "schema":  {
-                                                                                                                                      "$ref":  "#/components/schemas/RegistroInput"
-                                                                                                                                  }
-                                                                                                                   }
-                                                                                          }
-                                                                          },
-                                                          "responses":  {
-                                                                            "200":  {
-                                                                                        "description":  "Registro actualizado",
-                                                                                        "content":  {
-                                                                                                        "application/json":  {
-                                                                                                                                 "schema":  {
-                                                                                                                                                "$ref":  "#/components/schemas/Registro"
-                                                                                                                                            }
-                                                                                                                             }
-                                                                                                    }
-                                                                                    },
-                                                                            "404":  {
-                                                                                        "$ref":  "#/components/responses/NotFound"
-                                                                                    }
-                                                                        }
-                                                      },
-                                              "delete":  {
-                                                             "tags":  [
-                                                                          "Registros antropométricos"
-                                                                      ],
-                                                             "summary":  "Eliminar registro",
-                                                             "parameters":  [
-                                                                                {
-                                                                                    "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                }
-                                                                            ],
-                                                             "responses":  {
-                                                                               "204":  {
-                                                                                           "description":  "Registro eliminado"
-                                                                                       },
-                                                                               "404":  {
-                                                                                           "$ref":  "#/components/responses/NotFound"
-                                                                                       }
-                                                                           }
-                                                         }
-                                          },
-                  "/api/pacientes-usuarios":  {
-                                                  "get":  {
-                                                              "tags":  [
-                                                                           "Pacientes-Usuarios"
-                                                                       ],
-                                                              "summary":  "Listar relaciones",
-                                                              "parameters":  [
-                                                                                 {
-                                                                                     "name":  "idPaciente",
-                                                                                     "in":  "query",
-                                                                                     "schema":  {
-                                                                                                    "type":  "string"
-                                                                                                }
-                                                                                 },
-                                                                                 {
-                                                                                     "name":  "idUsuario",
-                                                                                     "in":  "query",
-                                                                                     "schema":  {
-                                                                                                    "type":  "string"
-                                                                                                }
-                                                                                 }
-                                                                             ],
-                                                              "responses":  {
-                                                                                "200":  {
-                                                                                            "description":  "Listado de relaciones",
-                                                                                            "content":  {
-                                                                                                            "application/json":  {
-                                                                                                                                     "schema":  {
-                                                                                                                                                    "type":  "array",
-                                                                                                                                                    "items":  {
-                                                                                                                                                                  "$ref":  "#/components/schemas/PacienteUsuario"
-                                                                                                                                                              }
-                                                                                                                                                }
-                                                                                                                                 }
-                                                                                                        }
-                                                                                        }
-                                                                            }
-                                                          },
-                                                  "post":  {
-                                                               "tags":  [
-                                                                            "Pacientes-Usuarios"
-                                                                        ],
-                                                               "summary":  "Crear relación",
-                                                               "requestBody":  {
-                                                                                   "required":  true,
-                                                                                   "content":  {
-                                                                                                   "application/json":  {
-                                                                                                                            "schema":  {
-                                                                                                                                           "$ref":  "#/components/schemas/PacienteUsuarioInput"
-                                                                                                                                       }
-                                                                                                                        }
-                                                                                               }
-                                                                               },
-                                                               "responses":  {
-                                                                                 "201":  {
-                                                                                             "description":  "Relación creada",
-                                                                                             "content":  {
-                                                                                                             "application/json":  {
-                                                                                                                                      "schema":  {
-                                                                                                                                                     "$ref":  "#/components/schemas/PacienteUsuario"
-                                                                                                                                                 }
-                                                                                                                                  }
-                                                                                                         }
-                                                                                         },
-                                                                                 "400":  {
-                                                                                             "$ref":  "#/components/responses/ValidationError"
-                                                                                         }
-                                                                             }
-                                                           }
-                                              },
-                  "/api/pacientes-usuarios/{id}":  {
-                                                       "get":  {
-                                                                   "tags":  [
-                                                                                "Pacientes-Usuarios"
-                                                                            ],
-                                                                   "summary":  "Obtener relación",
-                                                                   "parameters":  [
-                                                                                      {
-                                                                                          "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                      }
-                                                                                  ],
-                                                                   "responses":  {
-                                                                                     "200":  {
-                                                                                                 "description":  "Relación encontrada",
-                                                                                                 "content":  {
-                                                                                                                 "application/json":  {
-                                                                                                                                          "schema":  {
-                                                                                                                                                         "$ref":  "#/components/schemas/PacienteUsuario"
-                                                                                                                                                     }
-                                                                                                                                      }
-                                                                                                             }
-                                                                                             },
-                                                                                     "404":  {
-                                                                                                 "$ref":  "#/components/responses/NotFound"
-                                                                                             }
-                                                                                 }
-                                                               },
-                                                       "delete":  {
-                                                                      "tags":  [
-                                                                                   "Pacientes-Usuarios"
-                                                                               ],
-                                                                      "summary":  "Eliminar relación",
-                                                                      "parameters":  [
-                                                                                         {
-                                                                                             "$ref":  "#/components/parameters/ObjectIdPath"
-                                                                                         }
-                                                                                     ],
-                                                                      "responses":  {
-                                                                                        "204":  {
-                                                                                                    "description":  "Relación eliminada"
-                                                                                                },
-                                                                                        "404":  {
-                                                                                                    "$ref":  "#/components/responses/NotFound"
-                                                                                                }
-                                                                                    }
-                                                                  }
-                                                   },
-                                    "AuthUsuario":  {
-                                                           "type":  "object",
-                                                           "properties":  {
-                                                                              "idUsuario":  {
-                                                                                                "type":  "string"
-                                                                                            },
-                                                                              "nombreUsuario":  {
-                                                                                                    "type":  "string"
-                                                                                                },
-                                                                              "email":  {
-                                                                                            "type":  "string",
-                                                                                            "format":  "email"
-                                                                                        },
-                                                                              "telefono":  {
-                                                                                              "type":  "string"
-                                                                                          },
-                                                                              "rol":  {
-                                                                                          "type":  "string"
-                                                                                      },
-                                                                              "foto":  {
-                                                                                           "type":  "string"
-                                                                                       },
-                                                                              "debeActualizarPassword":  {
-                                                                                                                "type":  "boolean"
-                                                                                                             }
-                                                                          }
-                                                       },
-                                       "AuthChangePasswordRequest":  {
-                                                                "type":  "object",
-                                                                "required":  [
-                                                                                     "email",
-                                                                                     "passwordActual",
-                                                                                     "passwordNueva"
-                                                                                 ],
-                                                                "properties":  {
-                                                                                   "email":  {
-                                                                                                "type":  "string",
-                                                                                                "format":  "email"
-                                                                                            },
-                                                                                   "passwordActual":  {
-                                                                                                          "type":  "string"
-                                                                                                      },
-                                                                                   "passwordNueva":  {
-                                                                                                          "type":  "string",
-                                                                                                          "minLength":  8
-                                                                                                      }
-                                                                               }
-                                                            },
-                                       "AuthLoginRequest":  {
-                                                                "type":  "object",
-                                                                "required":  [
-                                                                                 "email",
-                                                                                 "password"
-                                                                             ],
-                                                                "properties":  {
-                                                                                   "email":  {
-                                                                                                 "type":  "string",
-                                                                                                 "format":  "email"
-                                                                                             },
-                                                                                   "password":  {
-                                                                                                    "type":  "string",
-                                                                                                    "minLength":  6
-                                                                                                }
-                                                                               }
-                                                            },
-                                       "AuthLoginResponse":  {
-                                                                 "type":  "object",
-                                                                 "properties":  {
-                                                                                    "mensaje":  {
-                                                                                                    "type":  "string"
-                                                                                                },
-                                                                                    "usuario":  {
-                                                                                                    "$ref":  "#/components/schemas/AuthUsuario"
-                                                                                                }
-                                                                                }
-                                                             }
-                                   }
-                   }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pacientes": {
+      "get": {
+        "tags": [
+          "Pacientes"
+        ],
+        "summary": "Listar pacientes",
+        "parameters": [
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Texto para buscar por nombre, apellidos o email"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de pacientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Paciente"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pacientes"
+        ],
+        "summary": "Crear paciente",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacienteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paciente creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/pacientes/{id}": {
+      "get": {
+        "tags": [
+          "Pacientes"
+        ],
+        "summary": "Obtener paciente por ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paciente encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Pacientes"
+        ],
+        "summary": "Actualizar paciente",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacienteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paciente actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pacientes"
+        ],
+        "summary": "Eliminar paciente",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Paciente eliminado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/citas": {
+      "get": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Listar citas",
+        "parameters": [
+          {
+            "name": "idPaciente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idUsuario",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fechaDesde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "fechaHasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "atendida",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de citas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Cita"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Crear cita",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CitaInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cita creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cita"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/citas/{id}": {
+      "get": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Obtener cita por ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cita encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cita"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Actualizar cita",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CitaInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cita actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cita"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Eliminar cita",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cita eliminada"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/citas/{id}/atendida": {
+      "patch": {
+        "tags": [
+          "Citas"
+        ],
+        "summary": "Actualizar estado de atención",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "atendida": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "atendida"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cita actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cita"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/historiales": {
+      "get": {
+        "tags": [
+          "Historiales"
+        ],
+        "summary": "Listar historiales",
+        "parameters": [
+          {
+            "name": "idPaciente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idUsuario",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idCita",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de historiales",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Historial"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Historiales"
+        ],
+        "summary": "Crear historial",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistorialInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Historial creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Historial"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/historiales/{id}": {
+      "get": {
+        "tags": [
+          "Historiales"
+        ],
+        "summary": "Obtener historial",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Historial"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Historiales"
+        ],
+        "summary": "Actualizar historial",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistorialInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Historial actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Historial"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Historiales"
+        ],
+        "summary": "Eliminar historial",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Historial eliminado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/registros": {
+      "get": {
+        "tags": [
+          "Registros antropométricos"
+        ],
+        "summary": "Listar registros antropométricos",
+        "parameters": [
+          {
+            "name": "idPaciente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idUsuario",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de registros",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Registro"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Registros antropométricos"
+        ],
+        "summary": "Crear registro",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registro"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/registros/{id}": {
+      "get": {
+        "tags": [
+          "Registros antropométricos"
+        ],
+        "summary": "Obtener registro",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registro"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Registros antropométricos"
+        ],
+        "summary": "Actualizar registro",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registro"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Registros antropométricos"
+        ],
+        "summary": "Eliminar registro",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Registro eliminado"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/pacientes-usuarios": {
+      "get": {
+        "tags": [
+          "Pacientes-Usuarios"
+        ],
+        "summary": "Listar relaciones",
+        "parameters": [
+          {
+            "name": "idPaciente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idUsuario",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de relaciones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PacienteUsuario"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pacientes-Usuarios"
+        ],
+        "summary": "Crear relación",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacienteUsuarioInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Relación creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacienteUsuario"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/pacientes-usuarios/{id}": {
+      "get": {
+        "tags": [
+          "Pacientes-Usuarios"
+        ],
+        "summary": "Obtener relación",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relación encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacienteUsuario"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pacientes-Usuarios"
+        ],
+        "summary": "Eliminar relación",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ObjectIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Relación eliminada"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "AuthUsuario": {
+      "type": "object",
+      "properties": {
+        "idUsuario": {
+          "type": "string"
+        },
+        "nombreUsuario": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "telefono": {
+          "type": "string"
+        },
+        "rol": {
+          "type": "string"
+        },
+        "foto": {
+          "type": "string"
+        },
+        "debeActualizarPassword": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AuthChangePasswordRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "passwordActual",
+        "passwordNueva"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "passwordActual": {
+          "type": "string"
+        },
+        "passwordNueva": {
+          "type": "string",
+          "minLength": 8
+        }
+      }
+    },
+    "AuthLoginRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 6
+        }
+      }
+    },
+    "AuthLoginResponse": {
+      "type": "object",
+      "properties": {
+        "mensaje": {
+          "type": "string"
+        },
+        "usuario": {
+          "$ref": "#/components/schemas/AuthUsuario"
+        }
+      }
+    }
+  }
 }
-
-
-
-
-

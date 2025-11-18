@@ -1,34 +1,23 @@
 # Bizihotz FastAPI Gateway
 
-Gateway desarrollado en FastAPI que expone un punto de entrada único para los microservicios de Bizihotz. Sus funciones principales:
+Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hacia `gestion`, `nutricion` y futuros servicios, agrega los documentos OpenAPI y expone endpoints de salud.
 
-- Proxy transparente hacia cada microservicio (`/gestion`, `/nutricion`, etc.).
-- Documentación agregada (Swagger) a partir de los OpenAPI individuales.
-- Endpoint de salud (`/health`) para comprobar el estado de los servicios registrados.
+## Funciones
+
+- Proxy transparente (`/gestion/*`, `/nutricion/*`, ...).
+- Documentacion unificada en `/docs` y `/openapi.json`.
+- Endpoint `/health` para verificar disponibilidad de los servicios registrados.
+- Carga dinamica de OpenAPI remotos para combinarlos en el esquema del gateway.
 
 ## Requisitos
 
 - Python 3.11+
-- Dependencias listadas en `requirements.txt`
+- Dependencias de `requirements.txt`
+- Variables definidas en `.env` o variables de entorno del sistema.
 
-Instalación local:
+## Configuracion minima
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # o .venv\Scripts\activate en Windows
-pip install -r requirements.txt
-```
-
-## Configuración
-
-El gateway se configura mediante variables de entorno (ver `.env.example`). Para cada microservicio define:
-
-- `*_SERVICE_URL`: URL base a la que reenviar peticiones.
-- `*_OPENAPI_URL`: documento OpenAPI que se agregará en `/docs`.
-
-Ejemplo:
-
-```
+```env
 PORT=5000
 GATEWAY_TIMEOUT=10
 GESTION_SERVICE_URL=http://localhost:4001
@@ -37,15 +26,31 @@ NUTRICION_SERVICE_URL=http://localhost:5002
 NUTRICION_OPENAPI_URL=http://localhost:5002/openapi.json
 ```
 
-## Ejecución
+Agrega tantas parejas `*_SERVICE_URL` / `*_OPENAPI_URL` como microservicios quieras publicar.
+
+## Ejecucion local
 
 ```bash
+cd api-gateway
+python -m venv .venv
+source .venv/bin/activate    # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-Rutas relevantes:
+El gateway intentara descargar los documentos OpenAPI configurados. Asegurate de que los microservicios esten arriba (o usa el stack de Docker compose en la raiz) para evitar errores al iniciar.
+
+## Ejecucion dentro del stack Docker
+
+El archivo `docker-compose.yml` de la raiz construye esta carpeta y levanta el gateway junto con los microservicios. Puedes limitarte a ese flujo si no necesitas hacer debugging local.
+
+```bash
+docker compose up api-gateway --build
+```
+
+## Rutas relevantes
 
 - `GET /health`
 - `GET /docs`
 - `GET /openapi.json`
-- `/gestion/*`, `/nutricion/*`, etc. → proxy hacia cada microservicio.
+- `/gestion/*`, `/nutricion/*`, ... -> proxys hacia cada servicio configurado.

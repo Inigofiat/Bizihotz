@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import List, Optional
 
+from dotenv import load_dotenv
+
 
 @dataclass
 class ServiceConfig:
@@ -24,6 +26,8 @@ class Settings:
     services: List[ServiceConfig]
     request_timeout: float = 10.0
 
+
+load_dotenv()
 
 _SERVICE_DEFAULTS = [
     ("GESTION", "/gestion"),
