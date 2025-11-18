@@ -2673,6 +2673,14 @@
 (() => {
   const UNIQUE = (values) => [...new Set(values.filter(Boolean).map((value) => value.replace(/\/\/+$/, "")))];
 
+  const LOCAL_GESTION_BASE = "http://localhost:4002";
+  const LOCAL_NUTRICION_BASE = "http://localhost:5002";
+
+  const isLocalEnvironment = () => {
+    const hostname = (window.location.hostname || "").toLowerCase();
+    return window.location.protocol === "file:" || hostname === "" || hostname === "localhost" || hostname === "127.0.0.1";
+  };
+
   const resolveGatewayBase = () => {
     const protocol = window.location.protocol;
     const hostname = (window.location.hostname || "").toLowerCase();
@@ -2686,13 +2694,20 @@
     return `${protocol}//${window.location.host}`;
   };
 
-  const resolveNutritionGateway = () => `${resolveGatewayBase()}/nutricion`;
-  const resolveGestionGateway = () => `${resolveGatewayBase()}/gestion`;
+  const buildApiBases = (localBase, gatewaySuffix) => {
+    const bases = [];
+    if (isLocalEnvironment()) {
+      bases.push(localBase);
+    }
+    bases.push(`${resolveGatewayBase()}${gatewaySuffix}`);
+    return UNIQUE(bases).map((base) => `${base.replace(/\/\/+$/, "")}/api`);
+  };
+
   const DEFAULT_NUTRICION_USUARIO_ID = 1;
   const isGestionObjectId = (value) => typeof value === "string" && /^[a-f0-9]{24}$/i.test(value.trim());
 
-  const NUTRICION_API_BASES = UNIQUE([resolveNutritionGateway()]).map((base) => `${base}/api`);
-  const GESTION_API_BASES = UNIQUE([resolveGestionGateway()]).map((base) => `${base}/api`);
+  const NUTRICION_API_BASES = buildApiBases(LOCAL_NUTRICION_BASE, "/nutricion");
+  const GESTION_API_BASES = buildApiBases(LOCAL_GESTION_BASE, "/gestion");
 
   const LOGIN_PAGE = "login.html";
   const EMPTY_STATE_MESSAGES = {

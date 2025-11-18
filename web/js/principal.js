@@ -774,6 +774,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
   PerfilModal.prepararModalPerfil(handleLogout, {
     getUsuarioActual: () => usuarioActual,
     actualizarUsuarioLocal,

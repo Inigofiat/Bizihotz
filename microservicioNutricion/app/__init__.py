@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .database import Base, engine
@@ -16,6 +17,14 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         openapi_url="/openapi.json",
+    )
+
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     application.include_router(health_router, tags=["health"])

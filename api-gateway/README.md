@@ -1,59 +1,51 @@
-﻿# Bizihotz · API Gateway
+# Bizihotz FastAPI Gateway
 
-Gateway HTTP que centraliza el acceso del frontend a los microservicios de Bizihotz. Se encarga de:
+Gateway desarrollado en FastAPI que expone un punto de entrada único para los microservicios de Bizihotz. Sus funciones principales:
 
-- aplicar middlewares comunes (parseo JSON, CORS, logging si se necesita),
-- hacer proxy hacia los microservicios existentes (`/gestion`, `/nutricion`, etc.),
-- exponer un `healthcheck` unificado y la documentación OpenAPI agregada.
+- Proxy transparente hacia cada microservicio (`/gestion`, `/nutricion`, etc.).
+- Documentación agregada (Swagger) a partir de los OpenAPI individuales.
+- Endpoint de salud (`/health`) para comprobar el estado de los servicios registrados.
 
 ## Requisitos
 
-- Node.js ≥ 18
-- Cada microservicio en ejecución (por defecto se espera `http://localhost:4001` para gestión y `http://localhost:5002` para nutrición).
+- Python 3.11+
+- Dependencias listadas en `requirements.txt`
 
-## Instalación
+Instalación local:
 
 ```bash
-cd api-gateway
-cp .env.example .env   # ajusta URLs si es necesario
-npm install
+python -m venv .venv
+source .venv/bin/activate  # o .venv\Scripts\activate en Windows
+pip install -r requirements.txt
+```
+
+## Configuración
+
+El gateway se configura mediante variables de entorno (ver `.env.example`). Para cada microservicio define:
+
+- `*_SERVICE_URL`: URL base a la que reenviar peticiones.
+- `*_OPENAPI_URL`: documento OpenAPI que se agregará en `/docs`.
+
+Ejemplo:
+
+```
+PORT=5000
+GATEWAY_TIMEOUT=10
+GESTION_SERVICE_URL=http://localhost:4001
+GESTION_OPENAPI_URL=http://localhost:4001/docs/swagger.json
+NUTRICION_SERVICE_URL=http://localhost:5002
+NUTRICION_OPENAPI_URL=http://localhost:5002/openapi.json
 ```
 
 ## Ejecución
 
 ```bash
-npm run dev            # recarga con nodemon
-# o
-npm start
+uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-### Endpoints expuestos
+Rutas relevantes:
 
-- `GET /health`: devuelve el estado del gateway y la configuración cargada.
-- `GET /openapi.json`: genera y devuelve la documentación OpenAPI agregada a partir de los microservicios disponibles.
-- `GET /docs`: interfaz Swagger UI que consume el `openapi.json` anterior.
-- Rutas proxy:
-  - `/gestion/*` → microservicio de gestión (Node.js + MongoDB).
-  - `/nutricion/*` → microservicio de nutrición (FastAPI + PostgreSQL).
-  - `/comunicacion/*` y `/documentos/*` quedan preparados para cuando esos microservicios estén disponibles.
-
-## Estructura del proyecto
-
-```
-api-gateway/
-├── .env.example
-├── package.json
-├── README.md
-└── src
-    ├── index.js
-    ├── lib
-    │   ├── config.js
-    │   └── openapiAggregator.js
-    └── middleware
-        └── errorHandler.js
-```
-
-## Notas
-
-- Si alguno de los microservicios no está disponible, el gateway sigue funcionando y simplemente omite sus rutas en la documentación agregada.
-- Puedes añadir autenticación/autorización global aquí antes de reenviar la petición al microservicio correspondiente.
+- `GET /health`
+- `GET /docs`
+- `GET /openapi.json`
+- `/gestion/*`, `/nutricion/*`, etc. → proxy hacia cada microservicio.
