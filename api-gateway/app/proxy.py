@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import httpx
 from fastapi import HTTPException, Request
-from starlette.responses import StreamingResponse
+from starlette.responses import Response
 
 from .config import ServiceConfig
 
@@ -47,20 +47,21 @@ async def proxy_request(request: Request, service: ServiceConfig, path: str = ""
     content = body if body else None
 
     try:
-        async with client.stream(
+        response = await client.request(
             request.method,
             target_url,
             content=content,
             headers=headers,
             cookies=request.cookies,
-        ) as response:
-            filtered_headers = _filter_response_headers(response.headers)
-            return StreamingResponse(
-                response.aiter_raw(),
-                status_code=response.status_code,
-                headers=filtered_headers,
-                background=None,
-            )
+        )
+        filtered_headers = _filter_response_headers(response.headers)
+        body_bytes = await response.aread()
+        return Response(
+            content=body_bytes,
+            status_code=response.status_code,
+            headers=filtered_headers,
+            media_type=response.headers.get("content-type"),
+        )
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502,

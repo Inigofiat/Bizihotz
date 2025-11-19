@@ -24,6 +24,8 @@ GESTION_SERVICE_URL=http://localhost:4001
 GESTION_OPENAPI_URL=http://localhost:4001/docs/swagger.json
 NUTRICION_SERVICE_URL=http://localhost:5002
 NUTRICION_OPENAPI_URL=http://localhost:5002/openapi.json
+COMUNICACION_SERVICE_URL=http://localhost:4100
+COMUNICACION_OPENAPI_URL=http://localhost:4100/docs/swagger.json
 ```
 
 Agrega tantas parejas `*_SERVICE_URL` / `*_OPENAPI_URL` como microservicios quieras publicar.

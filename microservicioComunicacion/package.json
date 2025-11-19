@@ -1,0 +1,38 @@
+{
+  "name": "microservicio-comunicacion",
+  "version": "1.0.0",
+  "description": "Microservicio de comunicación interna para Bizihotz (mensajería estilo chat).",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --watch src --ext js,json src/index.js",
+    "lint": "echo \"No hay reglas de lint configuradas\"",
+    "test": "node --test || echo \"Sin pruebas definidas\""
+  },
+  "keywords": [
+    "bizihotz",
+    "comunicacion",
+    "chat",
+    "microservicio"
+  ],
+  "author": "Equipo Bizihotz",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.19",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-validator": "^7.3.0",
+    "helmet": "^8.1.0",
+    "http-errors": "^2.0.0",
+    "mongoose": "^8.20.0",
+    "morgan": "^1.10.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

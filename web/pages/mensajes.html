@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chats interno · Bizihotz</title>
+  <link rel="stylesheet" href="../css/mensajes.css" />
+</head>
+
+<body>
+  <header class="chat-header">
+    <div class="chat-header__left">
+      <button type="button" class="back-btn has-logo" id="volverPanel" aria-label="Volver al panel">
+        <img src="../images/2.png" alt="Logo Bizihotz" />
+      </button>
+      <div>
+        <p class="chat-header__subtitle">Comunicaciones internas</p>
+        <h1 class="chat-header__title">BiziApp</h1>
+      </div>
+    </div>
+    <div class="chat-header__right">
+      <div class="status-pill" id="socketStatus">Desconectado</div>
+      <div class="user-chip" id="currentUserChip">
+        <span class="user-chip__avatar" id="currentUserInitials">--</span>
+        <span class="user-chip__name" id="currentUserName">Usuario</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="chat-app">
+    <aside class="chat-sidebar">
+      <div class="sidebar-tools">
+        <div class="search-box">
+          <input type="search" id="searchInput" placeholder="Buscar conversaciones" />
+        </div>
+        <button class="primary-button" id="openNewChat" type="button">+ Nuevo chat</button>
+      </div>
+
+      <ul class="conversation-list" id="conversationList">
+        <li class="conversation-list__empty">
+          <p>No hay conversaciones todavía.</p>
+          <p>Inicia una desde “Nuevo chat”.</p>
+        </li>
+      </ul>
+    </aside>
+
+    <section class="chat-panel">
+      <div class="chat-banner" id="chatFeedback" hidden></div>
+      <div class="chat-panel__placeholder" id="chatPlaceholder">
+        <img src="../images/chat-placeholder.svg" alt="Mensajería Bizihotz" />
+        <h2>Selecciona una conversación</h2>
+        <p>Los mensajes aparecen aquí y se sincronizan en tiempo real.</p>
+      </div>
+
+      <div class="chat-panel__content" id="chatContent" hidden>
+        <ul class="message-list" id="messageList"></ul>
+
+        <form id="composerForm" class="composer" autocomplete="off">
+          <textarea id="messageInput" rows="2" placeholder="Escribe un mensaje"></textarea>
+          <button class="send-button" type="submit" aria-label="Enviar mensaje">➤</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <section class="modal" id="newChatModal" aria-hidden="true">
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="newChatTitle">
+      <header class="modal__header">
+        <h2 id="newChatTitle">Iniciar conversación</h2>
+        <button class="ghost-button" id="closeNewChat" type="button">✕</button>
+      </header>
+      <form id="newChatForm" class="modal__body">
+        <div class="modal__field professional-picker">
+          <span>Profesional</span>
+          <input type="text" id="newChatSearch" placeholder="Escribe nombre y apellidos" autocomplete="off" />
+          <small class="modal__hint" id="newChatHint">Selecciona un profesional disponible.</small>
+          <div class="professional-picker__grid" id="professionalGrid"></div>
+        </div>
+        <p class="modal__hint">
+          Busca por nombre y apellidos y toca un profesional para abrir su conversación.
+        </p>
+        <div class="modal__actions">
+          <button class="ghost-button" type="button" id="cancelNewChat">Cerrar</button>
+        </div>
+        <p class="modal__feedback" id="newChatFeedback"></p>
+      </form>
+    </div>
+  </section>
+
+  <section class="modal" id="renameModal" aria-hidden="true">
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+      <header class="modal__header">
+        <h2 id="renameTitle">Renombrar contacto</h2>
+        <button class="ghost-button" id="closeRenameModal" type="button">✕</button>
+      </header>
+      <form id="renameForm" class="modal__body">
+        <label class="modal__field">
+          <span>Alias</span>
+          <input type="text" id="renameInput" placeholder="Ej: Dra. Nuñez" />
+        </label>
+        <div class="modal__actions">
+          <button class="ghost-button" type="button" id="cancelRename">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="modal" id="editMessageModal" aria-hidden="true">
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="editMessageTitle">
+      <header class="modal__header">
+        <h2 id="editMessageTitle">Editar mensaje</h2>
+        <button class="ghost-button" id="closeEditMessage" type="button">✕</button>
+      </header>
+      <form id="editMessageForm" class="modal__body">
+        <label class="modal__field">
+          <span>Contenido</span>
+          <textarea id="editMessageInput" rows="4" placeholder="Actualiza tu mensaje"></textarea>
+        </label>
+        <p class="modal__feedback" id="editMessageFeedback"></p>
+        <div class="modal__actions">
+          <button class="ghost-button" type="button" id="cancelEditMessage">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="modal" id="confirmModal" aria-hidden="true">
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <header class="modal__header">
+        <h2 id="confirmTitle">Confirmar acción</h2>
+        <button class="ghost-button" id="closeConfirmModal" type="button">✕</button>
+      </header>
+      <div class="modal__body">
+        <p id="confirmMessage">¿Deseas continuar?</p>
+        <div class="modal__actions">
+          <button class="ghost-button" type="button" id="cancelConfirm">Cancelar</button>
+          <button class="primary-button primary-button--danger" type="button" id="acceptConfirm">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="context-menu" id="messageContextMenu" hidden>
+    <button type="button" data-action="edit">Editar mensaje</button>
+    <button type="button" data-action="delete">Borrar mensaje</button>
+  </div>
+  <div class="context-menu" id="conversationContextMenu" hidden>
+    <button type="button" data-action="delete">Borrar conversación</button>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="../js/mensajes.js"></script>
+</body>
+
+</html>

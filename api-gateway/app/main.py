@@ -98,12 +98,12 @@ def _register_service_routes(service: ServiceConfig) -> None:
     param_path = f"{prefix}/{{path:path}}" if prefix else "/{path:path}"
 
     @app.api_route(base_path, methods=PROXY_METHODS, name=f"{service.name}-root")
-    async def proxy_root(request: Request, svc: ServiceConfig = service):
-        return await proxy_request(request, svc, "")
+    async def proxy_root(request: Request, service_config=service):
+        return await proxy_request(request, service_config, "")
 
     @app.api_route(param_path, methods=PROXY_METHODS, name=f"{service.name}-proxy")
-    async def proxy_with_path(path: str, request: Request, svc: ServiceConfig = service):
-        return await proxy_request(request, svc, path)
+    async def proxy_with_path(path: str, request: Request, service_config=service):
+        return await proxy_request(request, service_config, path)
 
 
 for _service in settings.services:

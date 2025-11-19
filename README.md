@@ -8,6 +8,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 |-----------------------|------------------------|--------------------|--------------------|
 | MongoDB               | Mongo 6                | `27018 -> 27017`   | `docker-compose.yml` (`mongo`) |
 | microservicioGestion  | Node.js 18 + Express   | `4002 -> 4001`     | `microservicioGestion/` |
+| microservicioComunicacion | Node.js 18 + Express + Socket.IO | `4103 -> 4100` | `microservicioComunicacion/` |
 | PostgreSQL            | Postgres 16            | `5435 -> 5432`     | `docker-compose.yml` (`postgres`) |
 | microservicioNutricion| FastAPI + SQLAlchemy   | `5002`             | `microservicioNutricion/` |
 | API Gateway           | FastAPI                | `5000`             | `api-gateway/` |
@@ -33,6 +34,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    - Frontend: http://localhost:8080
    - API Gateway: http://localhost:5000 (docs en `/docs`, health en `/health`)
    - Microservicio de gestion: http://localhost:4002 (el contenedor expone 4001, se publica en 4002)
+   - Microservicio de comunicacion: http://localhost:4103 (contenedor en 4100, publicado en 4103)
    - Microservicio de nutricion: http://localhost:5002
    - MongoDB: `mongodb://localhost:27018`
    - PostgreSQL: `postgresql://postgres:postgres@localhost:5435/nutricion`
@@ -40,6 +42,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    ```bash
    docker compose logs -f api-gateway
    docker compose logs -f gestion
+   docker compose logs -f comunicacion
    ```
 5. Para detener y limpiar:
    ```bash
@@ -75,6 +78,19 @@ MONGO_URI=mongodb://localhost:27017/gestion npm run dev
 - API local en `http://localhost:4001`
 - Documentacion Swagger: `http://localhost:4001/docs`
 - Scripts utiles: `npm run seed` para datos de prueba.
+
+### microservicioComunicacion (Node.js + Socket.IO)
+
+```bash
+cd microservicioComunicacion
+cp .env.example .env
+npm install
+npm run dev
+```
+
+- API local en `http://localhost:4100`
+- Documentacion Swagger: `http://localhost:4100/docs`
+- Canal tiempo real: conectar via Socket.IO (`io('http://localhost:4100', { auth: { userId: '<id>' } })`)
 
 ### PostgreSQL
 
@@ -128,7 +144,7 @@ Configura las variables de entorno del frontend (en los archivos JS) si necesita
 
 ## Recursos adicionales
 
-- Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioNutricion/` y `api-gateway/`.
+- Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioComunicacion/`, `microservicioNutricion/` y `api-gateway/`.
 - Scripts y seeds: disponibles en `microservicioGestion/data`, `microservicioNutricion/scripts` y en los paquetes npm/python correspondientes.
 - Variables globales del gateway: editar `./.env`.
 

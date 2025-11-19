@@ -291,7 +291,10 @@ const handleNextPage = () => {
 };
 
 const handleBack = (event) => {
-  event.preventDefault();
+  if (event?.currentTarget?.tagName === "A") {
+    return;
+  }
+  event?.preventDefault();
   window.location.href = "principal.html";
 };
 

@@ -26,6 +26,41 @@ const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
+const CONVERSATION_TARGET_KEY = "bizihotzConversationTarget";
+
+const dedupeValues = (items) => {
+  const seen = new Set();
+  return items
+    .filter(Boolean)
+    .map((item) => item.replace(/\/+$/, ""))
+    .filter((item) => {
+      if (seen.has(item)) {
+        return false;
+      }
+      seen.add(item);
+      return true;
+    });
+};
+
+const buildComunicacionBases = () => {
+  const direct = [
+    "http://localhost:4103",
+    "http://127.0.0.1:4103",
+    "http://localhost:4100",
+    "http://127.0.0.1:4100"
+  ];
+  const gateway = [
+    "http://localhost:5000/comunicacion",
+    "http://127.0.0.1:5000/comunicacion"
+  ];
+  const origin =
+    window.location.origin && window.location.origin !== "null" ? window.location.origin : null;
+  const originCandidate =
+    origin && !/:(4100|4103)(?:$|\/)/.test(origin) ? `${origin.replace(/\/$/, "")}/comunicacion` : null;
+  return dedupeValues([...direct, ...gateway, originCandidate]);
+};
+
+const COMUNICACION_API_BASES = buildComunicacionBases().map((base) => `${base}/api`);
 
 const CITA_ESTADOS = [
   {
@@ -79,6 +114,64 @@ let statusMenu = null;
 let statusMenuTrigger = null;
 
 let usuarioActual = null;
+let notificationDropdownOpen = false;
+let notificationConversations = [];
+const notificationRefs = {
+  toggle: null,
+  badge: null,
+  dropdown: null,
+  list: null,
+  empty: null
+};
+
+const fetchComunicacion = async (path, options = {}) => {
+  let lastError = null;
+  for (const base of COMUNICACION_API_BASES) {
+    try {
+      const response = await fetch(`${base}${path}`, options);
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || `Solicitud rechazada (${response.status})`);
+      }
+      const contentType = response.headers.get("Content-Type") || "";
+      if (contentType.includes("application/json")) {
+        return await response.json();
+      }
+      return await response.text();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("No se pudo contactar con el microservicio de comunicación.");
+};
+
+const getUsuarioId = () => {
+  if (!usuarioActual) {
+    usuarioActual = getStoredUser();
+  }
+  if (!usuarioActual) {
+    return null;
+  }
+  return (
+    usuarioActual._id ||
+    usuarioActual.id ||
+    usuarioActual.idUsuario ||
+    usuarioActual.usuarioId ||
+    usuarioActual.userId ||
+    usuarioActual.uid ||
+    usuarioActual.ID ||
+    null
+  );
+};
+
+const openConversationFromDashboard = (conversationId) => {
+  if (!conversationId) {
+    return;
+  }
+  localStorage.setItem(CONVERSATION_TARGET_KEY, conversationId);
+  closeDashboardNotifications();
+  window.location.href = "mensajes.html";
+};
 
 const obtenerRangoDiaUTC = (fechaReferencia = new Date()) => {
   const inicio = new Date(
@@ -451,6 +544,10 @@ const handleDocumentClick = (event) => {
     return;
   }
   closeStatusMenu();
+
+  if (notificationDropdownOpen && !event.target.closest(".notification-center")) {
+    closeDashboardNotifications();
+  }
 };
 
 const handleGlobalKeydown = (event) => {
@@ -458,11 +555,154 @@ const handleGlobalKeydown = (event) => {
     const trigger = statusMenuTrigger;
     closeStatusMenu();
     trigger?.focus();
+    if (notificationDropdownOpen) {
+      closeDashboardNotifications();
+    }
   }
 };
 
 const handleGlobalScroll = () => {
   closeStatusMenu();
+};
+
+const getConversationRecipient = (conversation) => {
+  if (!conversation || !Array.isArray(conversation.participants)) {
+    return null;
+  }
+  const userId = getUsuarioId();
+  if (!userId) {
+    return conversation.participants[0] || null;
+  }
+  return (
+    conversation.participants.find((participant) => participant !== userId) ||
+    conversation.participants[0] ||
+    null
+  );
+};
+
+const renderDashboardNotifications = () => {
+  const { badge, list, empty } = notificationRefs;
+  if (!badge || !list || !empty) {
+    return;
+  }
+  const userId = getUsuarioId();
+  if (!userId) {
+    badge.hidden = true;
+    list.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = "Inicia sesión para ver mensajes.";
+    return;
+  }
+  const unread = notificationConversations
+    .filter((conversation) => (conversation.unreadCounts?.[userId] || 0) > 0)
+    .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  if (!unread.length) {
+    badge.hidden = true;
+    list.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = "Sin mensajes nuevos.";
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent = unread.length > 99 ? "99+" : unread.length;
+  empty.hidden = true;
+  list.innerHTML = "";
+  unread.forEach((conversation) => {
+    const recipientId = getConversationRecipient(conversation);
+    const displayName = resolveNombreConversacion(recipientId, conversation);
+    const unreadCount = conversation.unreadCounts?.[userId] || 0;
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "notification-list__item";
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "notification-list__name";
+    nameSpan.textContent = displayName;
+    const countSpan = document.createElement("span");
+    countSpan.className = "notification-list__count";
+    countSpan.textContent = unreadCount > 99 ? "99+" : unreadCount;
+    item.appendChild(nameSpan);
+    item.appendChild(countSpan);
+    item.addEventListener("click", () => openConversationFromDashboard(conversation.id));
+    list.appendChild(item);
+  });
+};
+
+const closeDashboardNotifications = () => {
+  if (!notificationRefs.dropdown) {
+    return;
+  }
+  notificationRefs.dropdown.hidden = true;
+  notificationDropdownOpen = false;
+  notificationRefs.toggle?.setAttribute("aria-expanded", "false");
+};
+
+const toggleDashboardNotifications = () => {
+  if (!notificationRefs.dropdown || !notificationRefs.toggle) {
+    return;
+  }
+  notificationDropdownOpen = !notificationDropdownOpen;
+  notificationRefs.dropdown.hidden = !notificationDropdownOpen;
+  notificationRefs.toggle.setAttribute("aria-expanded", notificationDropdownOpen ? "true" : "false");
+  if (notificationDropdownOpen) {
+    renderDashboardNotifications();
+  }
+};
+
+const loadConversationNotifications = async () => {
+  const userId = getUsuarioId();
+  if (!userId) {
+    notificationConversations = [];
+    renderDashboardNotifications();
+    return;
+  }
+  try {
+    const response = await fetchComunicacion(`/conversations?userId=${encodeURIComponent(userId)}`);
+    notificationConversations = response?.data || response || [];
+    renderDashboardNotifications();
+  } catch (error) {
+    console.warn("No se pudieron cargar las notificaciones de mensajes:", error);
+  }
+};
+
+const initNotificationCenter = () => {
+  notificationRefs.toggle = document.getElementById("notificationToggle");
+  notificationRefs.badge = document.getElementById("notificationBadge");
+  notificationRefs.dropdown = document.getElementById("notificationDropdown");
+  notificationRefs.list = document.getElementById("notificationList");
+  notificationRefs.empty = document.getElementById("notificationEmpty");
+
+  if (!notificationRefs.toggle) {
+    return;
+  }
+
+  notificationRefs.toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    toggleDashboardNotifications();
+  });
+  notificationRefs.toggle.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleDashboardNotifications();
+    }
+  });
+
+  loadConversationNotifications();
+  window.addEventListener("focus", loadConversationNotifications);
+  setInterval(loadConversationNotifications, 30000);
+};
+
+const resolveNombreConversacion = (participantId, conversation) => {
+  if (!participantId) {
+    return "Contacto";
+  }
+  const metadataName =
+    conversation?.metadata?.participants?.[participantId] ||
+    conversation?.metadata?.aliases?.[participantId] ||
+    null;
+  if (metadataName) {
+    return metadataName;
+  }
+  return participantId;
 };
 
 const obtenerNombreVisible = (usuario) => {
@@ -741,6 +981,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleLogout = prepararLogoutModal();
   const user = cargarUsuario();
   cargarCitas();
+  if (!user) {
+    return;
+  }
+  initNotificationCenter();
 
   const agendaButton = document.querySelector('.nav-button[data-nav="agenda"]');
   if (agendaButton) {
@@ -771,6 +1015,14 @@ document.addEventListener("DOMContentLoaded", () => {
     dietasButton.addEventListener("click", (event) => {
       event.preventDefault();
       window.location.href = "dietas.html";
+    });
+  }
+
+  const mensajesButton = document.querySelector('.nav-button[data-nav="mensajes"]');
+  if (mensajesButton) {
+    mensajesButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "mensajes.html";
     });
   }
 
