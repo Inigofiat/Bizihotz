@@ -8,6 +8,15 @@ const pacienteModelo = new mongoose.Schema(
     nombrePaciente: { type: String, required: true, trim: true },
     apellidos: { type: String, required: true, trim: true },
     fechaNac: { type: Date, required: true },
+    estado: {
+      type: String,
+      enum: ['activo', 'baja'],
+      default: 'activo',
+      index: true
+    },
+    fechaBaja: { type: Date, default: null },
+    motivoBaja: { type: String, trim: true, maxlength: 500, default: '' },
+    bajaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
     emailPaciente: {
       type: String,
       required: true,

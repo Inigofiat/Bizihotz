@@ -47,19 +47,35 @@
 
     <section class="chat-panel">
       <div class="chat-banner" id="chatFeedback" hidden></div>
-      <div class="chat-panel__placeholder" id="chatPlaceholder">
-        <img src="../images/chat-placeholder.svg" alt="Mensajería Bizihotz" />
-        <h2>Selecciona una conversación</h2>
-        <p>Los mensajes aparecen aquí y se sincronizan en tiempo real.</p>
-      </div>
+      <div class="chat-panel__stage">
+        <div class="chat-panel__placeholder" id="chatPlaceholder" role="presentation">
+          <img src="../images/chat-placeholder.svg" alt="Mensajería Bizihotz" />
+          <h2>Selecciona una conversación</h2>
+          <p>Los mensajes aparecen aquí y se sincronizan en tiempo real.</p>
+        </div>
+        <div class="chat-panel__brand" id="chatBrand" hidden>
+          <img src="../images/1.png" alt="Bizihotz" />
+        </div>
 
-      <div class="chat-panel__content" id="chatContent" hidden>
-        <ul class="message-list" id="messageList"></ul>
+        <div class="chat-panel__content" id="chatContent" hidden>
+          <header class="chat-panel__header" id="chatHeaderDetails" data-empty="true">
+            <div>
+              <h2 class="chat-panel__name" id="activeConversationName"></h2>
+              <p class="chat-panel__meta" id="activeConversationMeta"></p>
+            </div>
+            <div class="chat-panel__actions">
+              <button class="ghost-button" id="renameContactBtn" type="button" disabled>✎ Renombrar</button>
+              <button class="ghost-button ghost-button--danger" id="deleteConversationBtn" type="button" disabled>🗑 Eliminar</button>
+            </div>
+          </header>
 
-        <form id="composerForm" class="composer" autocomplete="off">
-          <textarea id="messageInput" rows="2" placeholder="Escribe un mensaje"></textarea>
-          <button class="send-button" type="submit" aria-label="Enviar mensaje">➤</button>
-        </form>
+          <ul class="message-list" id="messageList"></ul>
+
+          <form id="composerForm" class="composer" autocomplete="off">
+            <textarea id="messageInput" rows="2" placeholder="Escribe un mensaje"></textarea>
+            <button class="send-button" type="submit" aria-label="Enviar mensaje">➤</button>
+          </form>
+        </div>
       </div>
     </section>
   </main>
@@ -142,15 +158,6 @@
       </div>
     </div>
   </section>
-
-  <div class="context-menu" id="messageContextMenu" hidden>
-    <button type="button" data-action="edit">Editar mensaje</button>
-    <button type="button" data-action="delete">Borrar mensaje</button>
-  </div>
-  <div class="context-menu" id="conversationContextMenu" hidden>
-    <button type="button" data-action="delete">Borrar conversación</button>
-  </div>
-
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="../js/mensajes.js"></script>
 </body>

@@ -89,7 +89,9 @@ const agendaState = {
 
   profesionales: new Map(),
 
-  lastError: null
+  lastError: null,
+
+  pendingDeleteId: null
 
 };
 
@@ -121,6 +123,12 @@ const agendaElements = {
 
   closePanelBtn: null,
 
+  panelBackdrop: null,
+
+  addModal: null,
+
+  addForm: null,
+
   pacientePicker: null,
 
   pacienteSearch: null,
@@ -139,9 +147,53 @@ const agendaElements = {
 
   feedback: null,
 
-  cancelBtn: null,
+  addCancelBtn: null,
 
-  closeBtn: null
+  addCloseBtn: null,
+
+  editModal: null,
+
+  editForm: null,
+
+  editCitaId: null,
+
+  editEstado: null,
+
+  editNotas: null,
+
+  editFeedback: null,
+
+  closeEditBtn: null,
+
+  cancelEditBtn: null,
+
+  deleteButton: null,
+
+  confirmModal: null,
+
+  confirmYesBtn: null,
+
+  confirmNoBtn: null
+
+};
+
+const isActivationKey = (event) => event && (event.key === "Enter" || event.key === " ");
+
+const updateBodyModalState = () => {
+
+  if (typeof document === "undefined" || !document.body) {
+
+    return;
+
+  }
+
+  const editOpen = Boolean(agendaElements.editModal && agendaElements.editModal.hidden === false);
+
+  const addOpen = Boolean(agendaElements.addModal && agendaElements.addModal.hidden === false);
+
+  const confirmOpen = Boolean(agendaElements.confirmModal && agendaElements.confirmModal.hidden === false);
+
+  document.body.classList.toggle("modal-open", editOpen || addOpen || confirmOpen);
 
 };
 
@@ -567,6 +619,32 @@ const cacheAgendaElements = () => {
 
   agendaElements.panelBackdrop = document.getElementById("panelBackdrop");
 
+  agendaElements.addModal = document.getElementById("addAppointmentModal");
+
+  agendaElements.addForm = document.getElementById("addAppointmentForm");
+
+  agendaElements.pacientePicker = document.getElementById("patientPicker");
+
+  agendaElements.pacienteSearch = document.getElementById("addPacienteSearch");
+
+  agendaElements.pacienteResults = document.getElementById("addPacienteResults");
+
+  agendaElements.pacienteIdInput = document.getElementById("addPacienteId");
+
+  agendaElements.tipoInput = document.getElementById("addTipoConsulta");
+
+  agendaElements.notasInput = document.getElementById("addNotas");
+
+  agendaElements.dateInput = document.getElementById("addDateIso");
+
+  agendaElements.horaInput = document.getElementById("addHoraClave");
+
+  agendaElements.feedback = document.getElementById("addAppointmentFeedback");
+
+  agendaElements.addCancelBtn = document.getElementById("cancelAddAppointment");
+
+  agendaElements.addCloseBtn = document.getElementById("closeAddAppointment");
+
   // edit modal elements
 
   agendaElements.editModal = document.getElementById("editAppointmentModal");
@@ -584,6 +662,14 @@ const cacheAgendaElements = () => {
   agendaElements.closeEditBtn = document.getElementById("closeEditAppointment");
 
   agendaElements.cancelEditBtn = document.getElementById("cancelEditAppointment");
+
+  agendaElements.deleteButton = document.getElementById("deleteAppointment");
+
+  agendaElements.confirmModal = document.getElementById("confirmDeleteModal");
+
+  agendaElements.confirmYesBtn = document.getElementById("confirmDeleteYes");
+
+  agendaElements.confirmNoBtn = document.getElementById("confirmDeleteNo");
 
 };
 
@@ -869,6 +955,796 @@ const actualizarTotalBadge = (total) => {
 
 };
 
+const PACIENTE_MIN_CARACTERES = 2;
+
+const PACIENTE_MAX_RESULTADOS = 8;
+
+const PACIENTE_DEBOUNCE_MS = 250;
+
+let pacienteSearchTimer = null;
+
+let pacienteSearchAbortController = null;
+
+const clearPacienteResultados = () => {
+
+  agendaState.pacienteResultados = [];
+
+  agendaState.pacienteResultadoIndex = -1;
+
+  if (agendaElements.pacienteResults) {
+
+    agendaElements.pacienteResults.innerHTML = "";
+
+    agendaElements.pacienteResults.classList.remove("is-visible");
+
+  }
+
+};
+
+const hidePacienteResultados = () => {
+
+  if (agendaElements.pacienteResults) {
+
+    agendaElements.pacienteResults.classList.remove("is-visible");
+
+  }
+
+};
+
+const highlightPacienteResultado = () => {
+
+  const list = agendaElements.pacienteResults;
+
+  if (!list) {
+
+    return;
+
+  }
+
+  const items = list.querySelectorAll("li[data-index]");
+
+  items.forEach((item) => {
+
+    const index = Number(item.dataset.index);
+
+    if (index === agendaState.pacienteResultadoIndex) {
+
+      item.classList.add("is-active");
+
+      item.scrollIntoView({ block: "nearest" });
+
+    } else {
+
+      item.classList.remove("is-active");
+
+    }
+
+  });
+
+};
+
+const renderPacienteResultados = ({ showEmpty = false, error = false, loading = false } = {}) => {
+
+  const list = agendaElements.pacienteResults;
+
+  if (!list) {
+
+    return;
+
+  }
+
+  list.innerHTML = "";
+
+  if (loading) {
+
+    list.classList.add("is-visible");
+
+    const loadingItem = document.createElement("li");
+
+    loadingItem.className = "patient-empty";
+
+    loadingItem.textContent = "Buscando pacientes...";
+
+    list.appendChild(loadingItem);
+
+    return;
+
+  }
+
+  const resultados = agendaState.pacienteResultados || [];
+
+  if (!resultados.length) {
+
+    if (showEmpty) {
+
+      list.classList.add("is-visible");
+
+      const empty = document.createElement("li");
+
+      empty.className = "patient-empty";
+
+      empty.textContent = error ? "No se pudieron cargar pacientes." : "Sin coincidencias.";
+
+      list.appendChild(empty);
+
+    } else {
+
+      list.classList.remove("is-visible");
+
+    }
+
+    return;
+
+  }
+
+  list.classList.add("is-visible");
+
+  resultados.forEach((paciente, index) => {
+
+    const li = document.createElement("li");
+
+    li.dataset.index = String(index);
+
+    li.tabIndex = 0;
+
+    li.id = `paciente-option-${index}`;
+
+    const title = document.createElement("span");
+
+    title.textContent = formatearNombrePaciente(paciente) || "Paciente sin nombre";
+
+    li.appendChild(title);
+
+    const secondary = paciente.emailPaciente || paciente.telefono;
+
+    if (secondary) {
+
+      const sub = document.createElement("span");
+
+      sub.className = "patient-subtext";
+
+      sub.textContent = secondary;
+
+      li.appendChild(sub);
+
+    }
+
+    li.addEventListener("click", () => seleccionarPacienteResultado(index));
+
+    li.addEventListener("keydown", (event) => {
+
+      if (isActivationKey(event)) {
+
+        event.preventDefault();
+
+        seleccionarPacienteResultado(index);
+
+      }
+
+    });
+
+    list.appendChild(li);
+
+  });
+
+  highlightPacienteResultado();
+
+};
+
+const seleccionarPacienteResultado = (index) => {
+
+  const paciente = agendaState.pacienteResultados[index];
+
+  if (!paciente) {
+
+    return;
+
+  }
+
+  agendaState.pacienteResultadoIndex = index;
+
+  if (agendaElements.pacienteSearch) {
+
+    agendaElements.pacienteSearch.value = formatearNombrePaciente(paciente);
+
+  }
+
+  if (agendaElements.pacienteIdInput) {
+
+    agendaElements.pacienteIdInput.value = paciente._id || paciente.id || paciente.idPaciente || "";
+
+  }
+
+  hidePacienteResultados();
+
+};
+
+const ejecutarBusquedaPacientes = async (termino) => {
+
+  const query = String(termino || "").trim();
+
+  if (query.length < PACIENTE_MIN_CARACTERES) {
+
+    clearPacienteResultados();
+
+    return;
+
+  }
+
+  if (pacienteSearchAbortController) {
+
+    pacienteSearchAbortController.abort();
+
+  }
+
+  const controller = new AbortController();
+
+  pacienteSearchAbortController = controller;
+
+  try {
+
+    const params = new URLSearchParams({
+
+      buscar: query,
+
+      limit: String(PACIENTE_MAX_RESULTADOS),
+
+      sort: "nombrePaciente:asc"
+
+    });
+
+    const respuesta = await fetchJson(`/pacientes?${params.toString()}`, { signal: controller.signal });
+
+    if (pacienteSearchAbortController !== controller) {
+
+      return;
+
+    }
+
+    if (Array.isArray(respuesta)) {
+
+      agendaState.pacienteResultados = respuesta;
+
+    } else if (Array.isArray(respuesta?.data)) {
+
+      agendaState.pacienteResultados = respuesta.data;
+
+    } else if (Array.isArray(respuesta?.items)) {
+
+      agendaState.pacienteResultados = respuesta.items;
+
+    } else {
+
+      agendaState.pacienteResultados = [];
+
+    }
+
+    agendaState.pacienteResultadoIndex = agendaState.pacienteResultados.length ? 0 : -1;
+
+    renderPacienteResultados({ showEmpty: true });
+
+  } catch (error) {
+
+    if (error.name === "AbortError") {
+
+      return;
+
+    }
+
+    console.error("Error buscando pacientes:", error);
+
+    agendaState.pacienteResultados = [];
+
+    agendaState.pacienteResultadoIndex = -1;
+
+    renderPacienteResultados({ showEmpty: true, error: true });
+
+  } finally {
+
+    if (pacienteSearchAbortController === controller) {
+
+      pacienteSearchAbortController = null;
+
+    }
+
+  }
+
+};
+
+const handlePacienteSearchInput = (event) => {
+
+  const termino = event.target.value || "";
+
+  if (agendaElements.pacienteIdInput) {
+
+    agendaElements.pacienteIdInput.value = "";
+
+  }
+
+  agendaState.pacienteResultadoIndex = -1;
+
+  if (pacienteSearchTimer) {
+
+    clearTimeout(pacienteSearchTimer);
+
+  }
+
+  if (termino.trim().length < PACIENTE_MIN_CARACTERES) {
+
+    clearPacienteResultados();
+
+    return;
+
+  }
+
+  renderPacienteResultados({ loading: true });
+
+  pacienteSearchTimer = setTimeout(() => ejecutarBusquedaPacientes(termino), PACIENTE_DEBOUNCE_MS);
+
+};
+
+const handlePacienteSearchKeydown = (event) => {
+
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+
+    const total = agendaState.pacienteResultados.length;
+
+    if (!total) {
+
+      return;
+
+    }
+
+    event.preventDefault();
+
+    const delta = event.key === "ArrowDown" ? 1 : -1;
+
+    let nextIndex = agendaState.pacienteResultadoIndex;
+
+    if (nextIndex < 0) {
+
+      nextIndex = event.key === "ArrowDown" ? 0 : total - 1;
+
+    } else {
+
+      nextIndex = (nextIndex + delta + total) % total;
+
+    }
+
+    agendaState.pacienteResultadoIndex = nextIndex;
+
+    highlightPacienteResultado();
+
+    return;
+
+  }
+
+  if (event.key === "Enter" && agendaState.pacienteResultadoIndex >= 0) {
+
+    event.preventDefault();
+
+    seleccionarPacienteResultado(agendaState.pacienteResultadoIndex);
+
+  }
+
+};
+
+const handlePacienteSearchFocus = (event) => {
+
+  const term = event.target.value || "";
+
+  if (agendaState.pacienteResultados.length) {
+
+    renderPacienteResultados();
+
+    return;
+
+  }
+
+  if (term.trim().length >= PACIENTE_MIN_CARACTERES) {
+
+    ejecutarBusquedaPacientes(term);
+
+  }
+
+};
+
+const getActiveProfessionalId = () => {
+
+  if (agendaState.professionalId) {
+
+    return agendaState.professionalId;
+
+  }
+
+  if (usuarioActual) {
+
+    return usuarioActual.idUsuario || usuarioActual._id || usuarioActual.id || null;
+
+  }
+
+  return null;
+
+};
+
+const getSelectedDateForSlot = () => {
+
+  const base = agendaState.selectedDate ? new Date(agendaState.selectedDate) : new Date();
+
+  return normalizeDate(base);
+
+};
+
+const combineFechaHora = (fecha, horaTexto) => {
+
+  const composed = new Date(fecha);
+
+  if (Number.isNaN(composed.getTime())) {
+
+    return new Date();
+
+  }
+
+  const partes = typeof horaTexto === "string" ? horaTexto.split(":") : [];
+
+  const horas = Number.parseInt(partes[0] || "0", 10);
+
+  const minutos = Number.parseInt(partes[1] || "0", 10);
+
+  if (!Number.isNaN(horas) && !Number.isNaN(minutos)) {
+
+    composed.setHours(horas, minutos, 0, 0);
+
+  }
+
+  return composed;
+
+};
+
+const resetAddAppointmentForm = () => {
+
+  if (agendaElements.addForm) {
+
+    agendaElements.addForm.reset();
+
+  }
+
+  if (agendaElements.pacienteIdInput) {
+
+    agendaElements.pacienteIdInput.value = "";
+
+  }
+
+  if (agendaElements.feedback) {
+
+    agendaElements.feedback.textContent = "";
+
+  }
+
+  if (pacienteSearchTimer) {
+
+    clearTimeout(pacienteSearchTimer);
+
+    pacienteSearchTimer = null;
+
+  }
+
+  if (pacienteSearchAbortController) {
+
+    pacienteSearchAbortController.abort();
+
+    pacienteSearchAbortController = null;
+
+  }
+
+  clearPacienteResultados();
+
+};
+
+const openAddAppointmentModal = (slot) => {
+
+  if (!agendaElements.addModal) {
+
+    return;
+
+  }
+
+  resetAddAppointmentForm();
+
+  const fechaSeleccionada = getSelectedDateForSlot();
+
+  agendaState.slotSeleccionado = {
+
+    fecha: fechaSeleccionada,
+
+    hora: slot?.hora || ""
+
+  };
+
+  if (agendaElements.dateInput) {
+
+    agendaElements.dateInput.value = fechaSeleccionada.toISOString();
+
+  }
+
+  if (agendaElements.horaInput) {
+
+    agendaElements.horaInput.value = slot?.hora || "";
+
+  }
+
+  agendaElements.addModal.hidden = false;
+
+  agendaElements.addModal.removeAttribute("hidden");
+
+  updateBodyModalState();
+
+  if (agendaElements.pacienteSearch) {
+
+    agendaElements.pacienteSearch.focus();
+
+    agendaElements.pacienteSearch.select?.();
+
+  }
+
+};
+
+const closeAddAppointmentModal = () => {
+
+  if (!agendaElements.addModal) {
+
+    return;
+
+  }
+
+  agendaElements.addModal.hidden = true;
+
+  agendaElements.addModal.setAttribute("hidden", "");
+
+  agendaState.slotSeleccionado = null;
+
+  if (agendaElements.addForm) {
+
+    agendaElements.addForm.reset();
+
+  }
+
+  if (agendaElements.pacienteSearch) {
+
+    agendaElements.pacienteSearch.value = "";
+
+  }
+
+  if (agendaElements.feedback) {
+
+    agendaElements.feedback.textContent = "";
+
+  }
+
+  clearPacienteResultados();
+
+  updateBodyModalState();
+
+};
+
+const openConfirmDeleteModal = () => {
+
+  if (!agendaElements.confirmModal) {
+
+    return;
+
+  }
+
+  agendaElements.confirmModal.hidden = false;
+
+  agendaElements.confirmModal.removeAttribute("hidden");
+
+  updateBodyModalState();
+
+};
+
+const closeConfirmDeleteModal = () => {
+
+  if (!agendaElements.confirmModal) {
+
+    return;
+
+  }
+
+  agendaElements.confirmModal.hidden = true;
+
+  agendaElements.confirmModal.setAttribute("hidden", "");
+
+  agendaState.pendingDeleteId = null;
+
+  updateBodyModalState();
+
+};
+
+const handleDeleteButtonClick = () => {
+
+  const id = agendaElements.editCitaId?.value?.trim();
+
+  if (!id) {
+
+    if (agendaElements.editFeedback) {
+
+      agendaElements.editFeedback.textContent = "No se pudo identificar la cita a eliminar.";
+
+    }
+
+    return;
+
+  }
+
+  agendaState.pendingDeleteId = id;
+
+  openConfirmDeleteModal();
+
+};
+
+const handleConfirmDelete = async () => {
+
+  const id = agendaState.pendingDeleteId;
+
+  if (!id) {
+
+    closeConfirmDeleteModal();
+
+    return;
+
+  }
+
+  if (agendaElements.editFeedback) {
+
+    agendaElements.editFeedback.textContent = "Borrando cita...";
+
+  }
+
+  try {
+
+    await fetchJson(`/citas/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+    closeConfirmDeleteModal();
+
+    closeEditModal();
+
+    await cargarCitasMensuales({ openPanel: true });
+
+  } catch (error) {
+
+    console.error("Error al eliminar la cita:", error);
+
+    if (agendaElements.editFeedback) {
+
+      agendaElements.editFeedback.textContent = "No se pudo borrar la cita.";
+
+    }
+
+    closeConfirmDeleteModal();
+
+  } finally {
+
+    agendaState.pendingDeleteId = null;
+
+  }
+
+};
+
+const handleAddAppointmentSubmit = async (event) => {
+
+  event.preventDefault();
+
+  if (!agendaElements.addForm) {
+
+    return;
+
+  }
+
+  const pacienteId = agendaElements.pacienteIdInput?.value?.trim();
+
+  const hora = agendaElements.horaInput?.value?.trim();
+
+  const tipoConsulta = agendaElements.tipoInput?.value?.trim();
+
+  const notas = agendaElements.notasInput?.value?.trim();
+
+  const fechaBase = agendaElements.dateInput?.value ? new Date(agendaElements.dateInput.value) : getSelectedDateForSlot();
+
+  const profesionalId = getActiveProfessionalId();
+
+  if (!pacienteId) {
+
+    if (agendaElements.feedback) {
+
+      agendaElements.feedback.textContent = "Selecciona un paciente para la cita.";
+
+    }
+
+    return;
+
+  }
+
+  if (!hora) {
+
+    if (agendaElements.feedback) {
+
+      agendaElements.feedback.textContent = "No se pudo determinar la hora del espacio seleccionado.";
+
+    }
+
+    return;
+
+  }
+
+  if (!profesionalId) {
+
+    if (agendaElements.feedback) {
+
+      agendaElements.feedback.textContent = "No se pudo identificar al profesional.";
+
+    }
+
+    return;
+
+  }
+
+  if (agendaElements.feedback) {
+
+    agendaElements.feedback.textContent = "Creando cita...";
+
+  }
+
+  try {
+
+    const fechaCita = combineFechaHora(fechaBase, hora);
+
+    const payload = {
+
+      idPaciente: pacienteId,
+
+      idUsuario: profesionalId,
+
+      fechaCita: fechaCita.toISOString(),
+
+      hora,
+
+      tipoConsulta: tipoConsulta || "Consulta",
+
+      notas: notas || "",
+
+      estado: "Pendiente"
+
+    };
+
+    await fetchJson("/citas", {
+
+      method: "POST",
+
+      headers: { "Content-Type": "application/json" },
+
+      body: JSON.stringify(payload)
+
+    });
+
+    closeAddAppointmentModal();
+
+    await cargarCitasMensuales({ openPanel: true });
+
+  } catch (error) {
+
+    console.error("Error al crear la cita:", error);
+
+    if (agendaElements.feedback) {
+
+      agendaElements.feedback.textContent = "No se pudo crear la cita. Inténtalo de nuevo.";
+
+    }
+
+  }
+
+};
+
 
 
 const buildAppointmentNode = (cita, slot) => {
@@ -880,6 +1756,12 @@ const buildAppointmentNode = (cita, slot) => {
   item.title = "Editar cita";
 
   item.setAttribute("aria-label", "Editar cita");
+
+  item.setAttribute("role", "button");
+
+  item.tabIndex = 0;
+
+  item.dataset.citaId = cita.id || cita._id || "";
 
 
 
@@ -979,6 +1861,8 @@ const buildAppointmentNode = (cita, slot) => {
 
   item.appendChild(content);
 
+  const triggerEdit = () => openEditModal(cita);
+
   // abrir modal de edición al hacer click en la tarjeta (evitar clicks en botones internos)
 
   item.addEventListener("click", (ev) => {
@@ -989,7 +1873,19 @@ const buildAppointmentNode = (cita, slot) => {
 
     if (["button", "a", "input", "select", "textarea"].includes(tag)) return;
 
-    openEditModal(cita);
+    triggerEdit();
+
+  });
+
+  item.addEventListener("keydown", (event) => {
+
+    if (isActivationKey(event)) {
+
+      event.preventDefault();
+
+      triggerEdit();
+
+    }
 
   });
 
@@ -1015,7 +1911,7 @@ const openEditModal = (cita) => {
 
   agendaElements.editModal.hidden = false;
 
-  document.body.classList.add("modal-open");
+  updateBodyModalState();
 
 };
 
@@ -1027,7 +1923,7 @@ const closeEditModal = () => {
 
   agendaElements.editModal.hidden = true;
 
-  document.body.classList.remove("modal-open");
+  updateBodyModalState();
 
 };
 
@@ -1131,6 +2027,12 @@ const buildFreeSlotNode = (slot) => {
 
   item.setAttribute("aria-label", "Añadir cita");
 
+  item.setAttribute("role", "button");
+
+  item.tabIndex = 0;
+
+  item.dataset.slotHora = slot.hora;
+
 
 
   const time = document.createElement("div");
@@ -1188,6 +2090,34 @@ const buildFreeSlotNode = (slot) => {
 
 
   item.appendChild(content);
+
+  const triggerCreate = () => openAddAppointmentModal(slot);
+
+  item.addEventListener("click", (event) => {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    triggerCreate();
+
+  });
+
+  item.addEventListener("keydown", (event) => {
+
+    if (isActivationKey(event)) {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+      triggerCreate();
+
+    }
+
+  });
+
+
 
   return item;
 
@@ -2167,6 +3097,82 @@ const attachEventListeners = () => {
 
 
 
+  if (agendaElements.addForm) {
+
+    agendaElements.addForm.addEventListener("submit", handleAddAppointmentSubmit);
+
+  }
+
+
+
+  [agendaElements.addCloseBtn, agendaElements.addCancelBtn].forEach((btn) => {
+
+    if (btn) {
+
+      btn.addEventListener("click", (event) => {
+
+        event.preventDefault();
+
+        closeAddAppointmentModal();
+
+      });
+
+    }
+
+  });
+
+
+
+  if (agendaElements.addModal) {
+
+    agendaElements.addModal.addEventListener("click", (event) => {
+
+      if (event.target === agendaElements.addModal) {
+
+        closeAddAppointmentModal();
+
+      }
+
+    });
+
+  }
+
+
+
+  if (agendaElements.pacienteSearch) {
+
+    agendaElements.pacienteSearch.addEventListener("input", handlePacienteSearchInput);
+
+    agendaElements.pacienteSearch.addEventListener("keydown", handlePacienteSearchKeydown);
+
+    agendaElements.pacienteSearch.addEventListener("focus", handlePacienteSearchFocus);
+
+  }
+
+
+
+  document.addEventListener("click", (event) => {
+
+    if (
+
+      agendaElements.addModal &&
+
+      agendaElements.addModal.hidden === false &&
+
+      agendaElements.pacientePicker &&
+
+      !agendaElements.pacientePicker.contains(event.target)
+
+    ) {
+
+      hidePacienteResultados();
+
+    }
+
+  });
+
+
+
   // edit modal listeners
 
   if (agendaElements.closeEditBtn) {
@@ -2187,11 +3193,81 @@ const attachEventListeners = () => {
 
   }
 
+  if (agendaElements.deleteButton) {
+
+    agendaElements.deleteButton.addEventListener("click", handleDeleteButtonClick);
+
+  }
+
+  if (agendaElements.confirmNoBtn) {
+
+    agendaElements.confirmNoBtn.addEventListener("click", () => closeConfirmDeleteModal());
+
+  }
+
+  if (agendaElements.confirmYesBtn) {
+
+    agendaElements.confirmYesBtn.addEventListener("click", handleConfirmDelete);
+
+  }
+
+  if (agendaElements.confirmModal) {
+
+    agendaElements.confirmModal.addEventListener("click", (event) => {
+
+      if (event.target === agendaElements.confirmModal) {
+
+        closeConfirmDeleteModal();
+
+      }
+
+    });
+
+  }
+
 
 
   document.addEventListener("keydown", (event) => {
 
-    if (event.key === "Escape" && agendaState.panelOpen) {
+    if (event.key !== "Escape") {
+
+      return;
+
+    }
+
+    if (agendaElements.confirmModal && agendaElements.confirmModal.hidden === false) {
+
+      event.preventDefault();
+
+      closeConfirmDeleteModal();
+
+      return;
+
+    }
+
+    if (agendaElements.addModal && agendaElements.addModal.hidden === false) {
+
+      event.preventDefault();
+
+      closeAddAppointmentModal();
+
+      return;
+
+    }
+
+    if (agendaElements.editModal && agendaElements.editModal.hidden === false) {
+
+      event.preventDefault();
+
+      closeEditModal();
+
+      return;
+
+    }
+
+    if (agendaState.panelOpen) {
+
+      event.preventDefault();
 
       closeSidePanel();
 
@@ -2258,8 +3334,3 @@ document.addEventListener("DOMContentLoaded", () => {
   initAgenda();
 
 });
-
-
-
-
-

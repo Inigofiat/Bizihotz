@@ -543,11 +543,12 @@ body.modal-open {
   color: #0f4f28;
   font-weight: 600;
 }
-.apt.free {
-  background: rgba(237, 247, 240, 0.9);
-  border-style: dashed;
-  border-color: rgba(55, 112, 78, 0.3);
-}
+.apt.free {
+  background: rgba(237, 247, 240, 0.9);
+  border-style: dashed;
+  border-color: rgba(55, 112, 78, 0.3);
+  cursor: pointer;
+}
 .apt.free .time {
   color: #4c6157;
 }

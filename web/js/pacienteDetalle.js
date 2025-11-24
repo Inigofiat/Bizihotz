@@ -193,7 +193,9 @@ const elements = {
   dietSummary: null,
   dietButton: null,
   historialLista: null,
-  historialTotal: null
+  historialTotal: null,
+  bajaBtn: null,
+  reactivarBtn: null
 };
 
 
@@ -470,6 +472,8 @@ const calculateAge = (fechaNac) => {
 
 };
 
+const isPacienteEnBaja = (paciente) => paciente?.estado === "baja";
+
 
 
 const formatNumber = (value, decimals = 2) => {
@@ -604,12 +608,15 @@ const escapeHtml = (value) => {
 
 
 const renderBadges = (paciente) => {
-
   if (!elements.badges) return;
-
   const badges = [];
 
-
+  if (isPacienteEnBaja(paciente)) {
+    const fecha = paciente.fechaBaja ? ` - ${formatDate(paciente.fechaBaja)}` : "";
+    badges.push(`<span class="badge danger">En baja${fecha}</span>`);
+  } else {
+    badges.push(`<span class="badge">Activo</span>`);
+  }
 
   const edad = calculateAge(paciente.fechaNac);
 
@@ -655,7 +662,7 @@ const renderPaciente = (paciente) => {
 
     const telefono = paciente.telefono || "Sin teléfono";
 
-    elements.meta.textContent = `${email} · ${telefono}`;
+    elements.meta.textContent = `${email} - ${telefono}`;
 
   }
 
@@ -698,7 +705,7 @@ const renderPaciente = (paciente) => {
 
 
   renderBadges(paciente);
-
+  updateAccionesPaciente(paciente);
 };
 
 
@@ -721,6 +728,17 @@ const getEstadoClass = (estado = "") => {
 
   return "status-pill is-pending";
 
+};
+
+
+
+const updateAccionesPaciente = (paciente) => {
+  if (!elements.bajaBtn || !elements.reactivarBtn) return;
+  const enBaja = isPacienteEnBaja(paciente);
+  elements.bajaBtn.hidden = enBaja;
+  elements.reactivarBtn.hidden = !enBaja;
+  elements.bajaBtn.disabled = false;
+  elements.reactivarBtn.disabled = false;
 };
 
 
@@ -1995,6 +2013,74 @@ const handleDeleteRegistro = async () => {
 
 
 
+const darDeBajaPaciente = async () => {
+  if (!pacienteId) {
+    return;
+  }
+  if (elements.bajaBtn) {
+    elements.bajaBtn.disabled = true;
+  }
+
+  const confirmar = window.confirm("¿Quieres dar de baja a este paciente?");
+  if (!confirmar) {
+    if (elements.bajaBtn) elements.bajaBtn.disabled = false;
+    return;
+  }
+
+  let motivo = "";
+  try {
+    const respuesta = window.prompt("Motivo de la baja (opcional):", "") ?? "";
+    motivo = respuesta.trim();
+  } catch {
+    motivo = "";
+  }
+
+  try {
+    await requestJson(`/pacientes/${encodeURIComponent(pacienteId)}/baja`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ motivo })
+    });
+    await loadPaciente();
+    alert("Paciente dado de baja correctamente.");
+  } catch (error) {
+    console.error("No se pudo dar de baja al paciente:", error);
+    alert(error?.message || "No se pudo dar de baja al paciente.");
+  } finally {
+    if (elements.bajaBtn) elements.bajaBtn.disabled = false;
+  }
+};
+
+const reactivarPaciente = async () => {
+  if (!pacienteId) {
+    return;
+  }
+  if (elements.reactivarBtn) {
+    elements.reactivarBtn.disabled = true;
+  }
+
+  const confirmar = window.confirm("¿Quieres reactivar al paciente?");
+  if (!confirmar) {
+    if (elements.reactivarBtn) elements.reactivarBtn.disabled = false;
+    return;
+  }
+
+  try {
+    await requestJson(`/pacientes/${encodeURIComponent(pacienteId)}/reactivar`, {
+      method: "POST"
+    });
+    await loadPaciente();
+    alert("Paciente reactivado correctamente.");
+  } catch (error) {
+    console.error("No se pudo reactivar al paciente:", error);
+    alert(error?.message || "No se pudo reactivar al paciente.");
+  } finally {
+    if (elements.reactivarBtn) elements.reactivarBtn.disabled = false;
+  }
+};
+
+
+
 const loadPaciente = async () => {
 
   try {
@@ -2083,6 +2169,10 @@ const init = () => {
   elements.meta = document.getElementById("pacienteMeta");
 
   elements.badges = document.getElementById("pacienteBadges");
+  elements.bajaBtn = document.getElementById("btnBajaPaciente");
+  elements.reactivarBtn = document.getElementById("btnReactivarPaciente");
+  elements.bajaBtn?.addEventListener("click", darDeBajaPaciente);
+  elements.reactivarBtn?.addEventListener("click", reactivarPaciente);
 
   elements.detalleNombre = document.getElementById("detalleNombre");
 
@@ -2396,7 +2486,7 @@ const renderPacienteDietas = (dietas) => {
         <div class="diet-card__item">
           <div class="diet-card__item-head">
             <strong>${escapeHtml(dieta.nombre || "Plan nutricional")}</strong>
-            <span class="badge">${estadoLabel} · V${dieta.version || 1}</span>
+            <span class="badge">${estadoLabel} - V${dieta.version || 1}</span>
           </div>
           ${metaHtml}
           ${descripcion}

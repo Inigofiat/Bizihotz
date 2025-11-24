@@ -25,6 +25,9 @@ const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
+const getAvatarFileName = (path = "") =>
+  path ? path.replace(/\\/g, "/").split("/").pop() : "";
+const getStoredAvatarName = () => localStorage.getItem("perfil_avatar_nombre") || "";
 
 const buildAvatarSrc = (fotoPath) => {
   if (!fotoPath) {
@@ -83,6 +86,9 @@ function cerrarModal(id) {
   if (id === "modalEditar") {
     avatarArchivoPendiente = null;
     avatarPreviewTemporal = null;
+    if (avatarInput) {
+      avatarInput.value = "";
+    }
     if (usuarioActual) {
       actualizarPerfilUI();
     }
@@ -154,9 +160,10 @@ function actualizarPerfilUI() {
   setAvatarImage(avatarImageNode, avatarSrc);
   const storedName =
     avatarArchivoPendiente?.name ??
-    localStorage.getItem("perfil_avatar_nombre") ??
-    (fotoActual ? fotoActual.split("/").pop() : "");
+    getStoredAvatarName() ??
+    getAvatarFileName(fotoActual);
   actualizarNombreArchivoAvatar(storedName);
+  actualizarEstadoEliminarAvatar();
 }
 
 const cargarUsuario = () => {
@@ -203,6 +210,9 @@ async function guardarPerfil(event) {
       localStorage.setItem("perfil_avatar_nombre", avatarArchivoPendiente.name);
       avatarArchivoPendiente = null;
       avatarPreviewTemporal = null;
+      if (avatarInput) {
+        avatarInput.value = "";
+      }
     }
   } catch (error) {
     console.error("Error subiendo avatar:", error);
@@ -247,6 +257,32 @@ const subirAvatar = async (file) => {
   }
 
   throw lastError ?? new Error("No se pudo subir la foto de perfil.");
+};
+
+const eliminarAvatar = async () => {
+  const endpoints = [`${API_URL}/usuarios/${usuarioActual.idUsuario}/avatar`];
+  if (API_FALLBACK) {
+    endpoints.push(`${API_FALLBACK}/usuarios/${usuarioActual.idUsuario}/avatar`);
+  }
+
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || `Error eliminando avatar (${response.status}).`);
+      }
+
+      return data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("No se pudo eliminar la foto de perfil.");
 };
 
 async function guardarContrasena(event) {
@@ -358,11 +394,25 @@ document.querySelectorAll(".togglePassword").forEach((btn) => {
 const avatarInput = document.getElementById("avatarInput");
 const avatarButton = document.getElementById("btnSelectAvatar");
 const avatarFilename = document.getElementById("avatarFilename");
+const removeAvatarButton = document.getElementById("btnRemoveAvatar");
+const avatarNode = document.getElementById("avatarImage");
 
 function actualizarNombreArchivoAvatar(nombre) {
   if (avatarFilename) {
     avatarFilename.textContent = nombre || "Ningun archivo seleccionado";
   }
+}
+
+function actualizarEstadoEliminarAvatar() {
+  if (!removeAvatarButton) {
+    return;
+  }
+  const nombreAlmacenado = getStoredAvatarName();
+  const tieneFotoGuardada = Boolean(usuarioActual?.foto);
+  const hayPendiente = Boolean(
+    avatarPreviewTemporal || avatarArchivoPendiente || nombreAlmacenado
+  );
+  removeAvatarButton.disabled = !(tieneFotoGuardada || hayPendiente);
 }
 
 if (avatarButton && avatarInput) {
@@ -376,12 +426,78 @@ if (avatarInput) {
     const reader = new FileReader();
     reader.onload = function (e) {
       avatarPreviewTemporal = e.target.result;
-      const avatarNode = document.getElementById("avatarImage");
       setAvatarImage(avatarNode, avatarPreviewTemporal);
     };
     avatarArchivoPendiente = file;
     actualizarNombreArchivoAvatar(file.name);
+    actualizarEstadoEliminarAvatar();
     reader.readAsDataURL(file);
+  });
+}
+
+if (removeAvatarButton) {
+  removeAvatarButton.addEventListener("click", async () => {
+    if (!usuarioActual) {
+      alert("Inicia sesion de nuevo para modificar tu foto de perfil.");
+      return;
+    }
+
+    if (avatarArchivoPendiente || avatarPreviewTemporal) {
+      avatarArchivoPendiente = null;
+      avatarPreviewTemporal = null;
+      if (avatarInput) {
+        avatarInput.value = "";
+      }
+      const fotoActual = usuarioActual?.foto ?? "";
+      setAvatarImage(avatarNode, buildAvatarSrc(fotoActual));
+      const nombreArchivo = getStoredAvatarName() || getAvatarFileName(fotoActual);
+      actualizarNombreArchivoAvatar(nombreArchivo);
+      actualizarEstadoEliminarAvatar();
+      return;
+    }
+
+    const nombreAlmacenado = getStoredAvatarName();
+    const tieneFotoEnServidor = Boolean(usuarioActual.foto);
+
+    if (!tieneFotoEnServidor && !nombreAlmacenado) {
+      actualizarEstadoEliminarAvatar();
+      return;
+    }
+
+    const confirmar = window.confirm(
+      "¿Quieres quitar tu foto de perfil y volver al avatar por defecto?"
+    );
+    if (!confirmar) return;
+
+    const previousLabel = removeAvatarButton.textContent;
+    removeAvatarButton.disabled = true;
+    removeAvatarButton.textContent = "Quitando...";
+
+    try {
+      if (tieneFotoEnServidor) {
+        await eliminarAvatar();
+      } else {
+        // No hay foto en servidor: limpia estado local igualmente
+        localStorage.removeItem("perfil_avatar_nombre");
+      }
+      avatarArchivoPendiente = null;
+      avatarPreviewTemporal = null;
+      if (avatarInput) {
+        avatarInput.value = "";
+      }
+      actualizarUsuarioLocal({ foto: "" });
+      localStorage.removeItem("perfil_avatar_nombre");
+      setAvatarImage(avatarNode, DEFAULT_AVATAR_URL);
+      actualizarNombreArchivoAvatar("");
+      actualizarEstadoEliminarAvatar();
+      alert("Foto de perfil eliminada.");
+    } catch (error) {
+      alert(error.message || "No se pudo eliminar la foto de perfil.");
+    } finally {
+      removeAvatarButton.disabled = false;
+      removeAvatarButton.textContent = previousLabel || "Quitar foto";
+      actualizarEstadoEliminarAvatar();
+    }
   });
 }
 
@@ -446,7 +562,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setAvatarImage(avatarNode, buildAvatarSrc(fotoActual));
 
   const avatarNombre =
-    localStorage.getItem("perfil_avatar_nombre") ??
-    (fotoActual ? fotoActual.split("/").pop() : "");
+    getStoredAvatarName() || getAvatarFileName(fotoActual);
   actualizarNombreArchivoAvatar(avatarNombre);
+  actualizarEstadoEliminarAvatar();
 });

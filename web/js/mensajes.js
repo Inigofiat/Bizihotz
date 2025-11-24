@@ -138,6 +138,7 @@
     conversationList: document.getElementById("conversationList"),
     searchInput: document.getElementById("searchInput"),
     chatPlaceholder: document.getElementById("chatPlaceholder"),
+    chatBrand: document.getElementById("chatBrand"),
     chatContent: document.getElementById("chatContent"),
     chatHeaderDetails: document.getElementById("chatHeaderDetails"),
     chatFeedback: document.getElementById("chatFeedback"),
@@ -207,6 +208,23 @@
       hideChatFeedback();
     }, timeout);
   }
+
+  const showConversationPlaceholder = () => {
+    refs.chatPlaceholder.hidden = false;
+    refs.chatContent.hidden = true;
+    if (refs.chatBrand) {
+      refs.chatBrand.hidden = true;
+    }
+  };
+
+  const showConversationWorkspace = () => {
+    refs.chatPlaceholder.hidden = true;
+    refs.chatContent.hidden = false;
+    if (refs.chatBrand) {
+      refs.chatBrand.hidden = false;
+      refs.chatPlaceholder.hidden = true;
+    }
+  };
 
   const handleBackButtonClick = (event) => {
     if (event) {
@@ -333,25 +351,6 @@
       messageId: null,
       conversationId: null
     };
-  };
-
-  const showContextMenu = (menu, x, y) => {
-    if (!menu) {
-      return;
-    }
-    hideContextMenus();
-    menu.hidden = false;
-    menu.style.visibility = "hidden";
-    const width = menu.offsetWidth || 180;
-    const height = menu.offsetHeight || 96;
-    const maxX = window.innerWidth - width - 8;
-    const maxY = window.innerHeight - height - 8;
-    const posX = Math.max(8, Math.min(x, maxX));
-    const posY = Math.max(8, Math.min(y, maxY));
-    menu.style.left = `${posX}px`;
-    menu.style.top = `${posY}px`;
-    menu.style.visibility = "visible";
-    openContextMenu = menu;
   };
 
   const setSocketStatus = (status, label) => {
@@ -1063,8 +1062,7 @@
     messagesCache.delete(conversationId);
     if (activeConversationId === conversationId) {
       activeConversationId = null;
-      refs.chatPlaceholder.hidden = false;
-      refs.chatContent.hidden = true;
+      showConversationPlaceholder();
       if (refs.messageList) {
         refs.messageList.innerHTML = "";
       }
@@ -1172,8 +1170,7 @@
     activeConversationId = conversationId;
     hideChatFeedback();
     updateConversationActionsState();
-    refs.chatPlaceholder.hidden = true;
-    refs.chatContent.hidden = false;
+    showConversationWorkspace();
 
     conversations = conversations.map((conversation) => {
       if (conversation.id === conversationId) {
@@ -1218,8 +1215,7 @@
       const stillExists = conversations.some((conversation) => conversation.id === activeConversationId);
       if (!stillExists) {
         activeConversationId = null;
-        refs.chatPlaceholder.hidden = false;
-        refs.chatContent.hidden = true;
+        showConversationPlaceholder();
         updateConversationActionsState();
         hideChatFeedback();
       }
@@ -1428,54 +1424,6 @@
     }
   };
 
-  const handleMessageContextMenu = (event) => {
-    if (!activeConversationId) {
-      return;
-    }
-    const targetItem = event.target.closest("li.message");
-    if (!targetItem) {
-      hideContextMenus();
-      return;
-    }
-    const messageId = targetItem.dataset.messageId;
-    const senderId = targetItem.dataset.senderId;
-    if (!messageId || senderId !== currentUserId) {
-      hideContextMenus();
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    if (refs.messageContextMenu) {
-      contextMenuState = {
-        type: "message",
-        messageId,
-        conversationId: activeConversationId
-      };
-      refs.messageContextMenu.dataset.messageId = messageId;
-      refs.messageContextMenu.dataset.conversationId = activeConversationId;
-      showContextMenu(refs.messageContextMenu, event.clientX, event.clientY);
-    }
-  };
-
-  const handleConversationContextMenu = (event) => {
-    const targetItem = event.target.closest("li[data-conversation-id]");
-    if (!targetItem) {
-      hideContextMenus();
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    const conversationId = targetItem.dataset.conversationId;
-    if (refs.conversationContextMenu) {
-      contextMenuState = {
-        type: "conversation",
-        conversationId
-      };
-      refs.conversationContextMenu.dataset.conversationId = conversationId;
-      showContextMenu(refs.conversationContextMenu, event.clientX, event.clientY);
-    }
-  };
-
   const handleMessageMenuClick = (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) {
@@ -1511,12 +1459,6 @@
     }
     if (action === "delete") {
       requestConversationDeletion(conversationId);
-    }
-  };
-
-  const handleGlobalPointer = (event) => {
-    if (!event.target.closest(".context-menu")) {
-      hideContextMenus();
     }
   };
 
@@ -1792,16 +1734,20 @@
     [refs.closeConfirmModal, refs.confirmCancel].forEach((button) =>
       button?.addEventListener("click", closeConfirmDialog)
     );
-    refs.messageList?.addEventListener("contextmenu", handleMessageContextMenu);
-    refs.conversationList?.addEventListener("contextmenu", handleConversationContextMenu);
     refs.messageContextMenu?.addEventListener("click", handleMessageMenuClick);
     refs.conversationContextMenu?.addEventListener("click", handleConversationMenuClick);
     document.addEventListener("click", handleGlobalPointer);
-    document.addEventListener("contextmenu", handleGlobalPointer);
     document.addEventListener("scroll", hideContextMenus, true);
     window.addEventListener("resize", hideContextMenus);
     document.addEventListener("keydown", handleGlobalKeydown);
   };
+
+  const handleGlobalPointer = (event) => {
+  if (!event.target.closest(".context-menu")) {
+    hideContextMenus();
+  }
+};
+
 
   const boot = async () => {
     ensureUser();

@@ -8,6 +8,15 @@ const { createNotFoundError } = require('../utils/httpErrors');
 
 const router = express.Router();
 
+const parseBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y', 'si', 'sí'].includes(normalized);
+  }
+  return false;
+};
+
 const handleError = (res, error, defaultMessage) => {
   if (error?.name === 'ValidationError') {
     return res.status(400).json({ mensaje: error.message });
@@ -72,8 +81,20 @@ const buildSortCriteria = (value) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { buscar, page, limit, sort } = req.query;
+    const { buscar, page, limit, sort, estado } = req.query;
     const filtro = {};
+
+    const includeBaja = parseBoolean(req.query.incluirBaja || req.query.incluirInactivos);
+    const estadoNormalized = typeof estado === 'string' ? estado.trim().toLowerCase() : '';
+    if (estadoNormalized === 'activo' || estadoNormalized === 'baja') {
+      if (estadoNormalized === 'activo') {
+        filtro.$or = [{ estado: 'activo' }, { estado: { $exists: false } }];
+      } else {
+        filtro.estado = estadoNormalized;
+      }
+    } else if (!includeBaja) {
+      filtro.$or = [{ estado: 'activo' }, { estado: { $exists: false } }];
+    }
 
     if (buscar) {
       const rawSearch = String(buscar).trim();
@@ -359,6 +380,73 @@ router.put('/:id', async (req, res) => {
     return res.json(actualizado);
   } catch (error) {
     return handleError(res, error, 'Error al actualizar el paciente');
+  }
+});
+
+router.post('/:id/baja', async (req, res) => {
+  try {
+    const { id } = req.params;
+    ensureValidObjectId(id, 'paciente');
+
+    const paciente = await Paciente.findById(id);
+    if (!paciente) {
+      throw createNotFoundError('Paciente', id);
+    }
+
+    const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+    const bajaPor = req.body?.bajaPor || null;
+
+    if (paciente.estado === 'baja') {
+      return res.json({
+        mensaje: 'El paciente ya estaba dado de baja.',
+        paciente
+      });
+    }
+
+    paciente.estado = 'baja';
+    paciente.fechaBaja = new Date();
+    paciente.motivoBaja = motivo;
+    paciente.bajaPor = bajaPor;
+    await paciente.save();
+
+    return res.json({
+      mensaje: 'Paciente dado de baja correctamente.',
+      paciente
+    });
+  } catch (error) {
+    return handleError(res, error, 'Error al dar de baja al paciente');
+  }
+});
+
+router.post('/:id/reactivar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    ensureValidObjectId(id, 'paciente');
+
+    const paciente = await Paciente.findById(id);
+    if (!paciente) {
+      throw createNotFoundError('Paciente', id);
+    }
+
+    if (paciente.estado === 'activo') {
+      return res.json({
+        mensaje: 'El paciente ya estaba activo.',
+        paciente
+      });
+    }
+
+    paciente.estado = 'activo';
+    paciente.fechaBaja = null;
+    paciente.motivoBaja = '';
+    paciente.bajaPor = null;
+    await paciente.save();
+
+    return res.json({
+      mensaje: 'Paciente reactivado correctamente.',
+      paciente
+    });
+  } catch (error) {
+    return handleError(res, error, 'Error al reactivar al paciente');
   }
 });
 

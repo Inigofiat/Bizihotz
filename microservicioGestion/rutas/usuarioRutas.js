@@ -189,4 +189,35 @@ router.post("/:id/avatar", upload.single("avatar"), async (req, res, next) => {
   }
 });
 
+router.delete("/:id/avatar", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
+    }
+
+    const usuario = await Usuario.findById(id);
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    }
+
+    if (usuario.foto && usuario.foto.startsWith("/uploads/avatars/")) {
+      const previousPath = resolveUploadPath(usuario.foto);
+      await deleteFileIfExists(previousPath);
+    }
+
+    usuario.foto = "";
+    await usuario.save();
+
+    return res.json({
+      mensaje: "Avatar eliminado correctamente.",
+      fotoUrl: ""
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;
