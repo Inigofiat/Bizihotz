@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Bizihotz · Microservicio de Gestión",
+    "title": "Bizihotz - Microservicio de Gestion",
     "version": "1.0.0",
-    "description": "Documentación de la API para el microservicio de gestión de pacientes, citas e historiales."
+    "description": "Documentacion de la API para el microservicio de gestion de pacientes, citas e historiales."
   },
   "servers": [
     {
@@ -32,29 +32,6 @@
     }
   ],
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Comprobar el estado del servicio",
-        "responses": {
-          "200": {
-            "description": "Servicio operativo",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "ok"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/pacientes": {
       "get": {
         "tags": [
@@ -68,7 +45,64 @@
             "schema": {
               "type": "string"
             },
-            "description": "Texto para buscar por nombre, apellidos o email"
+            "description": "Texto para buscar por nombre, apellidos, email o tel\u00c3\u00a9fono"
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "activo",
+                "baja"
+              ]
+            },
+            "description": "Filtrar por estado exacto."
+          },
+          {
+            "name": "incluirBaja",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Si es false, se excluyen los pacientes dados de baja. Por defecto es true (se incluyen)."
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Alias de incluirBaja."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "N\u00c3\u00bamero de p\u00c3\u00a1gina (paginaci\u00c3\u00b3n opcional)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Tama\u00c3\u00b1o de p\u00c3\u00a1gina (por defecto 20 si se env\u00c3\u00ada page/limit)."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "createdAt:desc"
+            },
+            "description": "Orden, p.ej. createdAt:desc o nombrePaciente:asc."
           }
         ],
         "responses": {
@@ -383,7 +417,7 @@
         "tags": [
           "Citas"
         ],
-        "summary": "Actualizar estado de atención",
+        "summary": "Actualizar estado de atenci\u00c3\u00b3n",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -439,21 +473,44 @@
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Filtra por idPaciente"
           },
           {
             "name": "idUsuario",
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Filtra por idUsuario"
           },
           {
             "name": "idCita",
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Filtra por idCita"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Número de página (opcional)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            },
+            "description": "Tamaño de página (max 500). Si no se indica, se limita a 200 registros."
           }
         ],
         "responses": {
@@ -627,7 +684,7 @@
       },
       "post": {
         "tags": [
-          "Registros antropométricos"
+          "Registrosantropométricos"
         ],
         "summary": "Crear registro",
         "requestBody": {
@@ -782,7 +839,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Crear relación",
+        "summary": "Crear relaci\u00c3\u00b3n",
         "requestBody": {
           "required": true,
           "content": {
@@ -795,7 +852,7 @@
         },
         "responses": {
           "201": {
-            "description": "Relación creada",
+            "description": "Relaci\u00c3\u00b3n creada",
             "content": {
               "application/json": {
                 "schema": {
@@ -815,7 +872,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Obtener relación",
+        "summary": "Obtener relaci\u00c3\u00b3n",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -823,7 +880,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Relación encontrada",
+            "description": "Relaci\u00c3\u00b3n encontrada",
             "content": {
               "application/json": {
                 "schema": {
@@ -841,7 +898,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Eliminar relación",
+        "summary": "Eliminar relaci\u00c3\u00b3n",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -849,7 +906,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Relación eliminada"
+            "description": "Relaci\u00c3\u00b3n eliminada"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -857,79 +914,754 @@
         }
       }
     },
-    "AuthUsuario": {
-      "type": "object",
-      "properties": {
-        "idUsuario": {
-          "type": "string"
-        },
-        "nombreUsuario": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "telefono": {
-          "type": "string"
-        },
-        "rol": {
-          "type": "string"
-        },
-        "foto": {
-          "type": "string"
-        },
-        "debeActualizarPassword": {
-          "type": "boolean"
+    "/status": {
+      "get": {
+        "summary": "Comprobar el estado del servicio",
+        "responses": {
+          "200": {
+            "description": "Servicio operativo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
-    "AuthChangePasswordRequest": {
-      "type": "object",
-      "required": [
-        "email",
-        "passwordActual",
-        "passwordNueva"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email"
+    "/api/auth/login": {
+      "post": {
+        "summary": "Iniciar sesion",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequest"
+              }
+            }
+          }
         },
-        "passwordActual": {
-          "type": "string"
-        },
-        "passwordNueva": {
-          "type": "string",
-          "minLength": 8
+        "responses": {
+          "200": {
+            "description": "Inicio de sesion correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthLoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos incompletos o invalidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales invalidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-    "AuthLoginRequest": {
-      "type": "object",
-      "required": [
-        "email",
-        "password"
-      ],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "password": {
-          "type": "string",
-          "minLength": 6
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Cerrar sesion",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesion cerrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
-    "AuthLoginResponse": {
-      "type": "object",
-      "properties": {
-        "mensaje": {
-          "type": "string"
+    "/api/auth/cambiar-password": {
+      "post": {
+        "summary": "Cambiar la contrasena de un usuario",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthChangePasswordRequest"
+              }
+            }
+          }
         },
-        "usuario": {
-          "$ref": "#/components/schemas/AuthUsuario"
+        "responses": {
+          "200": {
+            "description": "Contrasena actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos invalidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Contrasena actual incorrecta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/confirmar-password": {
+      "post": {
+        "summary": "Confirmar la contrasena actual",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "passwordActual"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "passwordActual": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contrasena confirmada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos invalidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Contrasena incorrecta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string"
+          }
+        }
+      },
+      "PacienteInput": {
+        "type": "object",
+        "required": [
+          "nombrePaciente",
+          "apellidos",
+          "fechaNac",
+          "emailPaciente",
+          "telefono"
+        ],
+        "properties": {
+          "nombrePaciente": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "fechaNac": {
+            "type": "string",
+            "format": "date"
+          },
+          "emailPaciente": {
+            "type": "string",
+            "format": "email"
+          },
+          "telefono": {
+            "type": "string"
+          }
+        }
+      },
+      "Paciente": {
+        "type": "object",
+        "properties": {
+          "idPaciente": {
+            "type": "string",
+            "example": "64f1c9b58d1c2e0012abcd34"
+          },
+          "nombrePaciente": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "fechaNac": {
+            "type": "string",
+            "format": "date"
+          },
+          "emailPaciente": {
+            "type": "string",
+            "format": "email"
+          },
+          "telefono": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activo",
+              "baja"
+            ]
+          },
+          "fechaBaja": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "motivoBaja": {
+            "type": "string"
+          },
+          "bajaPor": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID del profesional que gestiono la baja"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idPaciente",
+          "nombrePaciente",
+          "apellidos",
+          "fechaNac",
+          "emailPaciente",
+          "telefono"
+        ]
+      },
+      "CitaInput": {
+        "type": "object",
+        "required": [
+          "fechaCita",
+          "hora",
+          "tipoConsulta",
+          "idUsuario",
+          "idPaciente"
+        ],
+        "properties": {
+          "fechaCita": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hora": {
+            "type": "string",
+            "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "tipoConsulta": {
+            "type": "string"
+          },
+          "notas": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "Pendiente",
+              "Atendida",
+              "Cancelada"
+            ]
+          },
+          "atendida": {
+            "type": "boolean"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "idPaciente": {
+            "type": "string"
+          }
+        }
+      },
+      "Cita": {
+        "type": "object",
+        "properties": {
+          "idCita": {
+            "type": "string",
+            "example": "64f1c9b58d1c2e0012abcd35"
+          },
+          "fechaCita": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hora": {
+            "type": "string",
+            "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+          },
+          "tipoConsulta": {
+            "type": "string"
+          },
+          "notas": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "Pendiente",
+              "Atendida",
+              "Cancelada"
+            ]
+          },
+          "atendida": {
+            "type": "boolean"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idCita",
+          "fechaCita",
+          "hora",
+          "tipoConsulta",
+          "idUsuario",
+          "idPaciente",
+          "estado",
+          "atendida"
+        ]
+      },
+      "HistorialInput": {
+        "type": "object",
+        "required": [
+          "idPaciente",
+          "idUsuario",
+          "idCita"
+        ],
+        "properties": {
+          "observaciones": {
+            "type": "string"
+          },
+          "fechaActualizacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "idCita": {
+            "type": "string"
+          }
+        }
+      },
+      "Historial": {
+        "type": "object",
+        "properties": {
+          "idHistorial": {
+            "type": "string",
+            "example": "64f1c9b58d1c2e0012abcd36"
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "fechaActualizacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "idCita": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idHistorial",
+          "fechaActualizacion",
+          "idPaciente",
+          "idUsuario",
+          "idCita"
+        ]
+      },
+      "RegistroInput": {
+        "type": "object",
+        "required": [
+          "peso",
+          "altura",
+          "imc",
+          "idPaciente",
+          "idUsuario"
+        ],
+        "properties": {
+          "fechaMedicion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "peso": {
+            "type": "number"
+          },
+          "altura": {
+            "type": "number"
+          },
+          "imc": {
+            "type": "number"
+          },
+          "grasaCorporal": {
+            "type": "number"
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          }
+        }
+      },
+      "Registro": {
+        "type": "object",
+        "properties": {
+          "idMedicion": {
+            "type": "string",
+            "example": "64f1c9b58d1c2e0012abcd37"
+          },
+          "fechaMedicion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "peso": {
+            "type": "number"
+          },
+          "altura": {
+            "type": "number"
+          },
+          "imc": {
+            "type": "number"
+          },
+          "grasaCorporal": {
+            "type": "number"
+          },
+          "observaciones": {
+            "type": "string"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idMedicion",
+          "fechaMedicion",
+          "peso",
+          "altura",
+          "imc",
+          "idPaciente",
+          "idUsuario"
+        ]
+      },
+      "PacienteUsuarioInput": {
+        "type": "object",
+        "required": [
+          "idPaciente",
+          "idUsuario"
+        ],
+        "properties": {
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          }
+        }
+      },
+      "PacienteUsuario": {
+        "type": "object",
+        "properties": {
+          "idPacienteUsuario": {
+            "type": "string",
+            "example": "64f1c9b58d1c2e0012abcd38"
+          },
+          "idPaciente": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "idPacienteUsuario",
+          "idPaciente",
+          "idUsuario"
+        ]
+      },
+      "AuthUsuario": {
+        "type": "object",
+        "properties": {
+          "idUsuario": {
+            "type": "string"
+          },
+          "nombreUsuario": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "telefono": {
+            "type": "string"
+          },
+          "rol": {
+            "type": "string"
+          },
+          "foto": {
+            "type": "string"
+          },
+          "debeActualizarPassword": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthChangePasswordRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "passwordActual",
+          "passwordNueva"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "passwordActual": {
+            "type": "string"
+          },
+          "passwordNueva": {
+            "type": "string",
+            "minLength": 8
+          }
+        }
+      },
+      "AuthLoginRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email o identificador de usuario"
+          },
+          "identificador": {
+            "type": "string",
+            "description": "Nombre de usuario alternativo al email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          }
+        }
+      },
+      "AuthLoginResponse": {
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/AuthUsuario"
+          }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Error de validacion de datos",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso no encontrado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "ObjectIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Identificador en formato Mongo ObjectId",
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{24}$"
         }
       }
     }

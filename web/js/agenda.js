@@ -6,7 +6,7 @@
  * - En producción, se usa el gateway publicado bajo /gestion
  */
 const API_BASE_URL = (() => {
-  const serviceBase = "http://localhost:4002";
+  const serviceBase = "http://localhost:4001";
   const gatewayBase = "http://localhost:5000/gestion";
   const isFile = window.location.protocol === "file:";
   const host = window.location.hostname || "localhost";
@@ -2156,28 +2156,19 @@ const renderAppointmentsList = (citas, terminoNormalizado) => {
 
 
   if (!Array.isArray(citas) || citas.length === 0) {
-
-    const emptyMessage = document.createElement("div");
-
-    emptyMessage.className = "slot-empty";
-
-    emptyMessage.textContent =
-
-      terminoNormalizado && terminoNormalizado.length
-
-        ? "No hay citas que coincidan con la búsqueda."
-
-        : container.dataset.empty || "No hay citas para este día.";
-
-    container.appendChild(emptyMessage);
-
-    return;
-
+    // Si hay b?squeda, mostramos mensaje; sin b?squeda mostramos huecos libres.
+    if (terminoNormalizado && terminoNormalizado.length) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "slot-empty";
+      emptyMessage.textContent = "No hay citas que coincidan con la b?squeda.";
+      container.appendChild(emptyMessage);
+      return;
+    }
+    citas = [];
   }
 
 
-
-  const citasPorHora = new Map();
+const citasPorHora = new Map();
 
   citas.forEach((cita) => {
 

@@ -2673,7 +2673,7 @@
 (() => {
   const UNIQUE = (values) => [...new Set(values.filter(Boolean).map((value) => value.replace(/\/\/+$/, "")))];
 
-  const LOCAL_GESTION_BASE = "http://localhost:4002";
+  const LOCAL_GESTION_BASE = "http://localhost:4001";
   const LOCAL_NUTRICION_BASE = "http://localhost:5002";
 
   const isLocalEnvironment = () => {

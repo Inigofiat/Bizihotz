@@ -18,7 +18,7 @@ const API_BASE_URL = (() => {
 
 const API_FALLBACK_URL =
   window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:4002"
+    ? "http://localhost:4001"
     : null;
 
 const API_URL = `${API_BASE_URL}/api`;

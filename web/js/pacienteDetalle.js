@@ -6,7 +6,7 @@ const API_BASE_URL = (() => {
 
   const gatewayBase = "http://localhost:5000/gestion";
 
-  const serviceBase = "http://localhost:4002";
+  const serviceBase = "http://localhost:4001";
 
 
 

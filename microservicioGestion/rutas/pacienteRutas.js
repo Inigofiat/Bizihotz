@@ -8,15 +8,17 @@ const { createNotFoundError } = require('../utils/httpErrors');
 
 const router = express.Router();
 
-const parseBoolean = (value) => {
+const parseBoolean = (value, defaultValue = false) => {
+  if (typeof value === 'undefined' || value === null) {
+    return defaultValue;
+  }
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    return ['1', 'true', 'yes', 'y', 'si', 'sí'].includes(normalized);
+    return ['1', 'true', 'yes', 'y', 'si'].includes(normalized);
   }
-  return false;
+  return defaultValue;
 };
-
 const handleError = (res, error, defaultMessage) => {
   if (error?.name === 'ValidationError') {
     return res.status(400).json({ mensaje: error.message });
@@ -84,7 +86,11 @@ router.get('/', async (req, res) => {
     const { buscar, page, limit, sort, estado } = req.query;
     const filtro = {};
 
-    const includeBaja = parseBoolean(req.query.incluirBaja || req.query.incluirInactivos);
+    // Por defecto incluimos pacientes dados de baja; solo se excluyen si el cliente lo pide.
+    const includeBaja = (Object.prototype.hasOwnProperty.call(req.query, 'incluirBaja')
+      || Object.prototype.hasOwnProperty.call(req.query, 'incluirInactivos'))
+      ? parseBoolean(req.query.incluirBaja || req.query.incluirInactivos, false)
+      : true;
     const estadoNormalized = typeof estado === 'string' ? estado.trim().toLowerCase() : '';
     if (estadoNormalized === 'activo' || estadoNormalized === 'baja') {
       if (estadoNormalized === 'activo') {

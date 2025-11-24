@@ -5,6 +5,17 @@ const { createNotFoundError } = require('../utils/httpErrors');
 
 const router = express.Router();
 
+const DEFAULT_PAGE_SIZE = 200;
+const MAX_PAGE_SIZE = 500;
+
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isInteger(parsed) && parsed > 0) {
+    return parsed;
+  }
+  return fallback;
+};
+
 const handleError = (res, error, defaultMessage) => {
   if (error.name === 'ValidationError') {
     return res.status(400).json({ mensaje: error.message });
@@ -17,7 +28,7 @@ const handleError = (res, error, defaultMessage) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { idPaciente, idUsuario, idCita } = req.query;
+    const { idPaciente, idUsuario, idCita, page, limit } = req.query;
     const filtro = {};
 
     if (idPaciente) {
@@ -33,7 +44,34 @@ router.get('/', async (req, res) => {
       filtro.idCita = idCita;
     }
 
-    const historiales = await HistorialPaciente.find(filtro).sort({ fechaActualizacion: -1 });
+    const pageNumber = parsePositiveInt(page, null);
+    const pageSize = parsePositiveInt(limit, null);
+    const size = Math.min(pageSize || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+
+    if (pageNumber || pageSize) {
+      const currentPage = pageNumber || 1;
+      const skip = (currentPage - 1) * size;
+
+      const [total, items] = await Promise.all([
+        HistorialPaciente.countDocuments(filtro),
+        HistorialPaciente.find(filtro)
+          .sort({ fechaActualizacion: -1 })
+          .skip(skip)
+          .limit(size)
+      ]);
+
+      return res.json({
+        items,
+        total,
+        page: currentPage,
+        pageSize: size,
+        pages: Math.max(1, Math.ceil(total / size))
+      });
+    }
+
+    const historiales = await HistorialPaciente.find(filtro)
+      .sort({ fechaActualizacion: -1 })
+      .limit(size);
     return res.json(historiales);
   } catch (error) {
     return handleError(res, error, 'Error al obtener los historiales');

@@ -8,7 +8,7 @@
   const loadingPagePath = "cargando.html";
 
   const resolveLoginEndpoints = () => {
-    const localBase = "http://localhost:4002";
+    const localBase = "http://localhost:4001";
     const gatewayBase = "http://localhost:5000/gestion";
     const gatewayEndpoint = `${gatewayBase}/api/auth/login`;
     const localEndpoint = `${localBase}/api/auth/login`;

@@ -2,7 +2,7 @@
 
 const API_BASE_URL = (() => {
   const gatewayBase = "http://localhost:5000/gestion";
-  const serviceBase = "http://localhost:4002";
+  const serviceBase = "http://localhost:4001";
 
   if (window.location.protocol === "file:") {
     return serviceBase;
@@ -227,7 +227,8 @@ const fetchPatients = async () => {
 
   const params = new URLSearchParams({
     page: String(state.page),
-    limit: String(state.pageSize)
+    limit: String(state.pageSize),
+    sort: "nombrePaciente:asc"
   });
   if (state.search) {
     params.set("buscar", state.search);
@@ -249,6 +250,18 @@ const fetchPatients = async () => {
       state.total = 0;
       state.pages = 1;
     }
+
+    const normalize = (value = "") =>
+      String(value || "")
+        .toLocaleLowerCase("es-ES")
+        .trim();
+
+    const fullName = (paciente) =>
+      normalize(`${paciente?.nombrePaciente || ""} ${paciente?.apellidos || ""}`);
+
+    items = items
+      .slice()
+      .sort((a, b) => fullName(a).localeCompare(fullName(b), "es-ES"));
 
     renderPatients(items);
     renderPager();
