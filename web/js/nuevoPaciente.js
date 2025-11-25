@@ -26,9 +26,10 @@ const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
 const LOGIN_PAGE = "login.html";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^\+?[0-9\s\-().]{6,20}$/;
+const PHONE_REGEX = /^\d{9}$/;
 
 let usuarioActual = null;
+const normalizePhone = (value = "") => value.replace(/\D/g, "");
 
 const elements = {
   form: null,
@@ -161,7 +162,7 @@ const serializeForm = () => ({
   apellidos: elements.apellidos?.value?.trim() || "",
   fechaNac: elements.fechaNac?.value || "",
   emailPaciente: elements.email?.value?.trim().toLowerCase() || "",
-  telefono: elements.telefono?.value?.trim() || ""
+  telefono: normalizePhone(elements.telefono?.value || "")
 });
 
 const validateForm = (data) => {
@@ -186,8 +187,9 @@ const validateForm = (data) => {
   if (!data.emailPaciente || !EMAIL_REGEX.test(data.emailPaciente)) {
     return "Introduce un email válido.";
   }
-  if (!data.telefono || !PHONE_REGEX.test(data.telefono)) {
-    return "Introduce un teléfono válido.";
+  const telefonoDigits = normalizePhone(data.telefono);
+  if (!telefonoDigits || !PHONE_REGEX.test(telefonoDigits)) {
+    return "El número de teléfono debe tener exactamente 9 dígitos.";
   }
   return null;
 };

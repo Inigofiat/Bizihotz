@@ -47,7 +47,19 @@
 
             <label class="field">
               <span>Teléfono</span>
-              <input type="tel" id="telefonoPaciente" name="telefono" autocomplete="tel" inputmode="tel" required />
+              <input
+                type="tel"
+                id="telefonoPaciente"
+                name="telefono"
+                autocomplete="tel"
+                inputmode="numeric"
+                pattern="[0-9]{9}"
+                maxlength="9"
+                minlength="9"
+                placeholder="123456789"
+                title="El número debe tener 9 dígitos"
+                required
+              />
             </label>
           </div>
 
