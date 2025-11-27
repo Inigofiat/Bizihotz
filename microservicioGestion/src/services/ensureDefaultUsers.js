@@ -4,10 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 
-const Usuario = require("../data/usuarioModel");
+const Usuario = require("../models/usuarioModel");
 
 const DEFAULT_PASSWORD = process.env.DEFAULT_USER_PASSWORD || "Bizihotz2025!";
-const PROFESIONALES_SEED = path.resolve(__dirname, "..", "data", "profesionales.seed.json");
+const PROFESIONALES_SEED = path.resolve(__dirname, "..", "models", "profesionales.seed.json");
 
 const extractNombreApellidos = (profesional = {}) => {
   const nombreSeed = (profesional.nombre ?? "").trim();

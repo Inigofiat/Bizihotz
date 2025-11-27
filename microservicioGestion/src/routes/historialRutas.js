@@ -1,5 +1,5 @@
 const express = require('express');
-const HistorialPaciente = require('../data/historialPacienteModel');
+const HistorialPaciente = require('../models/historialPacienteModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 

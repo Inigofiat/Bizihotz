@@ -1,28 +1,15 @@
 "use strict";
 
 const API_BASE_URL = (() => {
-  const gatewayBase = "http://localhost:5000/gestion";
-  const serviceBase = "http://localhost:4001";
-
-  if (window.location.protocol === "file:") {
-    return serviceBase;
+  const host = (window.location.hostname || "").toLowerCase();
+  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
+    return "http://localhost:5000/gestion";
   }
-
-  const host = window.location.hostname || "localhost";
-  if (host === "localhost" || host === "127.0.0.1") {
-    return serviceBase;
-  }
-
-  return `${window.location.protocol}//${window.location.host}/gestion`;
+  return `${window.location.protocol}//${window.location.hostname}/gestion`;
 })();
 
-const API_FALLBACK_URL =
-  window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:5000/gestion"
-    : null;
-
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
+const API_FALLBACK = null;
 const LOGIN_PAGE = "login.html";
 
 const state = {

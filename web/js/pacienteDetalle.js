@@ -1,51 +1,19 @@
-"use strict";
+﻿"use strict";
 
 
 
 const API_BASE_URL = (() => {
-
-  const gatewayBase = "http://localhost:5000/gestion";
-
-  const serviceBase = "http://localhost:4001";
-
-
-
-  if (window.location.protocol === "file:") {
-
-    return serviceBase;
-
+  const host = (window.location.hostname || "").toLowerCase();
+  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
+    return "http://localhost:5000/gestion";
   }
-
-
-
-  const host = window.location.hostname || "localhost";
-
-  if (host === "localhost" || host === "127.0.0.1") {
-
-    return serviceBase;
-
-  }
-
-
-
   return `${window.location.protocol}//${window.location.host}/gestion`;
-
 })();
 
-
-
-const API_FALLBACK_URL =
-
-  window.location.protocol === "file:" || window.location.hostname === "localhost"
-
-    ? "http://localhost:5000/gestion"
-
-    : null;
-
-
+const API_FALLBACK_URL = null;
 
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
+const API_FALLBACK = null;
 const LOGIN_PAGE = "login.html";
 const HISTORIAL_PAGE = "historialClinico.html";
 
@@ -53,23 +21,16 @@ const unique = (values) => [...new Set(values.filter(Boolean))];
 
 const resolveNutritionBase = () => {
   if (window.location.protocol === "file:") {
-    return "http://localhost:5002";
+    return "http://localhost:5000/nutricion";
   }
   const host = window.location.hostname || "localhost";
   if (host === "localhost" || host === "127.0.0.1") {
-    return "http://localhost:5002";
-  }
-  return `${window.location.protocol}//${window.location.host}/nutricion`;
-};
-
-const resolveNutritionGateway = () => {
-  if (window.location.protocol === "file:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
     return "http://localhost:5000/nutricion";
   }
   return `${window.location.protocol}//${window.location.host}/nutricion`;
 };
 
-const NUTRICION_API_BASES = unique([resolveNutritionBase(), resolveNutritionGateway()]).map((base) => `${base}/api`);
+const NUTRICION_API_BASES = unique([resolveNutritionBase()]).map((base) => `${base}/api`);
 
 const SLOT_DURATION_MINUTES = 45;
 const HORARIO_BLOQUES = [
@@ -349,7 +310,7 @@ const requestJson = async (path, options = {}) => {
 
   if (lastError) throw lastError;
 
-  throw new Error("No se pudo completar la petición.");
+  throw new Error("No se pudo completar la petici├│n.");
 
 };
 
@@ -397,7 +358,7 @@ const requestNutritionJson = async (path, options = {}) => {
   }
 
   if (lastError) throw lastError;
-  throw new Error("No se pudo completar la petición.");
+  throw new Error("No se pudo completar la petici├│n.");
 };
 
 
@@ -480,7 +441,7 @@ const formatNumber = (value, decimals = 2) => {
 
   if (typeof value !== "number" || Number.isNaN(value)) {
 
-    return "—";
+    return "ÔÇö";
 
   }
 
@@ -508,7 +469,7 @@ const formatDiff = (value) => {
 
   const absValue = Math.abs(value);
 
-  return `${prefix}${absValue.toFixed(2).replace(".", ",")} kg en 30 días`;
+  return `${prefix}${absValue.toFixed(2).replace(".", ",")} kg en 30 d├¡as`;
 
 };
 
@@ -622,7 +583,7 @@ const renderBadges = (paciente) => {
 
   if (Number.isInteger(edad)) {
 
-    badges.push(`<span class="badge">${edad} años</span>`);
+    badges.push(`<span class="badge">${edad} a├▒os</span>`);
 
   }
 
@@ -660,7 +621,7 @@ const renderPaciente = (paciente) => {
 
     const email = paciente.emailPaciente || "Sin email";
 
-    const telefono = paciente.telefono || "Sin teléfono";
+    const telefono = paciente.telefono || "Sin tel├®fono";
 
     elements.meta.textContent = `${email} - ${telefono}`;
 
@@ -676,29 +637,29 @@ const renderPaciente = (paciente) => {
 
   if (elements.detalleNacimiento) {
 
-    const fecha = paciente.fechaNac ? formatDate(paciente.fechaNac) : "—";
+    const fecha = paciente.fechaNac ? formatDate(paciente.fechaNac) : "ÔÇö";
 
     const edad = calculateAge(paciente.fechaNac);
 
-    elements.detalleNacimiento.textContent = edad ? `${fecha} (${edad} años)` : fecha;
+    elements.detalleNacimiento.textContent = edad ? `${fecha} (${edad} a├▒os)` : fecha;
 
   }
 
   if (elements.detalleEmail) {
 
-    elements.detalleEmail.textContent = paciente.emailPaciente || "—";
+    elements.detalleEmail.textContent = paciente.emailPaciente || "ÔÇö";
 
   }
 
   if (elements.detalleTelefono) {
 
-    elements.detalleTelefono.textContent = paciente.telefono || "—";
+    elements.detalleTelefono.textContent = paciente.telefono || "ÔÇö";
 
   }
 
   if (elements.detalleActualizacion) {
 
-    elements.detalleActualizacion.textContent = formatDatetime(paciente.updatedAt) || "—";
+    elements.detalleActualizacion.textContent = formatDatetime(paciente.updatedAt) || "ÔÇö";
 
   }
 
@@ -857,7 +818,7 @@ const renderTodasLasCitas = (citas) => {
 
           ? escapeHtml(cita.notas.trim()).replace(/\n/g, "<br />")
 
-          : "—";
+          : "ÔÇö";
 
 
 
@@ -917,13 +878,13 @@ const renderRegistrosAntropometricos = (payload) => {
 
       ? formatDate(resumen.fechaUltimaMedicion, { day: "2-digit", month: "short", year: "numeric" })
 
-      : "—";
+      : "ÔÇö";
 
   }
 
   if (elements.antPesoActual) {
 
-    elements.antPesoActual.textContent = resumen?.pesoActual !== undefined ? `${formatNumber(resumen.pesoActual)} kg` : "—";
+    elements.antPesoActual.textContent = resumen?.pesoActual !== undefined ? `${formatNumber(resumen.pesoActual)} kg` : "ÔÇö";
 
   }
 
@@ -939,7 +900,7 @@ const renderRegistrosAntropometricos = (payload) => {
 
   if (elements.antImcActual) {
 
-    elements.antImcActual.textContent = resumen?.imcActual !== undefined ? formatNumber(resumen.imcActual) : "—";
+    elements.antImcActual.textContent = resumen?.imcActual !== undefined ? formatNumber(resumen.imcActual) : "ÔÇö";
 
   }
 
@@ -951,7 +912,7 @@ const renderRegistrosAntropometricos = (payload) => {
 
         ? `${formatNumber(resumen.grasaCorporal)} %`
 
-        : "—";
+        : "ÔÇö";
 
   }
 
@@ -973,7 +934,7 @@ const renderRegistrosAntropometricos = (payload) => {
 
   if (!registros.length) {
 
-    const empty = body.dataset.empty || "No hay registros antropométricos.";
+    const empty = body.dataset.empty || "No hay registros antropom├®tricos.";
 
     body.innerHTML = `<tr><td colspan="6">${empty}</td></tr>`;
 
@@ -989,11 +950,11 @@ const renderRegistrosAntropometricos = (payload) => {
 
       const fecha = formatDate(registro.fechaMedicion, { day: "2-digit", month: "short", year: "numeric" });
 
-      const peso = registro.peso !== undefined ? formatNumber(registro.peso) : "—";
+      const peso = registro.peso !== undefined ? formatNumber(registro.peso) : "ÔÇö";
 
-      const altura = registro.altura !== undefined ? formatNumber(registro.altura) : "—";
+      const altura = registro.altura !== undefined ? formatNumber(registro.altura) : "ÔÇö";
 
-      const imc = registro.imc !== undefined ? formatNumber(registro.imc) : "—";
+      const imc = registro.imc !== undefined ? formatNumber(registro.imc) : "ÔÇö";
 
       const grasa =
 
@@ -1001,7 +962,7 @@ const renderRegistrosAntropometricos = (payload) => {
 
           ? formatNumber(registro.grasaCorporal)
 
-          : "—";
+          : "ÔÇö";
 
 
 
@@ -1015,7 +976,7 @@ const renderRegistrosAntropometricos = (payload) => {
 
           : "";
 
-      const detalle = profesional || observaciones ? `${profesional}${observaciones}` : "—";
+      const detalle = profesional || observaciones ? `${profesional}${observaciones}` : "ÔÇö";
 
 
 
@@ -1371,7 +1332,7 @@ const actualizarHorasDisponibles = async () => {
 
     resetHoraSelect();
 
-    setDisponibilidadHint("La fecha seleccionada no es válida.", "error");
+    setDisponibilidadHint("La fecha seleccionada no es v├ílida.", "error");
 
     return;
 
@@ -1539,7 +1500,7 @@ const validateCitaForm = (data) => {
 
   const fechaClave = getFechaClave(fecha);
 
-  if (Number.isNaN(fecha.getTime())) return "La fecha indicada no es válida.";
+  if (Number.isNaN(fecha.getTime())) return "La fecha indicada no es v├ílida.";
 
   if (!data.hora) return "Selecciona un horario disponible.";
 
@@ -1691,7 +1652,7 @@ const openDeleteModal = (registro) => {
 
   if (elements.antDeleteMessage) {
 
-    elements.antDeleteMessage.textContent = `¿Seguro que deseas eliminar el registro del ${registro.fecha}?`;
+    elements.antDeleteMessage.textContent = `┬┐Seguro que deseas eliminar el registro del ${registro.fecha}?`;
 
   }
 
@@ -1763,17 +1724,17 @@ const serializeAntropometria = () => {
 
 const validateAntropometria = (data) => {
 
-  if (!data.fechaMedicion) return "Selecciona la fecha de medición.";
+  if (!data.fechaMedicion) return "Selecciona la fecha de medici├│n.";
 
   const fecha = new Date(data.fechaMedicion);
 
-  if (Number.isNaN(fecha.getTime())) return "La fecha de medición no es válida.";
+  if (Number.isNaN(fecha.getTime())) return "La fecha de medici├│n no es v├ílida.";
 
-  if (Number.isNaN(data.peso) || data.peso <= 0) return "Introduce un peso válido.";
+  if (Number.isNaN(data.peso) || data.peso <= 0) return "Introduce un peso v├ílido.";
 
-  if (Number.isNaN(data.altura) || data.altura <= 0) return "Introduce una altura válida.";
+  if (Number.isNaN(data.altura) || data.altura <= 0) return "Introduce una altura v├ílida.";
 
-  if (Number.isNaN(data.imc) || data.imc <= 0) return "El IMC calculado no es válido.";
+  if (Number.isNaN(data.imc) || data.imc <= 0) return "El IMC calculado no es v├ílido.";
 
   if (data.grasaCorporal !== null && (Number.isNaN(data.grasaCorporal) || data.grasaCorporal < 0)) {
 
@@ -1965,7 +1926,7 @@ const handleAntFormSubmit = async (event) => {
 
   } catch (errorSubmit) {
 
-    console.error("No se pudo guardar el registro antropométrico:", errorSubmit);
+    console.error("No se pudo guardar el registro antropom├®trico:", errorSubmit);
 
     setAntFeedback(errorSubmit?.message || "Error guardando el registro.", false);
 
@@ -2001,7 +1962,7 @@ const handleDeleteRegistro = async () => {
 
   } catch (error) {
 
-    console.error("No se pudo eliminar el registro antropométrico:", error);
+    console.error("No se pudo eliminar el registro antropom├®trico:", error);
 
     alert(error?.message || "No se pudo eliminar el registro.");
 
@@ -2021,7 +1982,7 @@ const darDeBajaPaciente = async () => {
     elements.bajaBtn.disabled = true;
   }
 
-  const confirmar = window.confirm("¿Quieres dar de baja a este paciente?");
+  const confirmar = window.confirm("┬┐Quieres dar de baja a este paciente?");
   if (!confirmar) {
     if (elements.bajaBtn) elements.bajaBtn.disabled = false;
     return;
@@ -2059,7 +2020,7 @@ const reactivarPaciente = async () => {
     elements.reactivarBtn.disabled = true;
   }
 
-  const confirmar = window.confirm("¿Quieres reactivar al paciente?");
+  const confirmar = window.confirm("┬┐Quieres reactivar al paciente?");
   if (!confirmar) {
     if (elements.reactivarBtn) elements.reactivarBtn.disabled = false;
     return;

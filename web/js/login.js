@@ -8,22 +8,12 @@
   const loadingPagePath = "cargando.html";
 
   const resolveLoginEndpoints = () => {
-    const localBase = "http://localhost:4001";
-    const gatewayBase = "http://localhost:5000/gestion";
-    const gatewayEndpoint = `${gatewayBase}/api/auth/login`;
-    const localEndpoint = `${localBase}/api/auth/login`;
-
-    if (window.location.protocol === "file:") {
-      return [gatewayEndpoint, localEndpoint];
-    }
-
-    const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1") {
-      return [gatewayEndpoint, localEndpoint];
-    }
-
-    const baseUrl = `${window.location.protocol}//${window.location.host}`.replace(/\/$/, "");
-    return [`${baseUrl}/gestion/api/auth/login`];
+    const host = (window.location.hostname || "").toLowerCase();
+    const gatewayBase =
+      window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === ""
+        ? "http://localhost:5000/gestion"
+        : `${window.location.protocol}//${window.location.hostname}/gestion`;
+    return [`${gatewayBase}/api/auth/login`];
   };
 
   const LOGIN_ENDPOINTS = resolveLoginEndpoints();
@@ -105,7 +95,11 @@
 
         if (data?.usuario) {
           try {
-            localStorage.setItem("bizihotzUsuario", JSON.stringify(data.usuario));
+            const userToStore = {
+              ...data.usuario,
+              token: data.token || data.usuario?.token || ""
+            };
+            localStorage.setItem("bizihotzUsuario", JSON.stringify(userToStore));
           } catch (storageError) {
             console.warn("No se pudo guardar la sesion en localStorage:", storageError);
           }

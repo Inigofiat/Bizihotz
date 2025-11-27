@@ -1,5 +1,5 @@
 const express = require('express');
-const RegistroAntropometrico = require('../data/registroAntropometricoModel');
+const RegistroAntropometrico = require('../models/registroAntropometricoModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 

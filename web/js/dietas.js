@@ -2673,7 +2673,8 @@
 (() => {
   const UNIQUE = (values) => [...new Set(values.filter(Boolean).map((value) => value.replace(/\/\/+$/, "")))];
 
-  const LOCAL_GESTION_BASE = "http://localhost:4001";
+  // Preferimos el gateway como primera opción; el puerto local solo para desarrollos puntuales.
+  const LOCAL_GESTION_BASE = "http://localhost:4002";
   const LOCAL_NUTRICION_BASE = "http://localhost:5002";
 
   const isLocalEnvironment = () => {
@@ -2695,12 +2696,13 @@
   };
 
   const buildApiBases = (localBase, gatewaySuffix) => {
-    const bases = [];
-    if (isLocalEnvironment()) {
+    const bases = [`${resolveGatewayBase()}${gatewaySuffix}`];
+    if (isLocalEnvironment() && localBase) {
       bases.push(localBase);
     }
-    bases.push(`${resolveGatewayBase()}${gatewaySuffix}`);
-    return UNIQUE(bases).map((base) => `${base.replace(/\/\/+$/, "")}/api`);
+    return UNIQUE(bases)
+      .filter(Boolean)
+      .map((base) => `${base.replace(/\/\/+$/, "")}/api`);
   };
 
   const DEFAULT_NUTRICION_USUARIO_ID = 1;

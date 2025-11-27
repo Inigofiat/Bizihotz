@@ -366,6 +366,24 @@
     }
   };
 
+  const resolveAuthToken = () => {
+    try {
+      const stored = currentUser || JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || "null");
+      return stored?.token || stored?.accessToken || stored?.authToken || "";
+    } catch (_error) {
+      return "";
+    }
+  };
+
+  const buildAuthHeaders = (baseHeaders = {}) => {
+    const headers = Object.assign({ Accept: "application/json" }, baseHeaders || {});
+    const token = resolveAuthToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
   const buildFallbackFetch = async (path, options = {}) => {
     let lastError = null;
     const orderedBases = resolvedApiBase
@@ -374,7 +392,10 @@
 
     for (const base of orderedBases) {
       try {
-        const response = await fetch(`${base}${path}`, options);
+        const response = await fetch(`${base}${path}`, {
+          ...options,
+          headers: buildAuthHeaders(options.headers)
+        });
         if (!response.ok) {
           const body = await response.text();
           throw new Error(body || `Solicitud rechazada (${response.status})`);
@@ -562,7 +583,9 @@
 
     for (const base of GESTION_API_BASES) {
       try {
-        const response = await fetch(`${base}/usuarios?${params.toString()}`);
+        const response = await fetch(`${base}/usuarios?${params.toString()}`, {
+          headers: buildAuthHeaders()
+        });
         if (!response.ok) {
           const text = await response.text();
           throw new Error(text || `Error ${response.status}`);

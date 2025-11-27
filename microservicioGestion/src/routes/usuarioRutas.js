@@ -6,7 +6,7 @@ const path = require("path");
 const fs = require("fs");
 const { Types } = require("mongoose");
 
-const Usuario = require("../data/usuarioModel");
+const Usuario = require("../models/usuarioModel");
 
 const router = express.Router();
 

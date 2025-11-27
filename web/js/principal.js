@@ -1,29 +1,16 @@
 "use strict";
 
+// Siempre a través del gateway (/gestion), tanto en local como desplegado.
 const API_BASE_URL = (() => {
-  const gatewayBase = "http://localhost:5000/gestion";
-  const serviceBase = "http://localhost:4001";
-
-  if (window.location.protocol === "file:") {
-    return serviceBase;
+  const host = (window.location.hostname || "").toLowerCase();
+  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
+    return "http://localhost:5000/gestion";
   }
-
-  const host = window.location.hostname || "localhost";
-
-  if (host === "localhost" || host === "127.0.0.1") {
-    return serviceBase;
-  }
-
-  return `${window.location.protocol}//${window.location.host}/gestion`;
+  return `${window.location.protocol}//${window.location.hostname}/gestion`;
 })();
 
-const API_FALLBACK_URL =
-  window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:5000/gestion"
-    : null;
-
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
+const API_FALLBACK = null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const CONVERSATION_TARGET_KEY = "bizihotzConversationTarget";
@@ -236,6 +223,37 @@ const getStoredUser = () => {
     console.warn("No se pudo interpretar el usuario guardado:", error);
     return null;
   }
+};
+
+const resolveTokenOrRedirect = () => {
+  const stored = getStoredUser();
+  const token =
+    usuarioActual?.token ||
+    usuarioActual?.accessToken ||
+    usuarioActual?.authToken ||
+    stored?.token ||
+    stored?.accessToken ||
+    stored?.authToken;
+  if (!token) {
+    localStorage.removeItem("bizihotzUsuario");
+    window.location.href = LOGIN_PAGE;
+    throw new Error("Sesion no valida. Necesitas iniciar sesion.");
+  }
+  return token;
+};
+
+const buildAuthHeaders = (baseHeaders = {}) => {
+  const headers = Object.assign({ Accept: "application/json" }, baseHeaders || {});
+  let token = null;
+  try {
+    token = resolveTokenOrRedirect();
+  } catch (error) {
+    console.warn(error?.message || "Sesion no valida");
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 const buildAvatarSrc = (fotoPath) => {
@@ -488,9 +506,9 @@ const patchCitaEstado = async (citaId, nuevoEstado) => {
     try {
       const response = await fetch(endpoint, {
         method: "PATCH",
-        headers: {
+        headers: buildAuthHeaders({
           "Content-Type": "application/json"
-        },
+        }),
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
@@ -819,14 +837,19 @@ const cargarCitas = async () => {
   });
   const primaryUrl = `${API_URL}/citas?${params.toString()}`;
   const fallbackUrl = API_FALLBACK ? `${API_FALLBACK}/citas?${params.toString()}` : null;
-
+  const requestInit = { headers: buildAuthHeaders() };
   try {
-    const res = await fetch(primaryUrl).catch((error) => {
+    const res = await fetch(primaryUrl, requestInit).catch((error) => {
       if (fallbackUrl) {
-        return fetch(fallbackUrl);
+        return fetch(fallbackUrl, requestInit);
       }
       throw error;
     });
+    if (res.status === 401) {
+      localStorage.removeItem("bizihotzUsuario");
+      window.location.href = LOGIN_PAGE;
+      return;
+    }
     if (!res.ok) {
       throw new Error(`Estado inesperado ${res.status}`);
     }
@@ -839,18 +862,18 @@ const cargarCitas = async () => {
     if (!citas.length && usuarioActual) {
       const slugBuscado = obtenerSlugUsuarioActual();
       if (slugBuscado) {
-        const paramsSinId = new URLSearchParams({
-          fechaDesde: inicio,
-          fechaHasta: fin
-        });
-        const alternativas = [`${API_URL}/citas?${paramsSinId.toString()}`];
-        if (API_FALLBACK) {
-          alternativas.push(`${API_FALLBACK}/citas?${paramsSinId.toString()}`);
-        }
-        for (let index = 0; index < alternativas.length; index += 1) {
-          const url = alternativas[index];
-          try {
-            const respuestaAlternativa = await fetch(url);
+          const paramsSinId = new URLSearchParams({
+            fechaDesde: inicio,
+            fechaHasta: fin
+          });
+          const alternativas = [`${API_URL}/citas?${paramsSinId.toString()}`];
+          if (API_FALLBACK) {
+            alternativas.push(`${API_FALLBACK}/citas?${paramsSinId.toString()}`);
+          }
+          for (let index = 0; index < alternativas.length; index += 1) {
+            const url = alternativas[index];
+            try {
+              const respuestaAlternativa = await fetch(url, requestInit);
             if (!respuestaAlternativa.ok) {
               throw new Error(`Estado inesperado ${respuestaAlternativa.status}`);
             }
@@ -935,7 +958,8 @@ const prepararLogoutModal = () => {
     localStorage.removeItem("bizihotzUsuario");
 
     const logoutInit = {
-      method: "POST"
+      method: "POST",
+      headers: buildAuthHeaders()
     };
 
     try {

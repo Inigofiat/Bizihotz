@@ -1,58 +1,26 @@
-"use strict";
+﻿"use strict";
 
-/**
- * Selecciona la URL base de la API dependiendo del contexto:
- * - Si abrimos la página como archivo o desde localhost, vamos directo al microservicio (4002)
- * - En producción, se usa el gateway publicado bajo /gestion
- */
+// Siempre a través del gateway (/gestion) tanto en local como desplegado.
 const API_BASE_URL = (() => {
-  const serviceBase = "http://localhost:4001";
-  const gatewayBase = "http://localhost:5000/gestion";
-  const isFile = window.location.protocol === "file:";
-  const host = window.location.hostname || "localhost";
-
-  if (isFile || host === "localhost" || host === "127.0.0.1") {
-    return serviceBase;
+  const host = (window.location.hostname || "").toLowerCase();
+  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
+    return "http://localhost:5000/gestion";
   }
-
-  return `${window.location.protocol}//${window.location.host}/gestion`;
+  return `${window.location.protocol}//${window.location.hostname}/gestion`;
 })();
-
-/**
- * Cuando estamos en local/file:// intentamos caer al gateway si existe, en otros
- * entornos no configuramos fallback para evitar mezclas de dominios.
- */
-const API_FALLBACK_URL = (() => {
-  const gatewayBase = "http://localhost:5000/gestion";
-  const host = window.location.hostname || "localhost";
-  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1") {
-    return gatewayBase;
-  }
-  return null;
-})();
-
-
 
 const API_URL = `${API_BASE_URL}/api`;
-
-const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
+const API_FALLBACK = null;
 
 const LOGIN_PAGE = "login.html";
 
-
-
 let usuarioActual = null;
-
-
 
 const SLOT_DURATION_MINUTES = 45;
 
 const HORARIO_BLOQUES = [
-
   { inicio: { horas: 9, minutos: 0 }, fin: { horas: 14, minutos: 0 } },
-
   { inicio: { horas: 15, minutos: 0 }, fin: { horas: 20, minutos: 0 } }
-
 ];
 
 

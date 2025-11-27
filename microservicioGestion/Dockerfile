@@ -3,5 +3,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# Asegura que jsonwebtoken (y demás deps) estén disponibles dentro de la imagen
+RUN npm install jsonwebtoken
 EXPOSE 4001
-CMD ["node", "main.js"]
+CMD ["node", "src/index.js"]

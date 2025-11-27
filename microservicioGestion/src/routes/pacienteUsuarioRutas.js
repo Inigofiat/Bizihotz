@@ -1,5 +1,5 @@
 const express = require('express');
-const PacienteUsuario = require('../data/pacienteUsuarioModelo');
+const PacienteUsuario = require('../models/pacienteUsuarioModelo');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 

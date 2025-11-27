@@ -6,14 +6,15 @@ const fs = require('fs');
 const path = require('path');
 
 const { connectDB } = require('./config/db');
-const pacienteRutas = require('./rutas/pacienteRutas');
-const citaRutas = require('./rutas/citasRutas');
-const historialRoutes = require('./rutas/historialRutas');
-const registroRoutes = require('./rutas/registroRutas');
-const pacienteUsuarioRoutes = require('./rutas/pacienteUsuarioRutas');
-const authRoutes = require('./rutas/authRutas');
-const usuarioRoutes = require('./rutas/usuarioRutas');
+const pacienteRutas = require('./routes/pacienteRutas');
+const citaRutas = require('./routes/citasRutas');
+const historialRoutes = require('./routes/historialRutas');
+const registroRoutes = require('./routes/registroRutas');
+const pacienteUsuarioRoutes = require('./routes/pacienteUsuarioRutas');
+const authRoutes = require('./routes/authRutas');
+const usuarioRoutes = require('./routes/usuarioRutas');
 const { ensureDefaultUsers } = require('./services/ensureDefaultUsers');
+const { requireAuth } = require('./middlewares/auth');
 
 const PORT = process.env.PORT || 4001;
 const app = express();
@@ -33,7 +34,7 @@ if (!fs.existsSync(uploadsPath)) {
 app.use('/uploads', express.static(uploadsPath));
 
 let swaggerDocument = null;
-const swaggerPath = path.join(__dirname, 'docs', 'openapi.json');
+const swaggerPath = path.join(__dirname, '..', 'docs', 'openapi.json');
 
 try {
   const rawSpec = fs.readFileSync(swaggerPath, 'utf-8');
@@ -64,12 +65,13 @@ const healthCheck = async (_req, res) => {
 
 app.get('/status', healthCheck);
 
+app.use('/api/auth', authRoutes);
+app.use(requireAuth);
 app.use('/api/pacientes', pacienteRutas);
 app.use('/api/citas', citaRutas);
 app.use('/api/historiales', historialRoutes);
 app.use('/api/registros', registroRoutes);
 app.use('/api/pacientes-usuarios', pacienteUsuarioRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 
 app.get('/docs/swagger.json', (_req, res) => {

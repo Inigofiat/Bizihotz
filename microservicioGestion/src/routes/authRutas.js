@@ -2,7 +2,8 @@
 
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const Usuario = require("../data/usuarioModel");
+const Usuario = require("../models/usuarioModel");
+const { signToken } = require("../utils/jwt");
 
 const router = express.Router();
 
@@ -42,16 +43,21 @@ router.post("/login", async (req, res, next) => {
     }
 
     const usuarioPlano = usuario.toJSON();
+    const authPayload = {
+      idUsuario: usuarioPlano.idUsuario,
+      nombreUsuario: usuarioPlano.nombreUsuario,
+      email: usuarioPlano.email,
+      rol: usuarioPlano.rol
+    };
+    const token = signToken(authPayload);
 
     return res.json({
       mensaje: "Inicio de sesion correcto.",
+      token,
       usuario: {
-        idUsuario: usuarioPlano.idUsuario,
-        nombreUsuario: usuarioPlano.nombreUsuario,
+        ...authPayload,
         nombre: usuarioPlano.nombre ?? "",
         apellidos: usuarioPlano.apellidos ?? "",
-        email: usuarioPlano.email,
-        rol: usuarioPlano.rol,
         telefono: usuarioPlano.telefono ?? "",
         foto: usuarioPlano.foto ?? "",
         debeActualizarPassword: usuarioPlano.debeActualizarPassword ?? false,

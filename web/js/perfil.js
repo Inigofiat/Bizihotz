@@ -16,13 +16,10 @@ const API_BASE_URL = (() => {
   return `${window.location.protocol}//${window.location.host}/gestion`;
 })();
 
-const API_FALLBACK_URL =
-  window.location.protocol === "file:" || window.location.hostname === "localhost"
-    ? "http://localhost:4001"
-    : null;
+const API_FALLBACK_URL = null;
 
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = API_FALLBACK_URL ? `${API_FALLBACK_URL}/api` : null;
+const API_FALLBACK = null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const getAvatarFileName = (path = "") =>

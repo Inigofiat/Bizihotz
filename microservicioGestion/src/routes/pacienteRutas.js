@@ -1,8 +1,8 @@
 const express = require('express');
-const Paciente = require('../data/pacienteModel');
-const Cita = require('../data/citaModel');
-const HistorialPaciente = require('../data/historialPacienteModel');
-const RegistroAntropometrico = require('../data/registroAntropometricoModel');
+const Paciente = require('../models/pacienteModel');
+const Cita = require('../models/citaModel');
+const HistorialPaciente = require('../models/historialPacienteModel');
+const RegistroAntropometrico = require('../models/registroAntropometricoModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 

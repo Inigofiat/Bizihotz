@@ -1,5 +1,5 @@
 const express = require('express');
-const Cita = require('../data/citaModel');
+const Cita = require('../models/citaModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 const { ensureEstadoValido, deriveEstadoDesdeAtendida } = require('../utils/estadoCita');
