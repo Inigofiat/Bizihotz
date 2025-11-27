@@ -1,0 +1,38 @@
+services:
+  documental-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: documental
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - documental_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d documental"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  documental:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app:app --host 0.0.0.0 --port 5100 --reload
+    env_file:
+      - .env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@documental-db:5432/documental
+    ports:
+      - "5100:5100"
+    depends_on:
+      documental-db:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+
+volumes:
+  documental_pgdata:

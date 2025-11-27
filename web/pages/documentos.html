@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentos nutricionales</title>
+  <link rel="stylesheet" href="../css/documentos.css" />
+</head>
+<body>
+  <header class="doc-header">
+    <div>
+      <p class="breadcrumb"><a href="principal.html">Volver al panel</a></p>
+      <h1>Documentos nutricionales</h1>
+      <p class="subtitle">Repositorios externos sincronizados vía microservicio documental (OpenLibrary)</p>
+    </div>
+    <div class="actions">
+      <button id="reloadDocs" class="primary">Refrescar</button>
+      <button id="syncOpenLibrary" class="ghost">Sincronizar OpenLibrary</button>
+    </div>
+  </header>
+
+  <section class="controls">
+    <label class="field">
+      <span>Buscar</span>
+      <input id="searchInput" type="search" placeholder="Título o descripción" />
+    </label>
+    <label class="field">
+      <span>Fuente</span>
+      <input id="fuenteInput" type="text" placeholder="ej. demo" />
+    </label>
+    <label class="field">
+      <span>Etiqueta</span>
+      <input id="etiquetaInput" type="text" placeholder="ej. externo" />
+    </label>
+  </section>
+
+  <section id="feedback" class="feedback" hidden></section>
+
+  <section id="documentList" class="doc-grid"></section>
+
+  <template id="docCardTemplate">
+    <article class="doc-card">
+      <div class="doc-meta">
+        <span class="doc-tag fuente"></span>
+        <span class="doc-tag tipo"></span>
+      </div>
+      <h3 class="doc-title"></h3>
+      <p class="doc-desc"></p>
+      <div class="doc-footer">
+        <div class="doc-etiquetas"></div>
+        <div class="doc-links">
+          <a class="doc-link detalle" target="_blank" rel="noopener">Detalle</a>
+          <a class="doc-link descarga" target="_blank" rel="noopener">Descargar</a>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="../js/documentos.js"></script>
+</body>
+</html>

@@ -11,6 +11,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 | microservicioComunicacion | Node.js 18 + Express + Socket.IO | `4103 -> 4100` | `microservicioComunicacion/` |
 | PostgreSQL            | Postgres 16            | `5435 -> 5432`     | `docker-compose.yml` (`postgres`) |
 | microservicioNutricion| FastAPI + SQLAlchemy   | `5002`             | `microservicioNutricion/` |
+| microservicioDocumental| FastAPI + SQLAlchemy  | `5100`             | `microservicioDocumental/` |
 | API Gateway           | FastAPI                | `5000`             | `api-gateway/` |
 | Frontend              | HTML/CSS/JS estatico   | `8080`             | `web/` |
 
@@ -36,6 +37,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    - Microservicio de gestion: http://localhost:4002 (el contenedor expone 4001, se publica en 4002)
    - Microservicio de comunicacion: http://localhost:4103 (contenedor en 4100, publicado en 4103)
    - Microservicio de nutricion: http://localhost:5002
+   - Microservicio documental: http://localhost:5100
    - MongoDB: `mongodb://localhost:27018`
    - PostgreSQL: `postgresql://postgres:postgres@localhost:5435/nutricion`
 4. Registra los logs cuando lo necesites:
@@ -145,6 +147,7 @@ Configura las variables de entorno del frontend (en los archivos JS) si necesita
 ## Recursos adicionales
 
 - Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioComunicacion/`, `microservicioNutricion/` y `api-gateway/`.
+- Documentacion del repositorio documental: `microservicioDocumental/README.md`.
 - Scripts y seeds: disponibles en `microservicioGestion/data`, `microservicioNutricion/scripts` y en los paquetes npm/python correspondientes.
 - Variables globales del gateway: editar `./.env`.
 

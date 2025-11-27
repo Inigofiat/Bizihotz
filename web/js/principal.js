@@ -1050,6 +1050,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const documentosButton = document.querySelector('.nav-button[data-nav="documentos"]');
+  if (documentosButton) {
+    documentosButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "documentos.html";
+    });
+  }
+
 
   PerfilModal.prepararModalPerfil(handleLogout, {
     getUsuarioActual: () => usuarioActual,

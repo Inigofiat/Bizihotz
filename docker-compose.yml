@@ -107,6 +107,36 @@ services:
     volumes:
       - ./microservicioNutricion:/app
 
+  documental:
+    build:
+      context: ./microservicioDocumental
+      dockerfile: Dockerfile
+    command: uvicorn app:app --host 0.0.0.0 --port 5100 --reload
+    env_file:
+      - ./microservicioDocumental/.env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/nutricion
+      ENABLED_SOURCES: openlibrary
+      OPENLIBRARY_SEARCH_URL: https://openlibrary.org/search.json
+      OPENLIBRARY_QUERY: nutrition
+    ports:
+      - "5100:5100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5100/health')\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./microservicioDocumental:/app
+
   api-gateway:
     build:
       context: ./api-gateway
@@ -121,6 +151,8 @@ services:
       NUTRICION_OPENAPI_URL: http://nutricion:5002/openapi.json
       COMUNICACION_SERVICE_URL: http://comunicacion:4100
       COMUNICACION_OPENAPI_URL: http://comunicacion:4100/docs/swagger.json
+      DOCUMENTOS_SERVICE_URL: http://documental:5100
+      DOCUMENTOS_OPENAPI_URL: http://documental:5100/openapi.json
     ports:
       - "5000:5000"
     depends_on:
@@ -129,6 +161,8 @@ services:
       nutricion:
         condition: service_healthy
       comunicacion:
+        condition: service_healthy
+      documental:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
