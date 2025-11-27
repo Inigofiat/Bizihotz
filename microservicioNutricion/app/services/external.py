@@ -30,6 +30,7 @@ def buscar_informacion_alimento(
         food = item.get("food", {})
         nutrients = food.get("nutrients", {})
         resultados.append(
+            
             {
                 "nombre": food.get("label"),
                 "categoria": food.get("category"),
