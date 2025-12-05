@@ -98,8 +98,8 @@ router.post('/', async (req, res) => {
   try {
     const { idPaciente, idUsuario, idCita } = req.body;
     ensureValidObjectId(idPaciente, 'paciente');
-    ensureValidObjectId(idUsuario, 'usuario');
-    ensureValidObjectId(idCita, 'cita');
+    if (idUsuario) ensureValidObjectId(idUsuario, 'usuario');
+    if (idCita) ensureValidObjectId(idCita, 'cita');
 
     const historial = new HistorialPaciente(req.body);
     const nuevo = await historial.save();

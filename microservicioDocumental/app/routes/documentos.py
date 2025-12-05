@@ -10,7 +10,6 @@ from ..config import get_settings
 from ..database import get_session
 from ..models import Documento
 from ..schemas.document import DocumentoRead
-from ..services.ingestion import sync_fuente
 
 router = APIRouter(prefix="/api/documentos", tags=["documentos"])
 
@@ -85,16 +84,3 @@ def obtener_documento(
     if not documento:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     return documento
-
-
-@router.post("/sync/{fuente}")
-async def sincronizar_fuente(
-    fuente: str,
-    limit: Optional[int] = Query(None, ge=1, le=1000),
-    session: Session = Depends(get_session),
-):
-    settings = get_settings()
-    if fuente not in settings.enabled_sources:
-        raise HTTPException(status_code=400, detail="Fuente no habilitada en configuración")
-    resultado = await sync_fuente(fuente, session, settings, limit=limit)
-    return resultado

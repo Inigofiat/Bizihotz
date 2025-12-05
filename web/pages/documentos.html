@@ -11,28 +11,9 @@
     <div>
       <p class="breadcrumb"><a href="principal.html">Volver al panel</a></p>
       <h1>Documentos nutricionales</h1>
-      <p class="subtitle">Repositorios externos sincronizados vía microservicio documental (OpenLibrary)</p>
-    </div>
-    <div class="actions">
-      <button id="reloadDocs" class="primary">Refrescar</button>
-      <button id="syncOpenLibrary" class="ghost">Sincronizar OpenLibrary</button>
+      <p class="subtitle">Acceso a enlaces configurables. Edita web/data/documentos.js para anadir mas.</p>
     </div>
   </header>
-
-  <section class="controls">
-    <label class="field">
-      <span>Buscar</span>
-      <input id="searchInput" type="search" placeholder="Título o descripción" />
-    </label>
-    <label class="field">
-      <span>Fuente</span>
-      <input id="fuenteInput" type="text" placeholder="ej. demo" />
-    </label>
-    <label class="field">
-      <span>Etiqueta</span>
-      <input id="etiquetaInput" type="text" placeholder="ej. externo" />
-    </label>
-  </section>
 
   <section id="feedback" class="feedback" hidden></section>
 
@@ -49,13 +30,13 @@
       <div class="doc-footer">
         <div class="doc-etiquetas"></div>
         <div class="doc-links">
-          <a class="doc-link detalle" target="_blank" rel="noopener">Detalle</a>
-          <a class="doc-link descarga" target="_blank" rel="noopener">Descargar</a>
+          <a class="doc-link descarga" target="_blank" rel="noopener">Abrir</a>
         </div>
       </div>
     </article>
   </template>
 
-  <script src="../js/documentos.js"></script>
+  <script src="../data/documentos.js"></script>
+  <script src="../js/documentos_static.js"></script>
 </body>
 </html>

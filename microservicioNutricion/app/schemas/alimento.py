@@ -17,7 +17,7 @@ class AlimentoBase(ORMModel):
     carbohidratos: float
     fibra: float = 0.0
     unidad_base: str = Field(default="g", max_length=20)
-    micronutrientes: Optional[Dict[str, float]] = Field(default_factory=dict)
+    micronutrientes: Optional[Dict[str, Optional[float]]] = Field(default_factory=dict)
 
 
 class AlimentoCreate(AlimentoBase):
@@ -37,7 +37,7 @@ class AlimentoSummary(ORMModel):
     carbohidratos: float
     fibra: float
     unidad_base: str
-    micronutrientes: Optional[Dict[str, float]] = None
+    micronutrientes: Optional[Dict[str, Optional[float]]] = None
 
 
 class AlimentoRead(AlimentoBase):

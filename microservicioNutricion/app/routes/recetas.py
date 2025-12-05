@@ -66,7 +66,7 @@ def _sincronizar_ingredientes(
         except (TypeError, ValueError) as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La cantidad debe ser numérica.",
+                detail="La cantidad debe ser numerica.",
             ) from exc
 
         if cantidad_val <= 0:

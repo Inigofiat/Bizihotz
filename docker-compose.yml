@@ -116,9 +116,6 @@ services:
       - ./microservicioDocumental/.env.example
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/nutricion
-      ENABLED_SOURCES: openlibrary
-      OPENLIBRARY_SEARCH_URL: https://openlibrary.org/search.json
-      OPENLIBRARY_QUERY: nutrition
     ports:
       - "5100:5100"
     depends_on:

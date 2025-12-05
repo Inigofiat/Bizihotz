@@ -6,7 +6,6 @@ API REST creada con FastAPI y PostgreSQL que gestiona alimentos, recetas, planes
 
 - `GET /health`: estado del servicio y conexion a la base de datos.
 - CRUD para `alimentos`, `recetas` y `dietas`.
-- `GET /api/alimentos/externo/buscar?q=`: consulta a la API externa configurada (Edamam por defecto).
 - `POST /api/dietas/{id}/asignaciones`: publica una dieta para un paciente.
 - `POST /api/dietas/{id}/versionar`: genera una nueva version de dieta.
 - `GET /api/dietas/{id}/exportar?formato=pdf|csv`: exporta el plan nutricional.
@@ -18,8 +17,9 @@ API REST creada con FastAPI y PostgreSQL que gestiona alimentos, recetas, planes
 Copia `.env.example` a `.env` y ajusta:
 
 - `DATABASE_URL`: URL SQLAlchemy (por defecto `postgresql+psycopg://postgres:postgres@postgres:5432/nutricion` al usar Docker).
-- `EXTERNAL_NUTRITION_*`: credenciales del proveedor de datos nutricionales.
-- `NOTIFICATIONS_SERVICE_URL`: webhook opcional para avisar al paciente.
+- `NOTIFICATIONS_SERVICE_URL` y `NOTIFICATIONS_SERVICE_API_KEY`: webhook opcional para avisar al paciente.
+- `CORS_ALLOWED_ORIGINS`: lista separada por comas con origenes permitidos (por defecto `*`).
+- `EXPORT_FOOTER_NOTE`: texto que aparece en los archivos exportados.
 
 ## Ejecucion con Docker Compose
 
@@ -43,7 +43,7 @@ Copia `.env.example` a `.env` y ajusta:
 1. Activa un entorno virtual y dependencias:
    ```bash
    python -m venv .venv
-   source .venv/bin/activate    # Windows: .venv\Scripts\activate
+   source .venv/bin/activate    # Windows: .venv\\Scripts\\activate
    pip install -r requirements.txt
    ```
 2. Define `DATABASE_URL` apuntando a tu Postgres (`postgresql+psycopg://postgres:postgres@localhost:5432/nutricion`) o usa SQLite (`sqlite:///nutricion.db`) para pruebas rapidas.
@@ -71,5 +71,5 @@ Si ya tenias tablas y ahora integras el microservicio de gestion, ejecuta `scrip
 - Calculo de calorias, macros y micronutrientes por receta o dieta.
 - Versionado de dietas y seguimiento de asignaciones por paciente.
 - Exportacion CSV/PDF lista para compartir.
-- Integracion opcional con proveedores de datos externos y webhook de notificaciones.
+- Integracion opcional con un webhook de notificaciones.
 - Seeds (`scripts/seed_demo.py`) para contar con catalogos y ejemplos al iniciar.
