@@ -2405,6 +2405,48 @@ const renderPacienteDietas = (dietas) => {
     return;
   }
 
+  const computeDietStatus = (dieta) => {
+    const asignacionActual = Array.isArray(dieta.asignaciones)
+      ? dieta.asignaciones.find((item) => item.es_actual)
+      : null;
+    const now = Date.now();
+    const startDate = asignacionActual?.fecha_asignacion || dieta.fecha_inicio;
+    const endDate = dieta.fecha_fin;
+
+    if (!asignacionActual && dieta.es_plantilla) {
+      return { label: "Plantilla", variant: "soft" };
+    }
+    if (!asignacionActual) {
+      return { label: "Sin asignar", variant: "muted" };
+    }
+    if (dieta.activa === false) {
+      return { label: "Inactiva", variant: "muted" };
+    }
+    if (startDate) {
+      const start = new Date(startDate).getTime();
+      if (start > now) {
+        return { label: "Programada", variant: "warning" };
+      }
+    }
+    if (endDate) {
+      const fin = new Date(endDate).getTime();
+      if (fin < now) {
+        return { label: "Finalizada", variant: "muted" };
+      }
+    }
+    return { label: "Activa", variant: "success" };
+  };
+
+  const parseDescripcion = (value) => {
+    if (!value || typeof value !== "string") return null;
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   const items = dietas
     .map((dieta) => {
       const estadoLabel = dieta.es_plantilla
@@ -2412,44 +2454,75 @@ const renderPacienteDietas = (dietas) => {
         : dieta.activa
         ? "Activa"
         : "Hist&oacute;rica";
+      const parsedDescripcion = parseDescripcion(dieta.descripcion);
+      const comidasCount = parsedDescripcion?.comidas?.length || 0;
+      const kcal =
+        (dieta.totales?.macros?.calorias ?? dieta.calorias_objetivo ?? parsedDescripcion?.resumen?.energia) || 0;
+      const macrosRaw = dieta.totales?.macros || parsedDescripcion?.resumen || {};
+      const macros = {
+        calorias: Number(macrosRaw.calorias ?? kcal ?? dieta.calorias_objetivo ?? 0) || 0,
+        proteinas: Number(macrosRaw.proteinas ?? macrosRaw.proteina ?? 0) || 0,
+        grasas: Number(macrosRaw.grasas ?? macrosRaw.grasa ?? 0) || 0,
+        carbohidratos: Number(macrosRaw.carbohidratos ?? 0) || 0,
+        fibra: Number(macrosRaw.fibra ?? 0) || 0
+      };
+      const macrosHtml = `<div class="diet-macros">
+            <span class="pill soft small">Kcal: ${formatNumber(macros.calorias, 0)}</span>
+            <span class="pill muted small">P: ${formatNumber(macros.proteinas, 0)} g</span>
+            <span class="pill muted small">G: ${formatNumber(macros.grasas, 0)} g</span>
+            <span class="pill muted small">HC: ${formatNumber(macros.carbohidratos, 0)} g</span>
+            <span class="pill muted small">Fibra: ${formatNumber(macros.fibra, 0)} g</span>
+          </div>`;
+      const asignacionActual = Array.isArray(dieta.asignaciones)
+        ? dieta.asignaciones.find((item) => item.es_actual)
+        : null;
       const meta = [];
-      if (dieta.objetivo) {
-        meta.push(dieta.objetivo);
-      }
-      if (typeof dieta.calorias_objetivo === "number" && Number.isFinite(dieta.calorias_objetivo)) {
-        meta.push(`${formatNumber(dieta.calorias_objetivo, 0)} kcal`);
-      }
       if (dieta.fecha_inicio) {
         meta.push(`Inicio: ${formatDate(dieta.fecha_inicio)}`);
+      }
+      if (asignacionActual?.fecha_asignacion) {
+        meta.push(`Asignada: ${formatDate(asignacionActual.fecha_asignacion)}`);
       }
       if (dieta.fecha_fin) {
         meta.push(`Fin: ${formatDate(dieta.fecha_fin)}`);
       }
-      const asignacionActual = Array.isArray(dieta.asignaciones)
-        ? dieta.asignaciones.find((item) => item.es_actual)
-        : null;
-      if (asignacionActual?.fecha_asignacion) {
-        meta.push(`Asignada: ${formatDate(asignacionActual.fecha_asignacion)}`);
+      if (comidasCount > 0) {
+        meta.push(`${comidasCount} comidas`);
       }
-      if (dieta.activa === false) {
-        meta.push("Estado: inactiva");
-      }
+      const estadoBadge =
+        (() => {
+          const { label, variant } = computeDietStatus(dieta);
+          return `<span class="pill ${variant}">${escapeHtml(label)}</span>`;
+        })();
       const metaHtml = meta.length
-        ? `<div class="diet-card__item-meta">${meta.map((valor) => `<span>${escapeHtml(valor)}</span>`).join("")}</div>`
+        ? `<div class="diet-card__item-meta">${meta.map((valor) => `<span class="pill muted">${escapeHtml(valor)}</span>`).join("")}</div>`
         : "";
-      const descripcion = dieta.descripcion
-        ? `<div class="diet-card__item-note">${escapeHtml(dieta.descripcion).replace(/\n/g, "<br />")}</div>`
+      const objetivo = dieta.objetivo
+        ? `<div class="diet-card__item-note"><strong>Objetivo:</strong> ${escapeHtml(dieta.objetivo)}</div>`
         : "";
+      const descripcion =
+        parsedDescripcion && parsedDescripcion.comidas
+          ? `<div class="diet-card__item-note muted">Plan con ${parsedDescripcion.comidas.length} comidas.</div>`
+          : dieta.descripcion
+          ? `<div class="diet-card__item-note">${escapeHtml(dieta.descripcion).replace(/\n/g, "<br />")}</div>`
+          : "";
       const notas = dieta.notas
         ? `<div class="diet-card__item-note">${escapeHtml(dieta.notas).replace(/\n/g, "<br />")}</div>`
         : "";
       return `
         <div class="diet-card__item">
           <div class="diet-card__item-head">
-            <strong>${escapeHtml(dieta.nombre || "Plan nutricional")}</strong>
-            <span class="badge">${estadoLabel} - V${dieta.version || 1}</span>
+            <div>
+              <strong>${escapeHtml(dieta.nombre || "Plan nutricional")}</strong>
+              ${objetivo}
+            </div>
+            <div class="diet-card__item-chips">
+              ${estadoBadge}
+            </div>
           </div>
+          ${kcal ? `<div class="diet-card__item-meta"><span class="pill soft">${formatNumber(kcal, 0)} kcal</span></div>` : ""}
           ${metaHtml}
+          ${macrosHtml}
           ${descripcion}
           ${notas}
         </div>
@@ -2467,9 +2540,16 @@ const loadPacienteDietas = async (paciente) => {
   container.dataset.empty = "Consultando plan nutricional...";
   container.innerHTML = "";
 
-  const nutricionId = getNutricionPacienteId(paciente);
-  if (!Number.isFinite(nutricionId)) {
-    container.innerHTML = "<p class=\"diet-card__item-note\">Asigna el identificador num&eacute;rico del paciente en el gestor de nutrici&oacute;n para vincular sus dietas.</p>";
+  const nutricionId =
+    getNutricionPacienteId(paciente) ||
+    paciente?.id ||
+    paciente?.idPaciente ||
+    paciente?.id_paciente ||
+    pacienteId ||
+    null;
+  if (!nutricionId) {
+    container.innerHTML =
+      '<p class="diet-card__item-note">Asigna el identificador num&eacute;rico del paciente en el gestor de nutrici&oacute;n para vincular sus dietas.</p>';
     return;
   }
 

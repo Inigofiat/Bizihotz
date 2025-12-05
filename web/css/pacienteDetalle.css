@@ -708,6 +708,51 @@ body.modal-open {
   gap: 10px;
 }
 
+.diet-card__item .pill {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.diet-card__item .pill.success {
+  background-color: #dff4e7;
+  color: #0f5c34;
+}
+
+.diet-card__item .pill.muted {
+  background-color: #eef2ef;
+  color: #567665;
+}
+
+.diet-card__item .pill.warning {
+  background-color: #fff4e5;
+  color: #a65d00;
+}
+
+.diet-card__item .pill.soft {
+  background-color: #e8f3ed;
+  color: #12814c;
+}
+
+.diet-card__item .pill.small {
+  font-size: 0.8rem;
+  padding: 3px 8px;
+}
+
+.diet-card__item-chips {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.diet-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .diet-card__item-head {
   display: flex;
   align-items: center;
