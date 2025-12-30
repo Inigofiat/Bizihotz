@@ -85,6 +85,25 @@ body {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
+  margin-left: 14px;
+}
+
+.patient-actions .btn {
+  min-width: auto;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+.patient-actions .btn.danger {
+  background: #c62828;
+  border-color: #c62828;
+  color: #fff;
+  box-shadow: none;
+}
+
+.patient-actions .btn.danger:hover {
+  background: #a92222;
 }
 
 .topbar .btn {
@@ -538,6 +557,19 @@ tbody tr:last-child td {
   background-color: #a92222;
 }
 
+.topbar .patient-actions .btn.danger,
+.patient-actions .btn.danger {
+  background-color: #d32f2f;
+  border-color: #d32f2f;
+  color: #fff;
+  box-shadow: none;
+}
+
+.topbar .patient-actions .btn.danger:hover,
+.patient-actions .btn.danger:hover {
+  background-color: #b71c1c;
+}
+
 .btn.ghost {
   background-color: transparent;
   color: #0f6d40;
@@ -688,6 +720,13 @@ body.modal-open {
   margin-bottom: 16px;
 }
 
+.diet-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .diet-summary {
   display: grid;
   gap: 16px;
@@ -785,7 +824,505 @@ body.modal-open {
   color: #4a6d5a;
 }
 
+.diet-history {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #d7efe1;
+}
+
+.diet-history h4 {
+  margin: 0 0 8px;
+  color: #0f5c34;
+}
+
+.diet-history ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diet-history__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.diet-history__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.diet-history .pill {
+  font-size: 0.8rem;
+}
+
+.diet-history__snapshot {
+  background: #f1f9f3;
+  border: 1px solid #d2ead7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.diet-history__snapshot-row {
+  font-size: 0.9rem;
+  color: #1f3a2c;
+}
+
 .form-group select:disabled {
   background-color: #f4f7f5;
   color: #6d8778;
+}
+
+.modal-diet-history {
+  max-width: 1100px;
+  width: min(92vw, 1100px);
+}
+
+.modal-diet-history .modal-subtitle {
+  margin: 0 0 0;
+  color: #2f5d45;
+}
+
+.diet-history-modal {
+  max-height: 78vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diet-history-modal[data-empty]:empty::after,
+.diet-history-modal[data-empty=""]::after {
+  content: attr(data-empty);
+  color: #4a6d5a;
+  background: #f1f8f4;
+  border: 1px dashed #cde5d6;
+  padding: 12px;
+  border-radius: 12px;
+  display: block;
+}
+
+.hist-entry {
+  border: 1px solid #d7efe1;
+  background: #f7fcf9;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 14px;
+}
+
+.hist-entry__head {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.hist-entry__title {
+  font-weight: 700;
+  color: #0f5c34;
+  margin: 0;
+}
+
+.hist-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.hist-entry__meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  color: #234936;
+  font-size: 0.95rem;
+}
+
+.hist-entry__meta-line .pill {
+  margin-left: 4px;
+}
+
+.hist-entry__macros {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e2f1e7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f9fcfa;
+}
+
+.hist-entry__macro-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hist-entry__macro-table th,
+.hist-entry__macro-table td {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 0.93rem;
+  color: #1f3a2c;
+}
+
+.hist-entry__macro-table th {
+  width: 150px;
+  font-weight: 700;
+  color: #0f5c34;
+}
+
+.hist-entry__macro-bar {
+  position: relative;
+  height: 12px;
+  background: #e8f3ed;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hist-entry__macro-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 10px;
+}
+
+.hist-entry__macro-value {
+  font-weight: 600;
+  color: #0f5c34;
+  font-size: 0.9rem;
+}
+
+.hist-entry__macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hist-entry__foods {
+  display: grid;
+  gap: 10px;
+}
+
+.hist-meal {
+  background: #ffffff;
+  border: 1px solid #e4f1e9;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.hist-meal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hist-meal__header strong {
+  color: #0f5c34;
+}
+
+.hist-meal__items {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #234936;
+}
+
+.hist-meal__items li {
+  margin: 2px 0;
+}
+
+.hist-entry__bars {
+  display: grid;
+  gap: 6px;
+}
+
+/* Oculta listas residuales que puedan quedar bajo las barras */
+.hist-entry__macros ul,
+.hist-entry__macros ol {
+  display: none;
+}
+
+/* Oculta posibles listas sueltas bajo las barras que no formen parte de comidas */
+.hist-entry > ul,
+.hist-entry > ol {
+  display: none;
+}
+
+/* Oculta listas que aparezcan justo despues del bloque de barras */
+.hist-entry__bars + ul,
+.hist-entry__bars + ol {
+  display: none !important;
+}
+
+.hist-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+  min-height: 360px;
+  align-items: flex-start;
+}
+
+.hist-list {
+  display: grid;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.hist-list__item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #dcece3;
+  background: #f7fbf8;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hist-list__item:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(18, 129, 76, 0.35);
+}
+
+.hist-list__item.is-active {
+  border-color: #12814c;
+  box-shadow: 0 6px 16px rgba(18, 129, 76, 0.12);
+  background: #ffffff;
+}
+
+.hist-list__title {
+  font-weight: 700;
+  color: #123524;
+}
+
+.hist-list__meta {
+  color: #3f6b54;
+  font-size: 0.9rem;
+}
+
+.hist-delete {
+  border: none;
+  background: #ffe9e9;
+  color: #a92222;
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hist-delete:hover {
+  background: #ffd4d4;
+}
+
+.hist-detail {
+  border: 1px solid #e1efe7;
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: #ffffff;
+  display: grid;
+  gap: 12px;
+  min-height: 360px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.hist-detail__charts {
+  display: grid;
+  gap: 14px;
+}
+
+.hist-macro-bars {
+  display: grid;
+  gap: 8px;
+}
+
+.hist-macro-row {
+  display: grid;
+  grid-template-columns: 20px 1fr 1fr 80px;
+  align-items: center;
+  gap: 8px;
+}
+
+.hist-macro-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.hist-macro-dot--energia { background: #f6c343; }
+.hist-macro-dot--grasa { background: #b21e35; }
+.hist-macro-dot--carbohidratos { background: #f28b30; }
+.hist-macro-dot--proteina { background: #3fb8de; }
+.hist-macro-dot--fibra { background: #2d9e5e; }
+
+.hist-macro-label {
+  color: #294334;
+  font-weight: 600;
+}
+
+.hist-macro-bar {
+  background: #e8f3ed;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hist-macro-bar span {
+  display: block;
+  height: 100%;
+}
+.hist-macro-fill--energia { background: #f6c343; }
+.hist-macro-fill--grasa { background: #b21e35; }
+.hist-macro-fill--carbohidratos { background: #f28b30; }
+.hist-macro-fill--proteina { background: #3fb8de; }
+.hist-macro-fill--fibra { background: #2d9e5e; }
+
+.hist-macro-val {
+  text-align: right;
+  color: #123524;
+  font-weight: 700;
+}
+
+.hist-donut-section {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.hist-donut-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.hist-donut {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: inset 0 0 0 10px #f7fcf9, 0 10px 24px rgba(18, 129, 76, 0.08);
+}
+
+.hist-donut--small {
+  width: 90px;
+  height: 90px;
+  box-shadow: inset 0 0 0 6px #f7fcf9, 0 6px 14px rgba(18, 129, 76, 0.08);
+}
+.hist-donut--empty {
+  background: #f2f7f4;
+  border: 1px solid #d6e8de;
+}
+
+.hist-donut__center {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #0f5c34;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(18, 129, 76, 0.08);
+}
+
+.hist-donut--small .hist-donut__center {
+  inset: 16px;
+  font-size: 0.82rem;
+}
+
+.hist-donut-label {
+  font-weight: 600;
+  color: #2f5d45;
+  margin-top: 6px;
+  text-align: center;
+}
+
+.hist-donut-minis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.hist-donut-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 800px) {
+  .hist-donut-minis {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+.hist-entry__bar-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #1f3a2c;
+}
+
+.hist-entry__bar {
+  position: relative;
+  background: #e8f3ed;
+  border-radius: 12px;
+  height: 14px;
+  overflow: hidden;
+}
+
+.hist-entry__bar-value {
+  position: absolute;
+  right: 8px;
+  top: -2px;
+  font-size: 0.78rem;
+  color: #0f5c34;
+}
+
+.hist-entry__bar-fill {
+  height: 100%;
+  border-radius: 12px;
+}
+
+.hist-entry__bar-fill--energia {
+  background: #f6c343;
+}
+
+.hist-entry__bar-fill--grasa {
+  background: #b21e35;
+}
+
+.hist-entry__bar-fill--carbohidratos {
+  background: #f28b30;
+}
+
+.hist-entry__bar-fill--proteina {
+  background: #3fb8de;
+}
+
+.hist-entry__bar-fill--fibra {
+  background: #2d9e5e;
 }

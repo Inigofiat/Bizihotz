@@ -40,6 +40,10 @@ def _sincronizar_ingredientes(
     ingredientes: Optional[List[RecetaIngredienteCreate]],
 ) -> None:
     receta.ingredientes.clear()
+    # Asegura que los ingredientes anteriores se eliminen en BD antes de insertar los nuevos
+    # para evitar violar la restricciÃ³n Ãºnica (receta_id, alimento_id) cuando llegan
+    # exactamente los mismos alimentos en una actualizaciÃ³n.
+    session.flush()
 
     if not ingredientes:
         return

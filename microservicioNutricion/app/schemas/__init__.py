@@ -3,6 +3,7 @@ from .dieta import (
     DietaAsignacionCreate,
     DietaAsignacionRead,
     DietaCreate,
+    DietaHistorialRead,
     DietaNotificacionRequest,
     DietaRead,
     DietaUpdate,
@@ -31,4 +32,5 @@ __all__ = [
     "DietaNotificacionRequest",
     "DietaRecetaCreate",
     "DietaRecetaRead",
+    "DietaHistorialRead",
 ]

@@ -55,6 +55,12 @@ class Dieta(Base):
         cascade="all, delete-orphan",
         foreign_keys="Dieta.parent_id",
     )
+    historial: Mapped[list["DietaHistorial"]] = relationship(
+        "DietaHistorial",
+        back_populates="dieta",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
     asignaciones: Mapped[list["AsignacionDieta"]] = relationship(
         "AsignacionDieta",
         back_populates="dieta",

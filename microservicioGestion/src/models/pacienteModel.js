@@ -10,7 +10,8 @@ const pacienteModelo = new mongoose.Schema(
     fechaNac: { type: Date, required: true },
     estado: {
       type: String,
-      enum: ['activo', 'baja'],
+      // Mantener "baja" por compatibilidad con datos anteriores, pero usar "standby" como estado inactivo principal.
+      enum: ['activo', 'standby', 'baja'],
       default: 'activo',
       index: true
     },

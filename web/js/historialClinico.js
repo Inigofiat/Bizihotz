@@ -169,21 +169,24 @@ const renderPatients = (items) => {
   const rows = items
     .map((paciente) => {
       const nombre = `${paciente.nombrePaciente || ""} ${paciente.apellidos || ""}`.trim() || "-";
-      const email = paciente.emailPaciente || "—";
-      const telefono = paciente.telefono || "—";
+      const email = paciente.emailPaciente || "N/D";
+      const telefono = paciente.telefono || "N/D";
       const edad = calculateAge(paciente.fechaNac);
       const updated = formatDate(paciente.updatedAt || paciente.createdAt);
       const id = paciente.idPaciente || paciente._id || paciente.id;
-      return `<tr>
+      const estado = String(paciente.estado || "").toLowerCase();
+      const enStandby = estado === "standby" || estado === "baja";
+      const standbyBadge = enStandby ? `<span class="pill pill--standby">Standby</span>` : "";
+      return `<tr class="${enStandby ? "is-standby" : ""}">
         <td>
-          <div class="paciente-name">${nombre}</div>
+          <div class="paciente-name">${nombre} ${standbyBadge}</div>
           <div class="paciente-meta">${email}</div>
         </td>
-        <td>${edad || "—"}</td>
+        <td>${edad || "N/D"}</td>
         <td>
           <span class="pill">Tel: ${telefono}</span>
         </td>
-        <td>${updated || "—"}</td>
+        <td>${updated || "N/D"}</td>
         <td style="text-align:right;">
           <a class="action-link" href="pacienteDetalle.html?id=${encodeURIComponent(id)}">Ver ficha</a>
         </td>

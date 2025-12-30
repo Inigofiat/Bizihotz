@@ -114,8 +114,12 @@
     objetivosMacros: emptyMacros(),
     resumen: emptyMacros(),
     notas: "",
+    notasPaciente: "",
+    comentarioInterno: "",
     esPlantilla: true,
     pacienteBase: null,
+    fechaInicio: null,
+    fechaFin: null,
     comidas: [...REQUIRED_MEALS, ...OPTIONAL_MEALS].map((nombre) => buildEmptyMeal(nombre))
   };
 
@@ -235,6 +239,10 @@
     mealFoodForm: document.getElementById("mealFoodForm"),
     mealFoodFeedback: document.getElementById("mealFoodFeedback"),
     mealFoodNew: document.getElementById("mealFoodNew"),
+    newDietaModal: document.getElementById("nuevaDietaModal"),
+    newDietaForm: document.getElementById("nuevaDietaForm"),
+    newDietaNombre: document.getElementById("nuevaDietaNombre"),
+    newDietaFeedback: document.getElementById("nuevaDietaFeedback"),
     assignModal: document.getElementById("assignModal"),
     assignForm: document.getElementById("assignForm"),
     assignPacienteId: document.getElementById("assignPacienteId"),
@@ -247,11 +255,22 @@
     mealDetailModal: document.getElementById("mealDetailModal"),
     mealDetailTitle: document.getElementById("mealDetailTitle"),
     mealDetailBody: document.getElementById("mealDetailBody"),
+    savePlanBtn: document.getElementById("savePlanBtn"),
     newDietaBtn: document.getElementById("newDietaBtn"),
     deleteDietaBtn: document.getElementById("deleteDietaBtn"),
     deleteDietaModal: document.getElementById("deleteDietaModal"),
     deleteDietaText: document.getElementById("deleteDietaText"),
     confirmDeleteDietaBtn: document.getElementById("confirmDeleteDietaBtn"),
+    dietaFechaInicio: document.getElementById("dietaFechaInicio"),
+    dietaFechaFin: document.getElementById("dietaFechaFin"),
+    dietaNotasPaciente: document.getElementById("dietaNotasPaciente"),
+    dietaComentarioInterno: document.getElementById("dietaComentarioInterno"),
+    saveMetaModal: document.getElementById("saveMetaModal"),
+    saveMetaForm: document.getElementById("saveMetaForm"),
+    saveMetaFeedback: document.getElementById("saveMetaFeedback"),
+    assignPacienteWrapper: document.getElementById("assignPacienteId")
+      ? document.getElementById("assignPacienteId").parentElement
+      : null,
     templatePicker: document.getElementById("templatePicker"),
     notesBox: document.getElementById("planNotes"),
     dietList: document.getElementById("dietList"),
@@ -375,8 +394,14 @@
     planState.nombre = data.nombre || planState.nombre || "Plantilla en blanco";
     planState.objetivoCalorias = data.calorias_objetivo || 0;
     planState.notas = data.notas || "";
+    planState.notasPaciente = data.notas || "";
+    planState.comentarioInterno = "";
     planState.esPlantilla = data.es_plantilla !== false;
     planState.pacienteBase = data.paciente_id || null;
+    planState.fechaInicio = data.fecha_inicio || null;
+    planState.fechaFin = data.fecha_fin || null;
+    if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = data.fecha_inicio ? data.fecha_inicio.slice(0, 10) : "";
+    if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = data.fecha_fin ? data.fecha_fin.slice(0, 10) : "";
     planState.asignadoA = data.paciente_id || planState.asignadoA || null;
     planState.asignadoLabel = getPacienteLabel(planState.asignadoA) || planState.asignadoA || planState.asignadoLabel || "";
     if (Array.isArray(data.asignaciones) && data.asignaciones.length) {
@@ -394,7 +419,12 @@
       if (parsed?.comidas) {
         planState.comidas = deserializeComidas(parsed.comidas);
       }
+      if (parsed?.comentarioInterno) {
+        planState.comentarioInterno = parsed.comentarioInterno;
+      }
     }
+    if (selectors.dietaNotasPaciente) selectors.dietaNotasPaciente.value = planState.notasPaciente || "";
+    if (selectors.dietaComentarioInterno) selectors.dietaComentarioInterno.value = planState.comentarioInterno || "";
     renderPlan();
   };
 
@@ -402,12 +432,21 @@
     nombre: planState.nombre || "Plantilla rapida",
     es_plantilla: planState.esPlantilla !== false,
     usuario_id: resolveCurrentUserId(),
+    actor_usuario_id: resolveCurrentUserId(),
     paciente_id: planState.esPlantilla === false ? planState.asignadoA || planState.pacienteBase || null : null,
     estado: planState.esPlantilla === false ? "publicada" : "borrador",
     activa: planState.esPlantilla === false ? true : undefined,
     notas: planState.notas || "",
-    descripcion: JSON.stringify({ comidas: planState.comidas || [] }),
+    descripcion: JSON.stringify({
+      comidas: planState.comidas || [],
+      comentarioInterno: planState.comentarioInterno || "",
+      fecha_inicio: planState.fechaInicio || null,
+      fecha_fin: planState.fechaFin || null,
+      notas_paciente: planState.notasPaciente || ""
+    }),
     calorias_objetivo: planState.objetivoCalorias || 0,
+    fecha_inicio: planState.fechaInicio || null,
+    fecha_fin: planState.fechaFin || null,
     recetas: buildDietaRecetasPayload(planState.comidas || []),
   });
 
@@ -467,11 +506,29 @@
       throw error;
     }
   };
-  const saveTemplate = async () => {
+  const saveTemplateCore = async () => {
+    if (selectors.dietaFechaInicio) {
+      planState.fechaInicio = selectors.dietaFechaInicio.value || null;
+    }
+    if (selectors.dietaFechaFin) {
+      planState.fechaFin = selectors.dietaFechaFin.value || null;
+    }
+    if (selectors.dietaNotasPaciente) {
+      planState.notas = selectors.dietaNotasPaciente.value || "";
+      planState.notasPaciente = planState.notas;
+    }
+    if (selectors.dietaComentarioInterno) {
+      planState.comentarioInterno = selectors.dietaComentarioInterno.value || "";
+    }
     const recetasPayload = await syncMealsRecetas(planState.comidas || []);
     planState.recetasPayload = recetasPayload;
     const payload = buildDietaPayload();
     payload.recetas = recetasPayload;
+    const originalText = selectors.savePlanBtn ? selectors.savePlanBtn.textContent : null;
+    if (selectors.savePlanBtn) {
+      selectors.savePlanBtn.disabled = true;
+      selectors.savePlanBtn.textContent = "Guardando...";
+    }
     try {
       let saved;
       if (planState.id) {
@@ -487,6 +544,11 @@
       loadDietas();
     } catch (error) {
       showToast(error.message || "No pudimos guardar la plantilla.");
+    } finally {
+      if (selectors.savePlanBtn) {
+        selectors.savePlanBtn.disabled = false;
+        selectors.savePlanBtn.textContent = originalText || "Guardar cambios";
+      }
     }
   };
 
@@ -502,7 +564,13 @@
         }
       }
     } catch (error) {
-      showToast(error.message || "No pudimos cargar la plantilla guardada.");
+      const message = (error?.message || "").toLowerCase();
+      if (error?.status === 404 || message.includes("no encontrada")) {
+        planState = cloneEmptyPlan();
+        setLastDietaId(null);
+      } else {
+        showToast(error.message || "No pudimos cargar la plantilla guardada.");
+      }
       renderPlan();
     }
   };
@@ -543,9 +611,9 @@
     const map = new Map();
     const normId = currentId ? String(currentId) : null;
     const priority = (item) => {
-      if (normId && String(item?.id) === normId) return 0; // priorizar la dieta seleccionada
-      if (item && item.es_plantilla === false) return 1; // luego las asignadas
-      return 2; // luego plantillas
+      if (normId && String(item?.id) === normId) return 0; 
+      if (item && item.es_plantilla === false) return 1; 
+      return 2; 
     };
     items.forEach((item) => {
       if (!item) return;
@@ -1042,8 +1110,12 @@
   };
 
   const openMealDetailModal = (mealName) => {
-    const meal = (planState.comidas || []).find((item) => item.nombre === mealName);
-    if (!meal || !selectors.mealDetailModal || !selectors.mealDetailBody || !selectors.mealDetailTitle) return;
+    let meal = (planState.comidas || []).find((item) => item.nombre === mealName);
+    if (!meal) {
+      meal = buildEmptyMeal(mealName);
+      planState.comidas = [...(planState.comidas || []), meal];
+    }
+    if (!selectors.mealDetailModal || !selectors.mealDetailBody || !selectors.mealDetailTitle) return;
     selectors.mealDetailTitle.textContent = meal.nombre || "Comida";
     selectors.mealDetailModal.dataset.meal = meal.nombre;
     const items = meal.items && meal.items.length ? meal.items : ["Sin alimentos agregados"];
@@ -1092,8 +1164,11 @@
   };
 
   const addFoodToMeal = (mealName) => {
-    const meal = (planState.comidas || []).find((item) => item.nombre === mealName);
-    if (!meal) return;
+    let meal = (planState.comidas || []).find((item) => item.nombre === mealName);
+    if (!meal) {
+      meal = buildEmptyMeal(mealName);
+      planState.comidas = [...(planState.comidas || []), meal];
+    }
     if (selectors.mealFoodModal && selectors.mealFoodSelect) {
       // Cierra el modal de detalle para evitar superposiciones y abre directamente el formulario de alimento
       if (selectors.mealDetailModal) {
@@ -1114,7 +1189,6 @@
       meal.items = meal.items || [];
       meal.items.push("Nuevo alimento pendiente de definir");
       renderPlan();
-      persistPlanChanges("add-food-direct").catch(() => {});
     }
   };
 
@@ -1124,7 +1198,6 @@
     meal.items.pop();
     recalcMealMacros(meal);
     renderPlan();
-    persistPlanChanges("remove-food").catch(() => {});
   };
 
   const showToast = (message) => {
@@ -1261,15 +1334,6 @@
         populatePacientesSelect();
         return true;
       }
-      // Si no hay dietas, crea una de muestra para tener ID
-      const nueva = await postJson("/dietas", buildDietaPayload());
-      if (nueva?.id) {
-        planState.id = nueva.id;
-        setLastDietaId(planState.id);
-        state.dietas = [nueva];
-        populatePacientesSelect();
-        return true;
-      }
     } catch (err) {
       // ignore, handled below
     }
@@ -1310,12 +1374,7 @@
     const selectedLabel = selectors.assignPacienteId?.selectedOptions?.[0]?.textContent?.trim();
     planState.asignadoLabel = getPacienteLabel(paciente) || selectedLabel || paciente;
 
-    // Asegura que el plan actual (comidas/notas) quede guardado antes de asignar.
-    const persisted = await persistPlanChanges("pre-assign");
-    if (!persisted) {
-      showToast("No se pudo guardar el plan antes de asignar. Intenta de nuevo.");
-      return;
-    }
+    // Se asigna sin guardar automáticamente; el usuario debe usar "Guardar cambios" si desea registrar versiones.
     if (!planState.id) {
       setGlobalAlert(`Dieta asignada a ${planState.asignadoLabel} (local, sin ID de dieta).`, "success");
       return;
@@ -1638,13 +1697,28 @@
   };
 
   const buildRecetaPayloadFromMeal = (meal) => {
-    const ingredientes = (meal.items || [])
+    const ingredientesMap = new Map();
+    (meal.items || [])
       .filter((item) => item && typeof item === "object" && item.alimento_id && item.cantidad)
-      .map((item) => ({
-        alimento_id: item.alimento_id,
-        cantidad: item.cantidad,
-        unidad: item.unidad || "g",
-      }));
+      .forEach((item) => {
+        const key = String(item.alimento_id);
+        const cantidadNum = Number.parseFloat(item.cantidad);
+        const cantidad = Number.isFinite(cantidadNum) ? cantidadNum : 0;
+        if (!cantidad) return;
+        const prev = ingredientesMap.get(key);
+        const unidad = item.unidad || prev?.unidad || "g";
+        if (prev) {
+          prev.cantidad += cantidad;
+          prev.unidad = prev.unidad || unidad;
+        } else {
+          ingredientesMap.set(key, {
+            alimento_id: item.alimento_id,
+            cantidad,
+            unidad,
+          });
+        }
+      });
+    const ingredientes = Array.from(ingredientesMap.values()).filter((ing) => ing.cantidad > 0);
     if (!ingredientes.length) return null;
     return {
       nombre: meal.nombre || "Comida",
@@ -1675,10 +1749,11 @@
     for (let index = 0; index < meals.length; index += 1) {
       const meal = meals[index];
       const receta = await upsertRecetaForMeal(meal);
-      if (receta?.id) {
-        meal.receta_id = receta.id;
+      const recetaId = receta?.id || meal.receta_id;
+      if (recetaId) {
+        meal.receta_id = recetaId;
         dietaRecetas.push({
-          receta_id: receta.id,
+          receta_id: recetaId,
           momento: meal.nombre,
           orden: index,
           porciones: 1,
@@ -1874,7 +1949,6 @@
       selectors.mealFoodModal.hidden = true;
       selectors.mealFoodModal.classList.remove("is-open");
       renderPlan();
-      persistPlanChanges("add-food").catch(() => {});
     });
 
     selectors.mealFoodForm?.addEventListener("click", (e) => {
@@ -1932,38 +2006,80 @@
       });
     });
 
-    document.getElementById("assignPlanBtn")?.addEventListener("click", () => {
-      ensureDietaId().then((ok) => {
-        if (!ok) {
-          showToast("No se pudo obtener el ID de la dieta para asignar.");
-          return;
+  document.getElementById("assignPlanBtn")?.addEventListener("click", () => {
+    ensureDietaId().then((ok) => {
+      if (!ok) {
+        showToast("No se pudo obtener el ID de la dieta para asignar.");
+        return;
+      }
+      const openAssignModal = () => {
+        if (selectors.assignModal) {
+          selectors.assignModal.hidden = false;
+          selectors.assignModal.classList.add("is-open");
+          populatePacientesSelect();
+          prepareAssignModal();
+          // Oculta campos que ya se rellenan en "Guardar cambios"
+          if (selectors.assignFechaInicio?.parentElement) selectors.assignFechaInicio.parentElement.style.display = "none";
+          if (selectors.assignFechaFin?.parentElement) selectors.assignFechaFin.parentElement.style.display = "none";
+          if (selectors.assignNotas) selectors.assignNotas.parentElement.style.display = "none";
+          if (selectors.assignComentario) selectors.assignComentario.parentElement.style.display = "none";
+        } else {
+          const paciente = prompt("Introduce el ID o nombre del paciente a asignar:");
+          if (paciente) applyAssignment({ paciente_id: paciente });
         }
-        const openAssignModal = () => {
-          if (selectors.assignModal) {
-            selectors.assignModal.hidden = false;
-            selectors.assignModal.classList.add("is-open");
-            populatePacientesSelect();
-          } else {
-            const paciente = prompt("Introduce el ID o nombre del paciente a asignar:");
-            if (paciente) applyAssignment({ paciente_id: paciente });
-          }
-        };
+      };
         loadPacientes().catch(() => {}).finally(openAssignModal);
       });
     });
 
     document.getElementById("analysisBtn")?.addEventListener("click", () => {
       if (selectors.analysisModal) {
-        selectors.analysisModal.hidden = false;
-        selectors.analysisModal.classList.add("is-open");
-        renderPlanAnalysis(planState);
-      }
+    selectors.analysisModal.hidden = false;
+    selectors.analysisModal.classList.add("is-open");
+    renderPlanAnalysis(planState);
+  }
+});
+
+selectors.savePlanBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+  openSaveMetaModal();
+});
+
+    const openNuevaDietaModal = () => {
+      if (!selectors.newDietaModal || !selectors.newDietaNombre) return;
+      selectors.newDietaFeedback.textContent = "";
+      selectors.newDietaNombre.value = "";
+      selectors.newDietaModal.hidden = false;
+      selectors.newDietaModal.classList.add("is-open");
+      selectors.newDietaNombre.focus();
+    };
+
+    const closeNuevaDietaModal = () => {
+      if (!selectors.newDietaModal) return;
+      selectors.newDietaModal.classList.remove("is-open");
+      selectors.newDietaModal.hidden = true;
+    };
+
+    selectors.newDietaBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openNuevaDietaModal();
     });
 
-    selectors.newDietaBtn?.addEventListener("click", () => {
-      const nombre = prompt("Nombre de la nueva dieta:");
-      if (!nombre) return;
+    selectors.newDietaForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const nombre = selectors.newDietaNombre?.value?.trim();
+      if (!nombre) {
+        if (selectors.newDietaFeedback) selectors.newDietaFeedback.textContent = "Introduce un nombre.";
+        return;
+      }
       createDieta(nombre);
+      closeNuevaDietaModal();
+    });
+
+    selectors.newDietaModal?.addEventListener("click", (e) => {
+      if (e.target.dataset?.modalClose === "nuevaDietaModal" || e.target === selectors.newDietaModal) {
+        closeNuevaDietaModal();
+      }
     });
 
     selectors.deleteDietaBtn?.addEventListener("click", (e) => {
@@ -1993,6 +2109,8 @@
         planState.notas = payload.notas;
         renderPlan();
       }
+      planState.fechaInicio = payload.fecha_inicio || planState.fechaInicio;
+      planState.fechaFin = payload.fecha_fin || planState.fechaFin;
       applyAssignment(payload);
       selectors.assignModal.classList.remove("is-open");
       selectors.assignModal.hidden = true;
@@ -2014,6 +2132,22 @@
       e.preventDefault();
       window.location.href = "principal.html";
     });
+  };
+
+
+  const prepareAssignModal = () => {
+    const pacienteSelect = selectors.assignPacienteId;
+    if (!pacienteSelect) return;
+    const wrapper = selectors.assignPacienteWrapper || pacienteSelect.parentElement;
+    if (planState.asignadoA) {
+      pacienteSelect.value = String(planState.asignadoA);
+      pacienteSelect.disabled = true;
+      if (wrapper) wrapper.style.display = "none";
+    } else {
+      pacienteSelect.disabled = false;
+      pacienteSelect.value = "";
+      if (wrapper) wrapper.style.display = "";
+    }
   };
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -2048,5 +2182,35 @@
         loadPacientes();
         loadDietas();
       });
+  });
+
+  const openSaveMetaModal = () => {
+    if (!selectors.saveMetaModal || !selectors.saveMetaForm) {
+      // Fallback si no hay modal: guardar directamente.
+      saveTemplateCore();
+      return;
+    }
+    if (selectors.saveMetaFeedback) selectors.saveMetaFeedback.textContent = "";
+    if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = planState.fechaInicio || "";
+    if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = planState.fechaFin || "";
+    if (selectors.dietaNotasPaciente) selectors.dietaNotasPaciente.value = planState.notasPaciente || "";
+    if (selectors.dietaComentarioInterno) selectors.dietaComentarioInterno.value = planState.comentarioInterno || "";
+    selectors.saveMetaModal.hidden = false;
+    selectors.saveMetaModal.classList.add("is-open");
+  };
+
+  selectors.saveMetaForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    saveTemplateCore().finally(() => {
+      selectors.saveMetaModal.classList.remove("is-open");
+      selectors.saveMetaModal.hidden = true;
+    });
+  });
+
+  Array.from(document.querySelectorAll("[data-modal-close=\"saveMetaModal\"]")).forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectors.saveMetaModal?.classList.remove("is-open");
+      if (selectors.saveMetaModal) selectors.saveMetaModal.hidden = true;
+    });
   });
 })();

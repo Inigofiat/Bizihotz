@@ -86,19 +86,21 @@ router.get('/', async (req, res) => {
     const { buscar, page, limit, sort, estado } = req.query;
     const filtro = {};
 
-    // Por defecto incluimos pacientes dados de baja; solo se excluyen si el cliente lo pide.
-    const includeBaja = (Object.prototype.hasOwnProperty.call(req.query, 'incluirBaja')
+    // Por defecto incluimos pacientes en standby/baja; solo se excluyen si el cliente lo pide.
+    const includeInactive = (Object.prototype.hasOwnProperty.call(req.query, 'incluirBaja')
       || Object.prototype.hasOwnProperty.call(req.query, 'incluirInactivos'))
       ? parseBoolean(req.query.incluirBaja || req.query.incluirInactivos, false)
       : true;
     const estadoNormalized = typeof estado === 'string' ? estado.trim().toLowerCase() : '';
-    if (estadoNormalized === 'activo' || estadoNormalized === 'baja') {
+    const isStandbyFilter = estadoNormalized === 'standby' || estadoNormalized === 'baja';
+    if (estadoNormalized === 'activo' || isStandbyFilter) {
       if (estadoNormalized === 'activo') {
         filtro.$or = [{ estado: 'activo' }, { estado: { $exists: false } }];
       } else {
-        filtro.estado = estadoNormalized;
+        // Aceptamos "baja" por compatibilidad, pero usamos "standby" como estado de inactividad.
+        filtro.estado = { $in: ['standby', 'baja'] };
       }
-    } else if (!includeBaja) {
+    } else if (!includeInactive) {
       filtro.$or = [{ estado: 'activo' }, { estado: { $exists: false } }];
     }
 
@@ -389,7 +391,12 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.post('/:id/baja', async (req, res) => {
+router.post('/:id/baja', setPacienteStandby);
+// Alias más semántico para pasar a standby sin eliminar.
+router.post('/:id/standby', setPacienteStandby);
+
+// Helper compartido para poner a un paciente en standby (sin eliminarlo).
+async function setPacienteStandby(req, res) {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');
@@ -402,27 +409,27 @@ router.post('/:id/baja', async (req, res) => {
     const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
     const bajaPor = req.body?.bajaPor || null;
 
-    if (paciente.estado === 'baja') {
+    if (paciente.estado === 'standby' || paciente.estado === 'baja') {
       return res.json({
-        mensaje: 'El paciente ya estaba dado de baja.',
+        mensaje: 'El paciente ya estaba en standby.',
         paciente
       });
     }
 
-    paciente.estado = 'baja';
+    paciente.estado = 'standby';
     paciente.fechaBaja = new Date();
     paciente.motivoBaja = motivo;
     paciente.bajaPor = bajaPor;
     await paciente.save();
 
     return res.json({
-      mensaje: 'Paciente dado de baja correctamente.',
+      mensaje: 'Paciente pasado a standby correctamente.',
       paciente
     });
   } catch (error) {
-    return handleError(res, error, 'Error al dar de baja al paciente');
+    return handleError(res, error, 'Error al poner al paciente en standby');
   }
-});
+}
 
 router.post('/:id/reactivar', async (req, res) => {
   try {

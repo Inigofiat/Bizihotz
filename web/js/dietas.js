@@ -4426,6 +4426,21 @@
     return ingredientes;
   };
 
+  const ensureIngredientesUnicos = (ingredientes) => {
+    if (!Array.isArray(ingredientes) || ingredientes.length === 0) {
+      return;
+    }
+    const vistos = new Set();
+    for (const item of ingredientes) {
+      const alimentoId = toNumericId(item?.alimento_id);
+      if (!Number.isFinite(alimentoId)) continue;
+      if (vistos.has(alimentoId)) {
+        throw new Error("No puedes repetir el mismo alimento en la receta. Ajusta o elimina los duplicados.");
+      }
+      vistos.add(alimentoId);
+    }
+  };
+
   const collectDietaRecetas = () => {
     const rows = document.querySelectorAll(".diet-recipe-row");
     const recetas = [];
@@ -4844,6 +4859,7 @@
     feedback && (feedback.textContent = "");
     try {
       const ingredientes = collectRecetaIngredientes();
+      ensureIngredientesUnicos(ingredientes);
       if (!ingredientes.length) throw new Error("Anade al menos un ingrediente.");
 
       const payload = {

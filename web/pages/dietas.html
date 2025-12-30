@@ -41,22 +41,23 @@
             <h2>Plan de dieta</h2>
             <p>Organiza tus comidas y revisa el aporte global</p>
           </div>
-          <div class="panel__actions">
-            <button type="button" class="btn" id="analysisBtn">Ver analisis</button>
-            <button type="button" class="btn" id="newDietaBtn">Nueva dieta</button>
-            <div class="template-picker">
+        <div class="panel__actions">
+          <button type="button" class="btn ghost" id="savePlanBtn">Guardar cambios</button>
+          <button type="button" class="btn" id="analysisBtn">Ver analisis</button>
+          <button type="button" class="btn" id="newDietaBtn">Nueva dieta</button>
+          <div class="template-picker">
               <select id="templatePicker" class="template-picker__select">
                 <option value="">Plantillas guardadas</option>
               </select>
             </div>
-            <button type="button" class="btn danger" id="deleteDietaBtn">
-              <span class="icon icon-trash" aria-hidden="true"></span>
-              <span>Borrar dieta</span>
-            </button>
-            <button type="button" class="btn primary" id="assignPlanBtn">Asignar plan</button>
-          </div>
+          <button type="button" class="btn danger" id="deleteDietaBtn">
+            <span class="icon icon-trash" aria-hidden="true"></span>
+            <span>Borrar dieta</span>
+          </button>
+          <button type="button" class="btn primary" id="assignPlanBtn">Asignar plan</button>
         </div>
-        <div class="diet-plan-grid">
+      </div>
+      <div class="diet-plan-grid">
           <div class="diet-plan-left">
             <div class="meal-columns">
               <div class="meal-column">
@@ -216,6 +217,14 @@
             <label for="dietaFechaFin">Fecha de fin</label>
             <input type="date" id="dietaFechaFin" name="dietaFechaFin">
           </div>
+        </div>
+        <div class="form-group">
+          <label for="dietaNotasPaciente">Notas para el paciente</label>
+          <textarea id="dietaNotasPaciente" name="dietaNotasPaciente" rows="3" placeholder="Indicaciones visibles para el paciente"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="dietaComentarioInterno">Comentario interno</label>
+          <textarea id="dietaComentarioInterno" name="dietaComentarioInterno" rows="2" placeholder="Comentario interno para el historial/versionado"></textarea>
         </div>
         <div class="form-group">
           <label for="dietaObjetivo">Objetivo</label>
@@ -400,6 +409,58 @@
         <div class="modal__actions">
           <button type="button" class="btn" data-modal-close="mealFoodModal">Cancelar</button>
           <button type="submit" class="btn primary">Agregar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="saveMetaModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="saveMetaModal">&times;</button>
+      <h3>Guardar cambios</h3>
+      <p class="modal__subtitle">Define las fechas y notas para esta versi&oacute;n antes de guardar.</p>
+      <form id="saveMetaForm" class="form-grid" autocomplete="off">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="saveMetaFechaInicio">Fecha de inicio</label>
+            <input type="date" id="saveMetaFechaInicio" name="saveMetaFechaInicio">
+          </div>
+          <div class="form-group">
+            <label for="saveMetaFechaFin">Fecha de fin</label>
+            <input type="date" id="saveMetaFechaFin" name="saveMetaFechaFin">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="saveMetaNotasPaciente">Notas para el paciente</label>
+          <textarea id="saveMetaNotasPaciente" name="saveMetaNotasPaciente" rows="2" placeholder="Indicaciones visibles para el paciente"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="saveMetaComentarioInterno">Comentario interno</label>
+          <textarea id="saveMetaComentarioInterno" name="saveMetaComentarioInterno" rows="2" placeholder="Comentario interno para el historial/versionado"></textarea>
+        </div>
+        <p class="modal-feedback" id="saveMetaFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="saveMetaModal">Cancelar</button>
+          <button type="submit" class="btn primary" id="saveMetaSubmit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="nuevaDietaModal" hidden>
+    <div class="modal">
+      <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="nuevaDietaModal">&times;</button>
+      <h3>Nueva dieta</h3>
+      <p class="modal__subtitle">Asigna un nombre para crear la dieta o plantilla.</p>
+      <form id="nuevaDietaForm" class="form-grid" autocomplete="off">
+        <div class="form-group">
+          <label for="nuevaDietaNombre">Nombre de la nueva dieta</label>
+          <input type="text" id="nuevaDietaNombre" name="nuevaDietaNombre" placeholder="Ej. Plan semanal" required />
+        </div>
+        <p class="modal-feedback" id="nuevaDietaFeedback"></p>
+        <div class="modal__actions">
+          <button type="button" class="btn" data-modal-close="nuevaDietaModal">Cancelar</button>
+          <button type="submit" class="btn primary">Crear</button>
         </div>
       </form>
     </div>

@@ -164,6 +164,10 @@ tbody tr:last-child td {
   color: #567665;
 }
 
+.is-standby .paciente-name {
+  color: #b26a00;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -172,6 +176,12 @@ tbody tr:last-child td {
   color: #12814c;
   padding: 4px 10px;
   border-radius: 999px;
+}
+
+.pill--standby {
+  background-color: #fff4e5;
+  color: #b26a00;
+  border: 1px solid #f2c27f;
 }
 
 .action-link {

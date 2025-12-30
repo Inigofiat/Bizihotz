@@ -28,7 +28,7 @@
 
       <div id="pacienteBadges" class="patient-badges"></div>
       <div id="pacienteAcciones" class="patient-actions">
-        <button type="button" class="btn danger" id="btnBajaPaciente">Dar de baja</button>
+        <button type="button" class="btn danger" id="btnBajaPaciente">Poner en standby</button>
         <button type="button" class="btn ghost" id="btnReactivarPaciente" hidden>Reactivar</button>
       </div>
 
@@ -127,7 +127,10 @@
         <article class="card wide full-span" id="dietPlanCard">
           <div class="diet-card__header">
             <h2>Plan nutricional</h2>
-            <button type="button" class="btn" id="abrirGestorDietas">Abrir gestor de dietas</button>
+            <div class="diet-card__actions">
+              <button type="button" class="btn ghost" id="verHistorialDieta">Ver historial</button>
+              <button type="button" class="btn" id="abrirGestorDietas">Abrir gestor de dietas</button>
+            </div>
           </div>
           <div id="pacienteDietas" class="diet-summary" data-empty="No hay dietas asignadas actualmente."></div>
         </article>
@@ -465,6 +468,15 @@
 
     </div>
 
+  </div>
+
+  <div class="modal-overlay" id="modalHistorialDieta" hidden>
+    <div class="modal-content modal-diet-history">
+      <button type="button" class="modal-close" id="cerrarModalHistorialDieta">&times;</button>
+      <h3>Historial de cambios de la dieta</h3>
+      <p class="modal-subtitle"></p>
+      <div id="historialDietaContenido" class="diet-history-modal" data-empty="Todav&iacute;a no hay cambios guardados."></div>
+    </div>
   </div>
 
 

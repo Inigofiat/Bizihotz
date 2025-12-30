@@ -39,6 +39,7 @@ class DietaUpdate(ORMModel):
     notas: Optional[str] = None
     paciente_id: Optional[str] = None
     usuario_id: Optional[int] = None
+    actor_usuario_id: Optional[int] = None
     es_plantilla: Optional[bool] = None
     estado: Optional[str] = None
     activa: Optional[bool] = None
@@ -83,6 +84,15 @@ class DietaAsignacionRead(ORMModel):
     comentario: Optional[str] = None
 
 
+class DietaHistorialRead(ORMModel):
+    id: int
+    dieta_id: int
+    usuario_id: int
+    detalle: Optional[str] = None
+    snapshot: Optional[Dict] = None
+    registrado_en: datetime
+
+
 class DietaRead(ORMModel):
     id: int
     nombre: str
@@ -105,3 +115,4 @@ class DietaRead(ORMModel):
     recetas: List[DietaRecetaRead] = Field(default_factory=list)
     totales: Dict[str, Dict[str, float]] = Field(default_factory=dict)
     asignaciones: List[DietaAsignacionRead] = Field(default_factory=list)
+    historial: List[DietaHistorialRead] = Field(default_factory=list)
