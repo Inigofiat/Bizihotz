@@ -2656,6 +2656,13 @@ const renderHistorialDietaModal = (dieta) => {
     );
   const totalEntries = sorted.length;
 
+  const pickDate = (...candidates) => {
+    for (const candidate of candidates) {
+      if (candidate !== undefined) return candidate;
+    }
+    return null;
+  };
+
   const entries = sorted.map((entry, idx) => {
     const parseMaybeJson = (value) => {
       if (!value || typeof value !== "string") return null;
@@ -2668,24 +2675,22 @@ const renderHistorialDietaModal = (dieta) => {
     const snapshot = entry.snapshot || parseMaybeJson(entry.snapshot_data) || {};
     const snapshotDescripcion = parsePlanDescripcion(snapshot.descripcion);
     const descripcion = snapshotDescripcion || parsePlanDescripcion(dieta?.descripcion) || {};
-    const fechaInicioRaw =
-      snapshot?.fecha_inicio ??
-      snapshot?.fechaInicio ??
-      descripcion?.fecha_inicio ??
-      descripcion?.fechaInicio ??
-      dieta?.historial?.[idx]?.snapshot?.fecha_inicio ??
-      dieta?.historial?.[idx]?.snapshot?.fechaInicio ??
-      dieta?.fecha_inicio ??
-      null;
-    const fechaFinRaw =
-      snapshot?.fecha_fin ??
-      snapshot?.fechaFin ??
-      descripcion?.fecha_fin ??
-      descripcion?.fechaFin ??
-      dieta?.historial?.[idx]?.snapshot?.fecha_fin ??
-      dieta?.historial?.[idx]?.snapshot?.fechaFin ??
-      dieta?.fecha_fin ??
-      null;
+    const fechaInicioRaw = pickDate(
+      snapshot?.fecha_inicio,
+      snapshot?.fechaInicio,
+      snapshotDescripcion?.fecha_inicio,
+      snapshotDescripcion?.fechaInicio,
+      descripcion?.fecha_inicio,
+      descripcion?.fechaInicio
+    );
+    const fechaFinRaw = pickDate(
+      snapshot?.fecha_fin,
+      snapshot?.fechaFin,
+      snapshotDescripcion?.fecha_fin,
+      snapshotDescripcion?.fechaFin,
+      descripcion?.fecha_fin,
+      descripcion?.fechaFin
+    );
     const parsedComidas = Array.isArray(descripcion?.comidas) ? descripcion.comidas : [];
     const fallbackComidas = parsePlanDescripcion(dieta?.descripcion)?.comidas || [];
     const comidas = parsedComidas.length ? parsedComidas : fallbackComidas;
@@ -2803,10 +2808,11 @@ const renderMealsDetail = (comidas) => {
       .map((c) => buildDonutChart(c.macros || {}, c.nombre || "Comida", true))
       .join("");
     const periodoHtml = (() => {
-      const inicio = formatDate(data.fechaInicioRaw || dieta?.fecha_inicio) || "N/D";
-      const finRaw = data.fechaFinRaw ?? dieta?.fecha_fin;
+      const inicioRaw = data.fechaInicioRaw !== undefined ? data.fechaInicioRaw : dieta?.fecha_inicio;
+      const finRaw = data.fechaFinRaw !== undefined ? data.fechaFinRaw : dieta?.fecha_fin;
+      const inicio = inicioRaw ? formatDate(inicioRaw) || "Indefinido" : "Indefinido";
       const fin = finRaw ? formatDate(finRaw) || "Indefinido" : "Indefinido";
-      if (!inicio && !finRaw) return "";
+      if (inicioRaw === undefined && finRaw === undefined) return "";
       return `<div class="hist-entry__meta-line">
         <span class="pill soft small">Inicio: ${inicio}</span>
         <span class="pill soft small">Fin: ${fin}</span>

@@ -265,6 +265,10 @@
     dietaFechaFin: document.getElementById("dietaFechaFin"),
     dietaNotasPaciente: document.getElementById("dietaNotasPaciente"),
     dietaComentarioInterno: document.getElementById("dietaComentarioInterno"),
+    saveMetaFechaInicio: document.getElementById("saveMetaFechaInicio"),
+    saveMetaFechaFin: document.getElementById("saveMetaFechaFin"),
+    saveMetaNotasPaciente: document.getElementById("saveMetaNotasPaciente"),
+    saveMetaComentarioInterno: document.getElementById("saveMetaComentarioInterno"),
     saveMetaModal: document.getElementById("saveMetaModal"),
     saveMetaForm: document.getElementById("saveMetaForm"),
     saveMetaFeedback: document.getElementById("saveMetaFeedback"),
@@ -389,6 +393,9 @@
 
   const hydratePlanFromDieta = (data) => {
     if (!data) return;
+    const parsedDescripcion = safeParseJson(data.descripcion);
+    const descFechaInicio = parsedDescripcion?.fecha_inicio ?? parsedDescripcion?.fechaInicio ?? null;
+    const descFechaFin = parsedDescripcion?.fecha_fin ?? parsedDescripcion?.fechaFin ?? null;
     planState.id = data.id ?? planState.id;
     if (planState.id) setLastDietaId(planState.id);
     planState.nombre = data.nombre || planState.nombre || "Plantilla en blanco";
@@ -398,10 +405,10 @@
     planState.comentarioInterno = "";
     planState.esPlantilla = data.es_plantilla !== false;
     planState.pacienteBase = data.paciente_id || null;
-    planState.fechaInicio = data.fecha_inicio || null;
-    planState.fechaFin = data.fecha_fin || null;
-    if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = data.fecha_inicio ? data.fecha_inicio.slice(0, 10) : "";
-    if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = data.fecha_fin ? data.fecha_fin.slice(0, 10) : "";
+    planState.fechaInicio = descFechaInicio ?? data.fecha_inicio ?? null;
+    planState.fechaFin = descFechaFin ?? data.fecha_fin ?? null;
+    if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = planState.fechaInicio ? String(planState.fechaInicio).slice(0, 10) : "";
+    if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = planState.fechaFin ? String(planState.fechaFin).slice(0, 10) : "";
     planState.asignadoA = data.paciente_id || planState.asignadoA || null;
     planState.asignadoLabel = getPacienteLabel(planState.asignadoA) || planState.asignadoA || planState.asignadoLabel || "";
     if (Array.isArray(data.asignaciones) && data.asignaciones.length) {
@@ -441,12 +448,16 @@
       comidas: planState.comidas || [],
       comentarioInterno: planState.comentarioInterno || "",
       fecha_inicio: planState.fechaInicio || null,
+      fechaInicio: planState.fechaInicio || null,
       fecha_fin: planState.fechaFin || null,
+      fechaFin: planState.fechaFin || null,
       notas_paciente: planState.notasPaciente || ""
     }),
     calorias_objetivo: planState.objetivoCalorias || 0,
     fecha_inicio: planState.fechaInicio || null,
+    fechaInicio: planState.fechaInicio || null,
     fecha_fin: planState.fechaFin || null,
+    fechaFin: planState.fechaFin || null,
     recetas: buildDietaRecetasPayload(planState.comidas || []),
   });
 
@@ -507,23 +518,35 @@
     }
   };
   const saveTemplateCore = async () => {
-    if (selectors.dietaFechaInicio) {
-      planState.fechaInicio = selectors.dietaFechaInicio.value || null;
-    }
-    if (selectors.dietaFechaFin) {
-      planState.fechaFin = selectors.dietaFechaFin.value || null;
-    }
-    if (selectors.dietaNotasPaciente) {
-      planState.notas = selectors.dietaNotasPaciente.value || "";
-      planState.notasPaciente = planState.notas;
-    }
-    if (selectors.dietaComentarioInterno) {
-      planState.comentarioInterno = selectors.dietaComentarioInterno.value || "";
-    }
+    const normalizeDateInput = (raw) => {
+      if (!raw) return null;
+      const value = String(raw).trim();
+      if (!value) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+      const ddmmyyyy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        const [, dd, mm, yyyy] = ddmmyyyy;
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+      return null;
+    };
+    const readValue = (primary, fallback = null) => {
+      const raw = primary?.value ?? fallback?.value ?? "";
+      return (raw || "").trim();
+    };
+    planState.fechaInicio = normalizeDateInput(readValue(selectors.saveMetaFechaInicio, selectors.dietaFechaInicio));
+    planState.fechaFin = normalizeDateInput(readValue(selectors.saveMetaFechaFin, selectors.dietaFechaFin));
+    const notasPaciente = readValue(selectors.saveMetaNotasPaciente, selectors.dietaNotasPaciente);
+    planState.notas = notasPaciente;
+    planState.notasPaciente = notasPaciente;
+    planState.comentarioInterno = readValue(selectors.saveMetaComentarioInterno, selectors.dietaComentarioInterno);
     const recetasPayload = await syncMealsRecetas(planState.comidas || []);
     planState.recetasPayload = recetasPayload;
     const payload = buildDietaPayload();
     payload.recetas = recetasPayload;
+    console.log("Guardando dieta con payload:", payload);
     const originalText = selectors.savePlanBtn ? selectors.savePlanBtn.textContent : null;
     if (selectors.savePlanBtn) {
       selectors.savePlanBtn.disabled = true;
@@ -540,6 +563,8 @@
         planState.id = saved.id;
         planState.nombre = saved.nombre || payload.nombre;
       }
+      // Refresca desde backend para asegurar que las fechas/macros reflejen lo que persiste el servicio.
+      await loadPlanFromBackend();
       showToast("Plantilla guardada en la base de datos.");
       loadDietas();
     } catch (error) {
@@ -2191,10 +2216,17 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
       return;
     }
     if (selectors.saveMetaFeedback) selectors.saveMetaFeedback.textContent = "";
-    if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = planState.fechaInicio || "";
-    if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = planState.fechaFin || "";
-    if (selectors.dietaNotasPaciente) selectors.dietaNotasPaciente.value = planState.notasPaciente || "";
-    if (selectors.dietaComentarioInterno) selectors.dietaComentarioInterno.value = planState.comentarioInterno || "";
+    const fillValue = (input, value) => {
+      if (input) input.value = value || "";
+    };
+    fillValue(selectors.saveMetaFechaInicio, planState.fechaInicio);
+    fillValue(selectors.saveMetaFechaFin, planState.fechaFin);
+    fillValue(selectors.saveMetaNotasPaciente, planState.notasPaciente);
+    fillValue(selectors.saveMetaComentarioInterno, planState.comentarioInterno);
+    fillValue(selectors.dietaFechaInicio, planState.fechaInicio);
+    fillValue(selectors.dietaFechaFin, planState.fechaFin);
+    fillValue(selectors.dietaNotasPaciente, planState.notasPaciente);
+    fillValue(selectors.dietaComentarioInterno, planState.comentarioInterno);
     selectors.saveMetaModal.hidden = false;
     selectors.saveMetaModal.classList.add("is-open");
   };
