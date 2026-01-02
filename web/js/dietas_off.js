@@ -126,6 +126,7 @@
   const cloneEmptyPlan = () => JSON.parse(JSON.stringify(EMPTY_PLAN_TEMPLATE));
   const LAST_DIETA_KEY = "bizihotzLastDietaId";
   const LAST_DIETA_ASSIGNED_KEY = "bizihotzLastAssignedDietaId";
+  const DIETA_INTRO_SEEN_KEY = "bizihotzDietaIntroSeen";
   const PACIENTE_PARAM = new URLSearchParams(window.location.search).get("pacienteId");
   let planState = cloneEmptyPlan();
 
@@ -166,6 +167,30 @@
     } catch {
       return null;
     }
+  };
+
+  const hasSeenIntro = () => {
+    try {
+      return sessionStorage.getItem(DIETA_INTRO_SEEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  };
+
+  const markIntroSeen = () => {
+    try {
+      sessionStorage.setItem(DIETA_INTRO_SEEN_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const hideIntroOverlay = () => {
+    if (selectors.introOverlay) {
+      selectors.introOverlay.classList.remove("is-open");
+      selectors.introOverlay.hidden = true;
+    }
+    document.body.classList.remove("intro-blur");
   };
 
   let API_BASE = `${resolveDirectBase()}/api`;
@@ -283,6 +308,8 @@
     statPlantillas: document.getElementById("statPlantillas"),
     statDietasActivas: document.getElementById("statDietasActivas"),
     statPacientes: document.getElementById("statPacientes"),
+    introOverlay: document.getElementById("introOverlay"),
+    introClose: document.getElementById("introClose"),
   };
 
   const state = {
@@ -892,10 +919,8 @@
 
       renderDietasList(state.dietas);
       updateStats();
-      const activeId = planState.id || (state.dietas[0] && state.dietas[0].id);
-      if (activeId) {
-        planState.id = activeId;
-        selectDiet(activeId, false);
+      if (planState.id) {
+        await selectDiet(planState.id, false);
       } else {
         renderDietDetail(null);
       }
@@ -905,7 +930,7 @@
     }
   };
 
-  const selectDiet = (dietaId, hydrate = true) => {
+  const selectDiet = async (dietaId, hydrate = true) => {
     const id = String(dietaId);
     const dieta = state.dietas.find((d) => String(d.id) === id);
     if (!dieta) {
@@ -915,6 +940,8 @@
     planState.esPlantilla = dieta.es_plantilla !== false;
     planState.pacienteBase = dieta.paciente_id || null;
     setLastDietaId(planState.id);
+    markIntroSeen();
+    hideIntroOverlay();
     if (dieta.es_plantilla === false || dieta.paciente_id) {
       setLastAssignedId(dieta.id);
     }
@@ -926,9 +953,15 @@
     if (selectors.templatePicker) {
       selectors.templatePicker.value = String(dieta.id);
     }
-    renderDietDetail(dieta);
     if (hydrate) {
-      hydratePlanFromDieta(dieta);
+      try {
+        const fresh = await fetchJson(`/dietas/${planState.id}`);
+        hydratePlanFromDieta(fresh);
+      } catch (error) {
+        hydratePlanFromDieta(dieta);
+      }
+    } else {
+      renderDietDetail(dieta);
     }
   };
 
@@ -1346,22 +1379,7 @@
       setLastDietaId(dietaId);
       return true;
     }
-    const storedId = getLastDietaId();
-    if (storedId) {
-      planState.id = storedId;
-      return true;
-    }
-    try {
-      state.dietas = (await fetchJson("/dietas?es_plantilla=true")) || [];
-      if (state.dietas.length) {
-        planState.id = state.dietas[0].id;
-        setLastDietaId(planState.id);
-        populatePacientesSelect();
-        return true;
-      }
-    } catch (err) {
-      // ignore, handled below
-    }
+    // No seleccionamos automáticamente ninguna dieta al entrar si no hay parámetro.
     return false;
   };
 
@@ -1894,11 +1912,10 @@
       planState.notas = e.target.textContent || "";
     });
 
-    selectors.templatePicker?.addEventListener("change", (e) => {
+    selectors.templatePicker?.addEventListener("change", async (e) => {
       const value = e.target.value;
       if (!value) return;
-      selectDiet(value, true);
-      setTimeout(() => window.location.reload(), 300);
+      await selectDiet(value, true);
     });
 
     selectors.refreshDietasBtn?.addEventListener("click", (e) => {
@@ -1906,15 +1923,14 @@
       loadDietas();
     });
 
-    selectors.dietList?.addEventListener("click", (e) => {
+    selectors.dietList?.addEventListener("click", async (e) => {
       const card = e.target.closest("[data-dieta-id]");
       if (!card) return;
       const dietaId = card.dataset.dietaId;
-      selectDiet(dietaId, true);
-      setTimeout(() => window.location.reload(), 300);
+      await selectDiet(dietaId, true);
     });
 
-    selectors.dietDetail?.addEventListener("click", (e) => {
+    selectors.dietDetail?.addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
       const action = btn.dataset.action;
@@ -1924,7 +1940,7 @@
       } else if (action === "load-current-template") {
         e.preventDefault();
         if (planState.id) {
-          selectDiet(planState.id, true);
+          await selectDiet(planState.id, true);
         }
       } else if (action === "add-food-modal") {
         e.preventDefault();
@@ -2185,12 +2201,7 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
     }
 
     const bootstrap = async () => {
-      if (!planState.id && pacienteId) {
-        const loadedForPaciente = await loadPlanForPaciente(pacienteId);
-        if (loadedForPaciente) {
-          return;
-        }
-      }
+      // Solo cargamos dieta si viene indicada por parámetro; no se autoselecciona ni por paciente.
       const ok = await ensureDietaId();
       if (ok) {
         await loadPlanFromBackend();
@@ -2206,7 +2217,24 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
         loadAlimentos();
         loadPacientes();
         loadDietas();
+        if (!planState.id && selectors.introOverlay) {
+          document.body.classList.add("intro-blur");
+          selectors.introOverlay.hidden = false;
+          selectors.introOverlay.classList.add("is-open");
+        } else if (planState.id) {
+          hideIntroOverlay();
+        }
       });
+  });
+
+  selectors.introClose?.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (selectors.introOverlay) {
+      selectors.introOverlay.classList.remove("is-open");
+      selectors.introOverlay.hidden = true;
+    }
+    markIntroSeen();
+    document.body.classList.remove("intro-blur");
   });
 
   const openSaveMetaModal = () => {

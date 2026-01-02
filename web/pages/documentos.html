@@ -7,17 +7,26 @@
   <link rel="stylesheet" href="../css/documentos.css" />
 </head>
 <body>
-  <header class="doc-header">
-    <div>
-      <p class="breadcrumb"><a href="principal.html">Volver al panel</a></p>
-      <h1>Documentos nutricionales</h1>
-      <p class="subtitle">Acceso a enlaces configurables. Edita web/data/documentos.js para anadir mas.</p>
-    </div>
-  </header>
+  <div class="page">
+    <header class="topbar">
+      <a href="principal.html" class="back-btn has-logo" id="volverPanel" aria-label="Volver al panel">
+        <img src="../images/2.png" alt="Logo Bizihotz" />
+      </a>
+      <div class="topbar__titles">
+        <p class="eyebrow">Recursos</p>
+        <h1>Documentos nutricionales</h1>
+      </div>
+      <div class="topbar__meta">
+        <span class="pill"><span id="docCount">--</span> documentos</span>
+      </div>
+    </header>
 
-  <section id="feedback" class="feedback" hidden></section>
+    <main class="content">
+      <section id="feedback" class="feedback" hidden></section>
 
-  <section id="documentList" class="doc-grid"></section>
+      <section id="documentList" class="doc-grid"></section>
+    </main>
+  </div>
 
   <template id="docCardTemplate">
     <article class="doc-card">

@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestion de Dietas</title>
   <link rel="stylesheet" href="../css/dietas.css">
+  <style>
+    body.intro-blur .app-shell {
+      filter: blur(4px);
+      pointer-events: none;
+      user-select: none;
+    }
+    #introOverlay .modal {
+      max-width: 520px;
+      text-align: center;
+    }
+    #introOverlay .modal__actions {
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -538,6 +552,16 @@
       <div class="modal__actions">
         <button type="button" class="btn ghost" data-modal-close="deleteDietaModal">Cancelar</button>
         <button type="button" class="btn danger" id="confirmDeleteDietaBtn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="introOverlay" hidden>
+    <div class="modal">
+      <h3>Acabas de entrar al gestor de dietas</h3>
+      <p class="modal__subtitle">Selecciona una plantilla o crea tu dieta personalizada.</p>
+      <div class="modal__actions" style="justify-content:center;">
+        <button type="button" class="btn primary" id="introClose">Comenzar</button>
       </div>
     </div>
   </div>

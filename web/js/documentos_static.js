@@ -5,16 +5,28 @@
     const list = document.getElementById("documentList");
     const template = document.getElementById("docCardTemplate");
     const feedback = document.getElementById("feedback");
+    const countNode = document.getElementById("docCount");
 
     if (!list || !template) return;
 
+    const updateCount = (value) => {
+      if (countNode) {
+        countNode.textContent = value.toString();
+      }
+    };
+
     list.innerHTML = "";
+    updateCount(docs.length || 0);
 
     if (!docs || docs.length === 0) {
       if (feedback) {
         feedback.hidden = false;
         feedback.textContent = "No hay documentos configurados. Edita web/data/documentos.js para anadir enlaces.";
       }
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Aun no hay documentos guardados.";
+      list.appendChild(empty);
       return;
     }
 
