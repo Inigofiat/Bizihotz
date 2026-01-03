@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..database import get_session
 from ..models import Alimento
 from ..schemas import AlimentoCreate, AlimentoRead, AlimentoUpdate
+from ..services.bedca import sync_bedca_alimentos
 
 router = APIRouter()
 
@@ -116,3 +117,15 @@ def eliminar_alimento(alimento_id: int, session: Session = Depends(get_session))
     session.delete(alimento)
     session.commit()
     return None
+
+
+@router.post("/bedca/sync", response_model=dict)
+def sincronizar_bedca(session: Session = Depends(get_session)):
+    """
+    Importa/actualiza alimentos desde la base publica BEDCA.
+    """
+    try:
+        resultado = sync_bedca_alimentos(session)
+        return resultado
+    except Exception as exc:  # pragma: no cover - capa de seguridad
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc

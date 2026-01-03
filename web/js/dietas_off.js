@@ -1865,6 +1865,7 @@
     }
   };
 
+
   const openNuevoAlimentoModal = (alimento = null) => {
     if (!selectors.nuevoAlimentoModal) return;
     const editingId = alimento?.id || alimento?.alimento_id || null;

@@ -27,6 +27,8 @@ class Settings:
             "EXPORT_FOOTER_NOTE",
             "Generado por el equipo de nutricion de Bizihotz",
         )
+        # Sincronizar automaticamente los alimentos desde BEDCA al arrancar (por defecto true)
+        self.bedca_auto_sync = os.getenv("BEDCA_AUTO_SYNC", "true").lower() in ("1", "true", "yes", "on")
 
 
 @lru_cache
