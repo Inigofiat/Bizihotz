@@ -1,10 +1,10 @@
 # Bizihotz FastAPI Gateway
 
-Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hacia `gestion`, `nutricion` y futuros servicios, agrega los documentos OpenAPI y expone endpoints de salud.
+Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hacia `gestion`, `nutricion`, `comunicacion`, `documentos` y futuros servicios, agrega los documentos OpenAPI y expone endpoints de salud.
 
 ## Funciones
 
-- Proxy transparente (`/gestion/*`, `/nutricion/*`, ...).
+- Proxy transparente (`/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, ...).
 - Documentacion unificada en `/docs` y `/openapi.json`.
 - Endpoint `/health` para verificar disponibilidad de los servicios registrados.
 - Carga dinamica de OpenAPI remotos para combinarlos en el esquema del gateway.
@@ -26,6 +26,8 @@ NUTRICION_SERVICE_URL=http://localhost:5002
 NUTRICION_OPENAPI_URL=http://localhost:5002/openapi.json
 COMUNICACION_SERVICE_URL=http://localhost:4100
 COMUNICACION_OPENAPI_URL=http://localhost:4100/docs/swagger.json
+DOCUMENTOS_SERVICE_URL=http://localhost:5100
+DOCUMENTOS_OPENAPI_URL=http://localhost:5100/openapi.json
 ```
 
 Agrega tantas parejas `*_SERVICE_URL` / `*_OPENAPI_URL` como microservicios quieras publicar.
@@ -55,4 +57,4 @@ docker compose up api-gateway --build
 - `GET /health`
 - `GET /docs`
 - `GET /openapi.json`
-- `/gestion/*`, `/nutricion/*`, ... -> proxys hacia cada servicio configurado.
+- `/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, ... -> proxys hacia cada servicio configurado.

@@ -119,6 +119,20 @@ uvicorn app:app --reload --port 5002
 - Semilla opcional: `python scripts/seed_demo.py`
 - Documentacion: ver `microservicioNutricion/README.md` para scripts adicionales.
 
+### microservicioDocumental (FastAPI)
+
+```bash
+cd microservicioDocumental
+cp .env.example .env
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app:app --reload --port 5100
+```
+
+- Por defecto usa el Postgres del stack (`postgresql+psycopg://postgres:postgres@localhost:5435/nutricion`). Cambia `DATABASE_URL` si usas otra instancia o el `docker-compose` de esta carpeta (que expone Postgres en `5440`).
+- Endpoints: `http://localhost:5100/health`, `/api/documentos`, `/docs`.
+
 ### API Gateway (FastAPI)
 
 ```bash
@@ -130,7 +144,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-Verifica que las variables `GESTION_*` y `NUTRICION_*` apunten a las URLs locales que arrancaste previamente.
+Verifica que las variables `GESTION_*`, `NUTRICION_*`, `COMUNICACION_*` y `DOCUMENTOS_*` apunten a las URLs locales que arrancaste previamente.
 
 ### Frontend web
 
@@ -143,10 +157,11 @@ python -m http.server 8080 -d web
 ```
 
 Configura las variables de entorno del frontend (en los archivos JS) si necesitas apuntar a URLs distintas para el gateway.
+La pagina de documentos (`web/pages/documentos.html`) consulta el microservicio documental via gateway (`/documentos/api/documentos`), asi que debe estar levantado para ver contenido.
 
 ## Recursos adicionales
 
-- Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioComunicacion/`, `microservicioNutricion/` y `api-gateway/`.
+- Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioComunicacion/`, `microservicioNutricion/`, `microservicioDocumental/` y `api-gateway/`.
 - Documentacion del repositorio documental: `microservicioDocumental/README.md`.
 - Scripts y seeds: disponibles en `microservicioGestion/data`, `microservicioNutricion/scripts` y en los paquetes npm/python correspondientes.
 - Variables globales del gateway: editar `./.env`.

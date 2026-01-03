@@ -27,18 +27,18 @@ Variables relevantes (`.env`):
 
 Scripts npm:
 
-- `npm start` → arranque en modo producción.
-- `npm run dev` → nodemon con recarga en caliente.
+- `npm start`: arranque en modo producción.
+- `npm run dev`: nodemon con recarga en caliente.
 
 ## Endpoints principales
 
-- `GET /health` → estado del servicio.
-- `POST /api/messages` → envía mensaje (crea conversación si no existe).
-- `PATCH /api/messages/:messageId/read` → marca un mensaje como leído.
-- `GET /api/conversations?userId=...` → conversaciones del usuario ordenadas por actividad.
-- `GET /api/conversations/:conversationId/messages` → mensajes paginados (`page`, `limit`).
-- `PATCH /api/conversations/:conversationId/read` → marca toda la conversación como leída.
-- `GET /docs` → Swagger UI (especificación en `/docs/swagger.json`).
+- `GET /health`: estado del servicio.
+- `POST /api/messages`: envía mensaje (crea conversación si no existe).
+- `PATCH /api/messages/:messageId/read`: marca un mensaje como leído.
+- `GET /api/conversations?userId=...`: conversaciones del usuario ordenadas por actividad.
+- `GET /api/conversations/:conversationId/messages`: mensajes paginados (`page`, `limit`).
+- `PATCH /api/conversations/:conversationId/read`: marca toda la conversación como leída.
+- `GET /docs`: Swagger UI (especificación en `/docs/swagger.json`).
 
 ## Tiempo real
 

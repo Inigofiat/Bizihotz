@@ -5,10 +5,20 @@ Repositorio de documentos nutricionales. Expone endpoints REST para listar y bus
 ## Requisitos
 
 - Python 3.12+
-- PostgreSQL (local o en contenedor)
+- PostgreSQL 16+ (local o en contenedor)
 - Dependencias de `requirements.txt`
 
-## Puesta en marcha rapida
+## Configuración y base de datos
+
+El archivo `.env.example` está preparado para el stack Bizihotz principal y apunta al Postgres compartido del `docker-compose` raíz:
+
+```
+DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/nutricion  # expuesto en localhost:5435
+```
+
+Si quieres ejecutar este servicio de forma aislada, cambia `DATABASE_URL` a tu instancia local (por ejemplo `postgresql+psycopg://postgres:postgres@localhost:5440/documental`) o usa el `docker-compose.yml` de esta carpeta que ya levanta su propio Postgres en `5440`.
+
+## Puesta en marcha rápida (local)
 
 ```bash
 cd microservicioDocumental
@@ -20,27 +30,41 @@ pip install -r requirements.txt
 uvicorn app:app --reload --port 5100
 ```
 
-Por defecto se conecta a `postgresql://postgres:postgres@localhost:5440/documental`. Ajusta `DATABASE_URL` en `.env` si usas otro host/puerto/base.
+## Usarlo dentro del stack Bizihotz
 
-### Usarlo dentro del stack Bizihotz
+El `docker-compose.yml` raíz ya incluye este servicio como `documental`, apuntando al Postgres compartido. Suele bastar con:
 
-En el `docker-compose.yml` raiz ya se incluye este servicio y se conecta al Postgres compartido (`postgres` servicio) usando la misma base `nutricion`. Si prefieres una base separada, cambia `DATABASE_URL` en la definicion del servicio y crea la base la primera vez (puedes hacerlo con un script en `docker-entrypoint-initdb.d` o manualmente).
+```bash
+docker compose up -d --build documental
+```
 
-### Docker Compose (servicio aislado)
+Si prefieres una base separada, ajusta `DATABASE_URL` en la definición del servicio y crea la base la primera vez.
+
+### Sembrar documentos de ejemplo
+
+Hay un script de apoyo en `scripts/seed_documents.py` que inserta dos documentos públicos. Ejecuta:
+
+```bash
+cd microservicioDocumental
+python scripts/seed_documents.py
+```
+
+Respeta `DATABASE_URL` del `.env` y crea la tabla si no existe.
+
+## Docker Compose (servicio aislado)
 
 ```bash
 cd microservicioDocumental
 docker compose up -d --build
 ```
 
-Esto levanta PostgreSQL en el puerto `5440` y el servicio en `5100`.
+Esto levanta PostgreSQL en `localhost:5440` y el servicio en `http://localhost:5100`.
 
 ## Endpoints relevantes
 
-- `GET /health` — estado del servicio.
-- `GET /api/documentos` — listado con filtros `q`, `fuente`, `tipo`, `etiqueta`, paginacion `skip/limit`.
-- `GET /api/documentos/{id}` — detalle.
-- No hay endpoints de sincronizacion con fuentes externas (deshabilitado).
+- `GET /health`: estado del servicio.
+- `GET /api/documentos`: listado con filtros `q`, `fuente`, `tipo`, `etiqueta`, paginación `skip/limit`.
+- `GET /api/documentos/{id}`: detalle.
 
 Swagger disponible en `/docs`.
 
@@ -49,12 +73,12 @@ Swagger disponible en `/docs`.
 Tabla `documentos` con:
 
 - `titulo`, `descripcion`, `etiquetas` (JSON array), `tipo`, `fuente`, `external_id`, `url_descarga`, `metadata` (json), `fecha_subida`, `last_synced_at`, `estado`, `idioma`.
-- Constraint unico por `fuente + external_id` para evitar duplicados.
+- Restricción única por `fuente + external_id` para evitar duplicados.
 
-## Busqueda
+## Búsqueda
 
-- Si la base es PostgreSQL, `q` usa `plainto_tsquery` con diccionario `spanish` para buscar en `titulo + descripcion` y ordena por relevancia (`ts_rank`). En otras bases de datos, hace `ILIKE`.
-- Recomendado anadir un indice FTS para acelerar:
+- En PostgreSQL, `q` usa `plainto_tsquery` con diccionario `spanish` sobre `titulo + descripcion` y ordena por relevancia (`ts_rank`). En otras bases, hace `ILIKE`.
+- Recomendado añadir un índice FTS:
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_documento_fts
@@ -64,5 +88,5 @@ USING GIN (to_tsvector('spanish', coalesce(titulo,'') || ' ' || coalesce(descrip
 
 ## Notas
 
-- El servicio no guarda binarios; almacena la URL de descarga o la ruta si decides persistirlos externamente.
-- Indices basicos por `fuente` y `tipo`. Para busquedas mas ricas, puede anadirse FTS con `pg_trgm` y `to_tsvector`.
+- El servicio no guarda binarios; almacena la URL de descarga o la ruta externa.
+- Índices básicos por `fuente` y `tipo`. Para búsquedas más ricas, puedes añadir FTS con `pg_trgm`.
