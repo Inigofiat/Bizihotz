@@ -317,6 +317,7 @@
     alimentosLoading: false,
     pacientesLoading: false,
     pacientesLoaded: false,
+    bedcaSyncAttempted: false,
     alimentoEditId: null,
     alimentos: [],
     dietas: [],
@@ -1850,7 +1851,28 @@
       selectors.alimentoSearch?.value ||
       "";
     try {
-      const data = await fetchJson(buildQuery("/alimentos", query));
+      const fetchAlimentos = () => fetchJson(buildQuery("/alimentos", query));
+      let data = await fetchAlimentos();
+      const shouldSyncBedca = (!data || data.length === 0) && !query.trim();
+
+      if (shouldSyncBedca && !state.bedcaSyncAttempted) {
+        state.bedcaSyncAttempted = true;
+        if (selectors.alimentosList) {
+          setPlaceholder(selectors.alimentosList, "Sincronizando catálogo de BEDCA...");
+        }
+        try {
+          await postJson("/alimentos/bedca/sync");
+          setGlobalAlert("Catálogo de alimentos actualizado desde BEDCA.", "success");
+          data = await fetchAlimentos();
+        } catch (syncError) {
+          state.bedcaSyncAttempted = false;
+          if (selectors.alimentosList) {
+            setPlaceholder(selectors.alimentosList, syncError.message || "No pudimos sincronizar con BEDCA.");
+          }
+          throw syncError;
+        }
+      }
+
       state.alimentos = data || [];
       if (selectors.alimentosList) {
         renderAlimentos(data);
