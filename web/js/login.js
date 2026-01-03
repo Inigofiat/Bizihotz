@@ -7,13 +7,34 @@
   const loginMessage = document.getElementById("loginMessage");
   const loadingPagePath = "cargando.html";
 
+  const buildGestionBases = () => {
+    const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+    const hostname = (window.location.hostname || "localhost").toLowerCase();
+    const port = window.location.port;
+    const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+    const targetHost = isLocal ? "localhost" : hostname;
+
+    const candidates = [`${protocol}//${targetHost}:5000/gestion`];
+    if (port && (port === "5000" || port === "4001")) {
+      candidates.push(`${protocol}//${targetHost}:${port}/gestion`);
+    } else if (!port || port === "80" || port === "443") {
+      candidates.push(`${protocol}//${targetHost}/gestion`);
+    }
+
+    const seen = new Set();
+    return candidates
+      .filter(Boolean)
+      .map((base) => base.replace(/\/+$/, ""))
+      .filter((base) => {
+        if (seen.has(base)) return false;
+        seen.add(base);
+        return true;
+      });
+  };
+
   const resolveLoginEndpoints = () => {
-    const host = (window.location.hostname || "").toLowerCase();
-    const gatewayBase =
-      window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === ""
-        ? "http://localhost:5000/gestion"
-        : `${window.location.protocol}//${window.location.hostname}/gestion`;
-    return [`${gatewayBase}/api/auth/login`];
+    const bases = buildGestionBases();
+    return bases.map((base) => `${base}/api/auth/login`);
   };
 
   const LOGIN_ENDPOINTS = resolveLoginEndpoints();

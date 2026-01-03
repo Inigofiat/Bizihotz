@@ -22,29 +22,16 @@
   };
 
   const buildBaseCandidates = () => {
-    const preferDockerRouting = window.location.port === "8080" || window.location.port === "80";
-    const directPorts = preferDockerRouting
-      ? [
-          "http://localhost:4103",
-          "http://127.0.0.1:4103",
-          "http://localhost:4100",
-          "http://127.0.0.1:4100"
-        ]
-      : [
-          "http://localhost:4100",
-          "http://127.0.0.1:4100",
-          // 4103 es el puerto publicado por Docker (internamente sigue usando 4100).
-          "http://localhost:4103",
-          "http://127.0.0.1:4103"
-        ];
-    const gatewayPorts = [
-      "http://localhost:5000/comunicacion",
-      "http://127.0.0.1:5000/comunicacion"
-    ];
-    const origin = window.location.origin && window.location.origin !== "null" ? window.location.origin : null;
-    const originCandidate =
-      origin && !/:(4100|4103)(?:$|\/)/.test(origin) ? `${origin.replace(/\/$/, "")}/comunicacion` : null;
-    const candidates = dedupeCandidates([...directPorts, ...gatewayPorts, originCandidate]);
+    const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+    const hostname = (window.location.hostname || "localhost").toLowerCase();
+    const port = window.location.port;
+    const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+    const targetHost = isLocal ? "localhost" : hostname;
+
+    const gateway = [`${protocol}//${targetHost}:5000/comunicacion`];
+    const direct = [`${protocol}//${targetHost}:4103`, `${protocol}//${targetHost}:4100`];
+
+    const candidates = dedupeCandidates([...gateway, ...direct]);
     const sanitized = candidates.map((candidate) => {
       if (/:410(0|3)(?:$|\/)/.test(candidate)) {
         return candidate.replace(/\/comunicacion$/, "");
@@ -55,13 +42,17 @@
   };
 
   const buildGestionBaseCandidates = () => {
-    const candidates = [
-      "http://localhost:5000/gestion",
-      "http://127.0.0.1:5000/gestion"
-    ];
-    const origin = window.location.origin && window.location.origin !== "null" ? window.location.origin : null;
-    if (origin) {
-      candidates.push(`${origin.replace(/\/$/, "")}/gestion`);
+    const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+    const hostname = (window.location.hostname || "localhost").toLowerCase();
+    const port = window.location.port;
+    const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+    const targetHost = isLocal ? "localhost" : hostname;
+
+    const candidates = [`${protocol}//${targetHost}:5000/gestion`];
+    if (port && (port === "5000" || port === "4001")) {
+      candidates.push(`${protocol}//${targetHost}:${port}/gestion`);
+    } else if (!port || port === "80" || port === "443") {
+      candidates.push(`${protocol}//${targetHost}/gestion`);
     }
     return dedupeCandidates(candidates);
   };
@@ -1606,7 +1597,8 @@
     console.info(`[Bizihotz] Socket: intentando conectar a ${socketBase}`);
 
     socket = window.io(socketBase, {
-      transports: ["websocket", "polling"],
+      // Intentamos con polling primero para evitar bloqueos de WebSocket en la red.
+      transports: ["polling", "websocket"],
       auth: {
         userId: currentUserId
       }
@@ -1619,13 +1611,15 @@
 
     socket.on("disconnect", () => {
       socketConnected = false;
-      setSocketStatus("offline", "Reconectando…");
+      setSocketStatus("offline", "Reconectando.");
       attemptReconnect();
     });
 
-    socket.on("connect_error", () => {
+    socket.on("connect_error", (err) => {
       socketConnected = false;
-      setSocketStatus("offline", "Cambiando servidor…");
+      const msg = err?.message || err?.stack || String(err || "Error de socket");
+      console.warn("[Bizihotz] connect_error:", msg);
+      setSocketStatus("offline", "Cambiando servidor.");
       advanceSocketCandidate();
       attemptReconnect(2000);
     });
@@ -1642,8 +1636,7 @@
     socket.on("message:deleted", handleMessageDeleted);
     socket.on("conversation:deleted", handleConversationDeleted);
   };
-
-  const attemptReconnect = (delay = 5000) => {
+const attemptReconnect = (delay = 5000) => {
     if (reconnectTimer) {
       return;
     }

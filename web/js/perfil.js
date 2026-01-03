@@ -1,25 +1,34 @@
 "use strict";
 
-const API_BASE_URL = (() => {
-  const gatewayBase = "http://localhost:5000/gestion";
+const buildGestionBases = () => {
+  const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+  const hostname = (window.location.hostname || "localhost").toLowerCase();
+  const port = window.location.port;
+  const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  const targetHost = isLocal ? "localhost" : hostname;
 
-  if (window.location.protocol === "file:") {
-    return gatewayBase;
+  const candidates = [`${protocol}//${targetHost}:5000/gestion`];
+  if (port && (port === "5000" || port === "4001")) {
+    candidates.push(`${protocol}//${targetHost}:${port}/gestion`);
+  } else if (!port || port === "80" || port === "443") {
+    candidates.push(`${protocol}//${targetHost}/gestion`);
   }
 
-  const host = window.location.hostname || "localhost";
+  const seen = new Set();
+  return candidates
+    .filter(Boolean)
+    .map((base) => base.replace(/\/+$/, ""))
+    .filter((base) => {
+      if (seen.has(base)) return false;
+      seen.add(base);
+      return true;
+    });
+};
 
-  if (host === "localhost" || host === "127.0.0.1") {
-    return gatewayBase;
-  }
-
-  return `${window.location.protocol}//${window.location.host}/gestion`;
-})();
-
-const API_FALLBACK_URL = null;
-
+const GESTION_BASES = buildGestionBases();
+const API_BASE_URL = GESTION_BASES[0];
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = null;
+const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const getAvatarFileName = (path = "") =>

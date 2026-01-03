@@ -1,15 +1,10 @@
 (function () {
   const resolveGatewayBase = () => {
-    const protocol = window.location.protocol;
-    const hostname = (window.location.hostname || "").toLowerCase();
-    if (protocol === "file:") {
-      return "http://localhost:5000";
-    }
-    if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
-      const baseHost = hostname || "localhost";
-      return `${protocol}//${baseHost}:5000`;
-    }
-    return `${protocol}//${window.location.host}`;
+    const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+    const hostname = (window.location.hostname || "localhost").toLowerCase() || "localhost";
+    const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+    const targetHost = isLocal ? "localhost" : hostname;
+    return `${protocol}//${targetHost}:5000`;
   };
 
   const resolveDirectBase = () => {
@@ -193,8 +188,8 @@
     document.body.classList.remove("intro-blur");
   };
 
-  let API_BASE = `${resolveDirectBase()}/api`;
-  const API_FALLBACK = `${resolveGatewayBase()}/nutricion/api`;
+  let API_BASE = `${resolveGatewayBase()}/nutricion/api`;
+  const API_FALLBACK = `${resolveDirectBase()}/api`;
   let GESTION_API_BASE = `${resolveGatewayBase()}/gestion/api`;
   const GESTION_API_FALLBACK = `${resolveGestionDirectBase()}/api`;
 

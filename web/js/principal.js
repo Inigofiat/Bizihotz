@@ -1,16 +1,35 @@
 "use strict";
 
 // Siempre a través del gateway (/gestion), tanto en local como desplegado.
-const API_BASE_URL = (() => {
-  const host = (window.location.hostname || "").toLowerCase();
-  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
-    return "http://localhost:5000/gestion";
-  }
-  return `${window.location.protocol}//${window.location.hostname}/gestion`;
-})();
+const buildGestionBases = () => {
+  const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+  const hostname = (window.location.hostname || "localhost").toLowerCase();
+  const port = window.location.port;
+  const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  const targetHost = isLocal ? "localhost" : hostname;
 
+  const candidates = [`${protocol}//${targetHost}:5000/gestion`];
+  if (port && (port === "5000" || port === "4001")) {
+    candidates.push(`${protocol}//${targetHost}:${port}/gestion`);
+  } else if (!port || port === "80" || port === "443") {
+    candidates.push(`${protocol}//${targetHost}/gestion`);
+  }
+
+  const seen = new Set();
+  return candidates
+    .filter(Boolean)
+    .map((base) => base.replace(/\/+$/, ""))
+    .filter((base) => {
+      if (seen.has(base)) return false;
+      seen.add(base);
+      return true;
+    });
+};
+
+const GESTION_BASES = buildGestionBases();
+const API_BASE_URL = GESTION_BASES[0];
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = null;
+const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const CONVERSATION_TARGET_KEY = "bizihotzConversationTarget";
@@ -30,21 +49,16 @@ const dedupeValues = (items) => {
 };
 
 const buildComunicacionBases = () => {
-  const direct = [
-    "http://localhost:4103",
-    "http://127.0.0.1:4103",
-    "http://localhost:4100",
-    "http://127.0.0.1:4100"
-  ];
-  const gateway = [
-    "http://localhost:5000/comunicacion",
-    "http://127.0.0.1:5000/comunicacion"
-  ];
-  const origin =
-    window.location.origin && window.location.origin !== "null" ? window.location.origin : null;
-  const originCandidate =
-    origin && !/:(4100|4103)(?:$|\/)/.test(origin) ? `${origin.replace(/\/$/, "")}/comunicacion` : null;
-  return dedupeValues([...direct, ...gateway, originCandidate]);
+  const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+  const hostname = (window.location.hostname || "localhost").toLowerCase();
+  const port = window.location.port;
+  const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  const targetHost = isLocal ? "localhost" : hostname;
+
+  const gateway = [`${protocol}//${targetHost}:5000/comunicacion`];
+  const direct = [`${protocol}//${targetHost}:4103`, `${protocol}//${targetHost}:4100`];
+
+  return dedupeValues([...gateway, ...direct]);
 };
 
 const COMUNICACION_API_BASES = buildComunicacionBases().map((base) => `${base}/api`);

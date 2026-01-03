@@ -1,36 +1,57 @@
 "use strict";
 
+const buildGestionBases = () => {
+  const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+  const hostname = (window.location.hostname || "localhost").toLowerCase();
+  const port = window.location.port;
+  const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  const targetHost = isLocal ? "localhost" : hostname;
 
-
-const API_BASE_URL = (() => {
-  const host = (window.location.hostname || "").toLowerCase();
-  if (window.location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "") {
-    return "http://localhost:5000/gestion";
+  const candidates = [`${protocol}//${targetHost}:5000/gestion`];
+  if (port && (port === "5000" || port === "4001")) {
+    candidates.push(`${protocol}//${targetHost}:${port}/gestion`);
+  } else if (!port || port === "80" || port === "443") {
+    candidates.push(`${protocol}//${targetHost}/gestion`);
   }
-  return `${window.location.protocol}//${window.location.host}/gestion`;
-})();
 
-const API_FALLBACK_URL = null;
+  const seen = new Set();
+  return candidates
+    .filter(Boolean)
+    .map((base) => base.replace(/\/+$/, ""))
+    .filter((base) => {
+      if (seen.has(base)) return false;
+      seen.add(base);
+      return true;
+    });
+};
 
+const GESTION_BASES = buildGestionBases();
+const API_BASE_URL = GESTION_BASES[0];
 const API_URL = `${API_BASE_URL}/api`;
-const API_FALLBACK = null;
+const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
 const HISTORIAL_PAGE = "historialClinico.html";
 
 const unique = (values) => [...new Set(values.filter(Boolean))];
 
-const resolveNutritionBase = () => {
-  if (window.location.protocol === "file:") {
-    return "http://localhost:5000/nutricion";
+const buildNutricionBases = () => {
+  const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
+  const hostname = (window.location.hostname || "localhost").toLowerCase();
+  const port = window.location.port;
+  const isLocal = !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  const targetHost = isLocal ? "localhost" : hostname;
+
+  const candidates = [`${protocol}//${targetHost}:5000/nutricion`];
+  if (port && (port === "5000" || port === "5002")) {
+    candidates.push(`${protocol}//${targetHost}:${port}/nutricion`);
+  } else if (!port || port === "80" || port === "443") {
+    candidates.push(`${protocol}//${targetHost}/nutricion`);
   }
-  const host = window.location.hostname || "localhost";
-  if (host === "localhost" || host === "127.0.0.1") {
-    return "http://localhost:5000/nutricion";
-  }
-  return `${window.location.protocol}//${window.location.host}/nutricion`;
+
+  return unique(candidates.map((base) => base.replace(/\/+$/, "")));
 };
 
-const NUTRICION_API_BASES = unique([resolveNutritionBase()]).map((base) => `${base}/api`);
+const NUTRICION_API_BASES = buildNutricionBases().map((base) => `${base}/api`);
 
 const SLOT_DURATION_MINUTES = 45;
 const HORARIO_BLOQUES = [

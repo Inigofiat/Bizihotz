@@ -79,9 +79,29 @@
     }
 
     setFeedback("", "info");
+    const chapterNumber = (title = "") => {
+      const match = String(title || "")
+        .toLowerCase()
+        .match(/cap[ií]tulo\s*([0-9]+)/i);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
+    const orderedDocs = safeDocs.slice().sort((a, b) => {
+      const na = chapterNumber(a?.titulo);
+      const nb = chapterNumber(b?.titulo);
+      if (na !== null && nb !== null && na !== nb) {
+        return na - nb;
+      }
+      const ta = (a?.titulo || "").toLocaleLowerCase("es-ES").trim();
+      const tb = (b?.titulo || "").toLocaleLowerCase("es-ES").trim();
+      if (ta === tb) {
+        return (a?.fuente || "").localeCompare(b?.fuente || "", "es-ES");
+      }
+      return ta.localeCompare(tb, "es-ES");
+    });
     const fragment = document.createDocumentFragment();
 
-    safeDocs.forEach((doc) => {
+    orderedDocs.forEach((doc) => {
       const clone = selectors.template.content.cloneNode(true);
       const titleNode = clone.querySelector(".doc-title");
       const descNode = clone.querySelector(".doc-desc");
