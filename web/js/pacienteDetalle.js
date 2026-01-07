@@ -2420,6 +2420,15 @@ const init = () => {
 
   loadPaciente();
 
+  if (window.LiveRefresh?.start) {
+    LiveRefresh.start(loadPaciente, {
+      intervalMs: 15000,
+      immediate: false,
+      label: "paciente-detalle",
+      shouldRun: () => !document.body.classList.contains("modal-open")
+    });
+  }
+
 };
 
 

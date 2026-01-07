@@ -25,28 +25,28 @@ const mergeParticipantsMetadata = (conversation, metadata = {}) => {
     return false;
   }
 
-  conversation.metadata ??= {};
+  conversation.metadatos ??= {};
   let updated = false;
 
   if (participantEntries.length) {
-    conversation.metadata.participants ??= {};
+    conversation.metadatos.participants ??= {};
     participantEntries.forEach(([participantId, name]) => {
       const trimmed = name.trim();
       if (!trimmed) {
         return;
       }
-      if (conversation.metadata.participants[participantId] !== trimmed) {
-        conversation.metadata.participants[participantId] = trimmed;
+      if (conversation.metadatos.participants[participantId] !== trimmed) {
+        conversation.metadatos.participants[participantId] = trimmed;
         updated = true;
       }
     });
   }
 
   if (avatarEntries.length) {
-    conversation.metadata.avatars ??= {};
+    conversation.metadatos.avatars ??= {};
     avatarEntries.forEach(([participantId, path]) => {
-      if (conversation.metadata.avatars[participantId] !== path) {
-        conversation.metadata.avatars[participantId] = path;
+      if (conversation.metadatos.avatars[participantId] !== path) {
+        conversation.metadatos.avatars[participantId] = path;
         updated = true;
       }
     });
@@ -60,17 +60,18 @@ const ensureConversation = async (participants, metadata = {}) => {
     throw createError(400, 'Se requieren al menos dos participantes para iniciar una conversacion');
   }
 
-  const participantKey = buildKey(participants);
-  let conversation = await Conversation.findOne({ participantKey });
+  const claveParticipantes = buildKey(participants);
+  let conversation = await Conversation.findOne({ claveParticipantes });
 
   if (!conversation) {
     conversation = await Conversation.create({
-      participants,
-      metadata,
-      unreadCounts: participants.reduce((acc, participant) => {
+      participantes: participants,
+      metadatos: metadata,
+      noLeidos: participants.reduce((acc, participant) => {
         acc.set(String(participant), 0);
         return acc;
       }, new Map()),
+      claveParticipantes,
     });
   }
 
@@ -89,48 +90,48 @@ const getConversationOrFail = async (conversationId) => {
   return conversation;
 };
 
-const listUserConversations = async (userId) => {
-  if (!userId) {
-    throw createError(400, 'userId es obligatorio para listar conversaciones');
+const listUserConversations = async (usuarioId) => {
+  if (!usuarioId) {
+    throw createError(400, 'usuarioId es obligatorio para listar conversaciones');
   }
 
-  const conversations = await Conversation.find({ participants: userId })
-    .sort({ updatedAt: -1 })
+  const conversations = await Conversation.find({ participantes: usuarioId })
+    .sort({ actualizadoEn: -1 })
     .lean();
 
   return conversations.map((conversation) => ({
     id: conversation._id.toString(),
-    participants: conversation.participants,
-    unreadCounts: Conversation.toPlainUnreadCounts(conversation.unreadCounts),
-    lastMessage: conversation.lastMessage,
-    topic: conversation.topic,
-    metadata: conversation.metadata,
-    updatedAt: conversation.updatedAt,
-    createdAt: conversation.createdAt,
+    participantes: conversation.participantes,
+    noLeidos: Conversation.toPlainUnreadCounts(conversation.noLeidos),
+    ultimoMensaje: conversation.ultimoMensaje,
+    tema: conversation.tema,
+    metadatos: conversation.metadatos,
+    actualizadoEn: conversation.actualizadoEn,
+    creadoEn: conversation.creadoEn,
   }));
 };
 
 const ensureParticipant = (conversation, participantId) => {
-  if (!conversation.participants.includes(participantId)) {
+  if (!conversation.participantes.includes(participantId)) {
     throw createError(403, 'El usuario no pertenece a esta conversacion');
   }
 };
 
 const applyMessageEffect = async (conversation, message) => {
-  conversation.lastMessage = {
-    messageId: message._id.toString(),
-    content: message.content,
-    sentAt: message.sentAt,
-    senderId: message.senderId,
+  conversation.ultimoMensaje = {
+    idMensaje: message._id.toString(),
+    contenido: message.contenido,
+    enviadoEn: message.enviadoEn,
+    remitenteId: message.remitenteId,
   };
 
-  conversation.unreadCounts ??= new Map();
-  conversation.participants.forEach((participant) => {
-    if (participant === message.senderId) {
-      conversation.unreadCounts.set(participant, 0);
+  conversation.noLeidos ??= new Map();
+  conversation.participantes.forEach((participant) => {
+    if (participant === message.remitenteId) {
+      conversation.noLeidos.set(participant, 0);
     } else {
-      const current = conversation.unreadCounts.get(participant) || 0;
-      conversation.unreadCounts.set(participant, current + 1);
+      const current = conversation.noLeidos.get(participant) || 0;
+      conversation.noLeidos.set(participant, current + 1);
     }
   });
 
@@ -139,34 +140,34 @@ const applyMessageEffect = async (conversation, message) => {
 };
 
 const setUnreadCounter = async (conversation, participantId, value = 0) => {
-  conversation.unreadCounts ??= new Map();
+  conversation.noLeidos ??= new Map();
   ensureParticipant(conversation, participantId);
 
-  conversation.unreadCounts.set(participantId, Math.max(0, value));
+  conversation.noLeidos.set(participantId, Math.max(0, value));
   await conversation.save();
   return conversation;
 };
 
 const decrementUnreadCounter = async (conversation, participantId, delta = 1) => {
-  conversation.unreadCounts ??= new Map();
+  conversation.noLeidos ??= new Map();
   ensureParticipant(conversation, participantId);
 
-  const current = conversation.unreadCounts.get(participantId) || 0;
+  const current = conversation.noLeidos.get(participantId) || 0;
   const nextValue = Math.max(0, current - Math.abs(delta));
-  conversation.unreadCounts.set(participantId, nextValue);
+  conversation.noLeidos.set(participantId, nextValue);
   await conversation.save();
   return conversation;
 };
 
-const deleteConversation = async (conversationId, requesterId) => {
-  if (!requesterId) {
-    throw createError(400, 'requesterId es obligatorio');
+const deleteConversation = async (conversationId, solicitanteId) => {
+  if (!solicitanteId) {
+    throw createError(400, 'solicitanteId es obligatorio');
   }
 
   const conversation = await getConversationOrFail(conversationId);
-  ensureParticipant(conversation, requesterId);
+  ensureParticipant(conversation, solicitanteId);
 
-  await Message.deleteMany({ conversationId: conversation._id });
+  await Message.deleteMany({ conversacionId: conversation._id });
   await conversation.deleteOne();
 
   return conversation.toPublicJSON();

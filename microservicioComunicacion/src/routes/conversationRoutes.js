@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { query, param, body } = require('express-validator');
+const { query, param, body, oneOf } = require('express-validator');
 const {
   createConversation,
   listConversations,
@@ -14,8 +14,14 @@ const router = Router();
 router.post(
   '/',
   [
-    body('requesterId').trim().notEmpty().withMessage('requesterId es obligatorio'),
-    body('participantId').trim().notEmpty().withMessage('participantId es obligatorio'),
+    oneOf(
+      [body('solicitanteId').trim().notEmpty(), body('requesterId').trim().notEmpty()],
+      'solicitanteId o requesterId es obligatorio'
+    ),
+    oneOf(
+      [body('participanteId').trim().notEmpty(), body('participantId').trim().notEmpty()],
+      'participanteId o participantId es obligatorio'
+    ),
   ],
   validateRequest,
   createConversation
@@ -23,7 +29,12 @@ router.post(
 
 router.get(
   '/',
-  [query('userId').trim().notEmpty().withMessage('userId es obligatorio')],
+  [
+    oneOf(
+      [query('usuarioId').trim().notEmpty(), query('userId').trim().notEmpty()],
+      'usuarioId o userId es obligatorio'
+    ),
+  ],
   validateRequest,
   listConversations
 );
@@ -43,7 +54,10 @@ router.patch(
   '/:conversationId/read',
   [
     param('conversationId').isMongoId().withMessage('conversationId invalido'),
-    body('readerId').trim().notEmpty().withMessage('readerId es obligatorio'),
+    oneOf(
+      [body('lectorId').trim().notEmpty(), body('readerId').trim().notEmpty()],
+      'lectorId o readerId es obligatorio'
+    ),
   ],
   validateRequest,
   markConversationRead
@@ -53,7 +67,10 @@ router.delete(
   '/:conversationId',
   [
     param('conversationId').isMongoId().withMessage('conversationId invalido'),
-    body('requesterId').trim().notEmpty().withMessage('requesterId es obligatorio'),
+    oneOf(
+      [body('solicitanteId').trim().notEmpty(), body('requesterId').trim().notEmpty()],
+      'solicitanteId o requesterId es obligatorio'
+    ),
   ],
   validateRequest,
   removeConversation

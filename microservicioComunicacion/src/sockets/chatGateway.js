@@ -46,13 +46,18 @@ const registerChatGateway = (server) => {
 
     socket.on('message:send', async (payload = {}, ack) => {
       try {
+        const remitenteId = payload.remitenteId || payload.senderId || userId;
         const message = await createMessage({
           ...payload,
-          senderId: payload.senderId || userId,
+          remitenteId,
+          destinatarioId: payload.destinatarioId || payload.recipientId,
+          contenido: payload.contenido ?? payload.content,
+          adjuntos: payload.adjuntos ?? payload.attachments,
+          conversacionId: payload.conversacionId || payload.conversationId,
         });
 
-        io.to(`user:${message.senderId}`).emit('message:new', message);
-        io.to(`user:${message.recipientId}`).emit('message:new', message);
+        io.to(`user:${message.remitenteId}`).emit('message:new', message);
+        io.to(`user:${message.destinatarioId}`).emit('message:new', message);
         safeAck(ack, null, message);
       } catch (error) {
         const message = error.message || 'No se pudo enviar el mensaje';
@@ -64,8 +69,8 @@ const registerChatGateway = (server) => {
     socket.on('message:read', async ({ messageId }, ack) => {
       try {
         const updated = await markMessageAsRead(messageId, userId);
-        io.to(`user:${updated.senderId}`).emit('message:read', updated);
-        io.to(`user:${updated.recipientId}`).emit('message:read', updated);
+        io.to(`user:${updated.remitenteId}`).emit('message:read', updated);
+        io.to(`user:${updated.destinatarioId}`).emit('message:read', updated);
         safeAck(ack, null, updated);
       } catch (error) {
         const message = error.message || 'No se pudo actualizar el mensaje';
@@ -76,11 +81,11 @@ const registerChatGateway = (server) => {
     socket.on('conversation:read', async ({ conversationId }, ack) => {
       try {
         const conversation = await markConversationAsRead(conversationId, userId);
-        conversation.participants.forEach((participant) => {
+        conversation.participantes.forEach((participant) => {
           io.to(`user:${participant}`).emit('conversation:read', {
             conversationId: conversation.id,
             readerId: userId,
-            unreadCounts: conversation.unreadCounts,
+            unreadCounts: conversation.noLeidos,
           });
         });
         safeAck(ack, null, conversation);

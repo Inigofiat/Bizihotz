@@ -18,7 +18,7 @@ const toPlainUnreadCounts = (value) => {
 
 const conversationSchema = new Schema(
   {
-    participants: {
+    participantes: {
       type: [String],
       required: true,
       validate: {
@@ -26,46 +26,46 @@ const conversationSchema = new Schema(
         message: 'Una conversacion requiere al menos dos participantes',
       },
     },
-    participantKey: {
+    claveParticipantes: {
       type: String,
       required: true,
       unique: true,
       index: true,
     },
-    topic: {
+    tema: {
       type: String,
       trim: true,
     },
-    metadata: {
+    metadatos: {
       type: Schema.Types.Mixed,
     },
-    lastMessage: {
-      messageId: String,
-      content: String,
-      sentAt: Date,
-      senderId: String,
+    ultimoMensaje: {
+      idMensaje: String,
+      contenido: String,
+      enviadoEn: Date,
+      remitenteId: String,
     },
-    unreadCounts: {
+    noLeidos: {
       type: Map,
       of: Number,
       default: {},
     },
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: 'creadoEn', updatedAt: 'actualizadoEn' },
     versionKey: false,
   }
 );
 
 conversationSchema.pre('validate', function setParticipantKey(next) {
-  if (Array.isArray(this.participants)) {
-    const filtered = this.participants
+  if (Array.isArray(this.participantes)) {
+    const filtered = this.participantes
       .map((participant) => String(participant).trim())
       .filter(Boolean);
 
     const unique = [...new Set(filtered)];
-    this.participants = unique;
-    this.participantKey = unique.sort().join('#');
+    this.participantes = unique;
+    this.claveParticipantes = unique.sort().join('#');
   }
 
   next();
@@ -75,18 +75,19 @@ conversationSchema.methods.toPublicJSON = function toPublicJSON() {
   const doc = this.toObject({ getters: true });
   return {
     id: doc._id.toString(),
-    participants: doc.participants,
-    unreadCounts: toPlainUnreadCounts(doc.unreadCounts),
-    lastMessage: doc.lastMessage,
-    topic: doc.topic,
-    metadata: doc.metadata,
-    updatedAt: doc.updatedAt,
-    createdAt: doc.createdAt,
+    participantes: doc.participantes,
+    noLeidos: toPlainUnreadCounts(doc.noLeidos),
+    ultimoMensaje: doc.ultimoMensaje,
+    tema: doc.tema,
+    metadatos: doc.metadatos,
+    actualizadoEn: doc.actualizadoEn,
+    creadoEn: doc.creadoEn,
   };
 };
 
 conversationSchema.statics.toPlainUnreadCounts = toPlainUnreadCounts;
 
-const Conversation = model('Conversation', conversationSchema);
+// Forzamos el nombre de coleccion a "Conversacion" en Mongo.
+const Conversacion = model('Conversacion', conversationSchema, 'Conversacion');
 
-module.exports = Conversation;
+module.exports = Conversacion;

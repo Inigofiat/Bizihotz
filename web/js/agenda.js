@@ -3303,6 +3303,22 @@ const initAgenda = () => {
 
   cargarCitasMensuales(false);
 
+  if (window.LiveRefresh?.start) {
+
+    LiveRefresh.start(() => cargarCitasMensuales(agendaState.panelOpen), {
+
+      intervalMs: 12000,
+
+      immediate: false,
+
+      label: "agenda-citas",
+
+      shouldRun: () => !document.querySelector(".modal-overlay:not([hidden])")
+
+    });
+
+  }
+
 };
 
 

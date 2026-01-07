@@ -1,5 +1,32 @@
 "use strict";
 
+// Refresca solo al reentrar (volver a la pestaña o bfcache), no cada X segundos.
+(() => {
+  let shouldReload = false;
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      shouldReload = true;
+    } else if (shouldReload) {
+      shouldReload = false;
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    if (shouldReload) {
+      shouldReload = false;
+      window.location.reload();
+    }
+  });
+})();
+
 (function initMessaging() {
   const LOGIN_PAGE = "login.html";
   const USER_STORAGE_KEY = "bizihotzUsuario";
@@ -375,6 +402,53 @@
     return headers;
   };
 
+  // Normaliza objetos de conversacion del API (castellano/ingles) al shape usado en el frontend.
+  const normalizeConversation = (raw) => {
+    if (!raw) return null;
+    const participants = raw.participantes || raw.participants || [];
+    const metadata = raw.metadatos || raw.metadata || {};
+    const lastRaw = raw.ultimoMensaje || raw.lastMessage || null;
+    const lastMessage = lastRaw
+      ? {
+          messageId: lastRaw.idMensaje || lastRaw.messageId,
+          content: lastRaw.contenido || lastRaw.content,
+          sentAt: lastRaw.enviadoEn || lastRaw.sentAt,
+          senderId: lastRaw.remitenteId || lastRaw.senderId
+        }
+      : raw.lastMessage || null;
+    return {
+      id: raw.id || raw._id || raw.conversationId || null,
+      participants,
+      metadata,
+      lastMessage,
+      unreadCounts: raw.noLeidos || raw.unreadCounts || {},
+      topic: raw.tema || raw.topic || "",
+      createdAt: raw.creadoEn || raw.createdAt,
+      updatedAt: raw.actualizadoEn || raw.updatedAt
+    };
+  };
+
+  // Normaliza objetos de mensaje del API (castellano/ingles) al shape usado en el frontend.
+  const normalizeMessage = (raw) => {
+    if (!raw) return null;
+    return {
+      id: raw.id || raw._id || raw.messageId || null,
+      conversationId: raw.conversacionId || raw.conversationId || raw.conversation_id || null,
+      senderId: raw.remitenteId || raw.senderId,
+      recipientId: raw.destinatarioId || raw.recipientId,
+      content: raw.contenido || raw.content || "",
+      attachments: raw.adjuntos || raw.attachments || [],
+      metadata: raw.metadatos || raw.metadata || {},
+      status: raw.estado || raw.status,
+      readAt: raw.leidoEn || raw.readAt,
+      editedAt: raw.editadoEn || raw.editedAt,
+      editedBy: raw.editadoPor || raw.editedBy,
+      sentAt: raw.enviadoEn || raw.sentAt,
+      createdAt: raw.creadoEn || raw.createdAt,
+      updatedAt: raw.actualizadoEn || raw.updatedAt
+    };
+  };
+
   const buildFallbackFetch = async (path, options = {}) => {
     let lastError = null;
     const orderedBases = resolvedApiBase
@@ -692,9 +766,9 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requesterId: currentUserId,
-          participantId,
-          metadata: {
+          solicitanteId: currentUserId,
+          participanteId: participantId,
+          metadatos: {
             participants: {
               [currentUserId]: senderName,
               [participantId]: professional.nombreCompleto
@@ -706,7 +780,7 @@
           }
         })
       });
-      const payload = response?.data || response;
+      const payload = normalizeConversation(response?.data || response);
       const conversationId = payload?.id || payload?._id || null;
       hideModal(refs.newChatModal);
       resetNewChatState();
@@ -1152,6 +1226,31 @@
     localStorage.removeItem(CONVERSATION_TARGET_KEY);
   };
 
+  const dedupeDirectConversations = (items = []) => {
+    const result = [];
+    const seen = new Map();
+    items.forEach((conversation) => {
+      const participants = Array.isArray(conversation?.participants) ? conversation.participants : [];
+      const others = participants.filter((id) => id && id !== currentUserId);
+      const isDirect = others.length === 1;
+      if (!isDirect) {
+        result.push(conversation);
+        return;
+      }
+      const key = others[0];
+      const existingIndex = seen.get(key);
+      if (existingIndex === undefined) {
+        seen.set(key, result.length);
+        result.push(conversation);
+        return;
+      }
+      const existing = result[existingIndex];
+      const prefer = conversation.id === activeConversationId ? conversation : existing;
+      result[existingIndex] = prefer;
+    });
+    return result;
+  };
+
   const updateLocalMessagesStatus = (conversationId, status = "read", recipientId = currentUserId) => {
     const cache = messagesCache.get(conversationId);
     if (!cache) {
@@ -1205,20 +1304,29 @@
     renderConversationList(refs.searchInput.value || "");
 
     if (!messagesCache.has(conversationId)) {
-    const response = await buildFallbackFetch(`/conversations/${conversationId}/messages?limit=50&order=asc`);
-      messagesCache.set(conversationId, response.items || []);
+      const response = await buildFallbackFetch(
+        `/conversations/${conversationId}/messages?limit=50&order=asc`
+      );
+      messagesCache.set(
+        conversationId,
+        (response.items || []).map(normalizeMessage).filter(Boolean)
+      );
     }
     renderMessages(conversationId);
     await markConversationAsRead(conversationId);
   };
 
   const fetchConversations = async () => {
-    const response = await buildFallbackFetch(`/conversations?userId=${currentUserId}`);
-    conversations = (response.data || response || []).sort((a, b) => {
-      const aTime = new Date(a.updatedAt || 0).getTime();
-      const bTime = new Date(b.updatedAt || 0).getTime();
-      return bTime - aTime;
-    });
+    const response = await buildFallbackFetch(`/conversations?usuarioId=${currentUserId}`);
+    conversations = (response.data || response || [])
+      .map(normalizeConversation)
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt || 0).getTime();
+        const bTime = new Date(b.updatedAt || 0).getTime();
+        return bTime - aTime;
+      });
+    conversations = dedupeDirectConversations(conversations);
     conversations.forEach((conversation) => {
       const participantMeta = conversation.metadata?.participants || {};
       const avatarMeta = conversation.metadata?.avatars || {};
@@ -1250,7 +1358,7 @@
       await buildFallbackFetch(`/conversations/${conversationId}/read`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ readerId: currentUserId })
+        body: JSON.stringify({ lectorId: currentUserId })
       });
       updateLocalMessagesStatus(conversationId, "read", currentUserId);
     } catch (_error) {
@@ -1276,11 +1384,11 @@
       conversation?.metadata?.avatars?.[recipientId] || contacts[recipientId]?.avatarSource || null;
 
     const payload = {
-      senderId: currentUserId,
-      recipientId,
-      conversationId: conversation.id,
-      content,
-      metadata: {
+      remitenteId: currentUserId,
+      destinatarioId: recipientId,
+      conversacionId: conversation.id,
+      contenido: content,
+      metadatos: {
         participants: {
           [currentUserId]: senderAlias,
           [recipientId]: recipientAlias || contacts[recipientId]?.alias || recipientId,
@@ -1316,7 +1424,7 @@
         body: JSON.stringify(payload)
       });
       if (response?.data) {
-        resolveOptimisticMessage(conversation.id, clientRequestId, response.data);
+        resolveOptimisticMessage(conversation.id, clientRequestId, normalizeMessage(response.data));
         rememberContact(recipientId, recipientAlias || selectedProfessional?.nombreCompleto, recipientAvatarSource);
       }
     } catch (error) {
@@ -1334,10 +1442,10 @@
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requesterId: currentUserId
+          solicitanteId: currentUserId
         })
       });
-      const payload = response?.data || response;
+      const payload = normalizeMessage(response?.data || response) || response?.data || response;
       applyDeletedMessage(payload);
       showChatFeedback("Mensaje eliminado.", "success");
     } catch (error) {
@@ -1354,7 +1462,7 @@
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          requesterId: currentUserId
+          solicitanteId: currentUserId
         })
       });
       removeConversationLocally(conversationId);
@@ -1424,10 +1532,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           editorId: currentUserId,
-          content: trimmed
+          contenido: trimmed
         })
       });
-      const updated = response?.data || response;
+      const updated = normalizeMessage(response?.data || response);
       applyEditedMessage(updated);
       showChatFeedback("Mensaje actualizado.", "success");
       closeEditMessageDialog();
@@ -1493,9 +1601,10 @@
     if (!payload) {
       return;
     }
+    const normalized = normalizeMessage(payload);
     applyDeletedMessage({
-      id: payload.id || payload.messageId,
-      conversationId: payload.conversationId
+      id: normalized?.id || payload.id || payload.messageId,
+      conversationId: normalized?.conversationId || payload.conversationId
     });
   };
 

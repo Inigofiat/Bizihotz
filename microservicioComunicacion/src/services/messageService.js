@@ -12,84 +12,95 @@ const {
   mergeParticipantsMetadata,
 } = require('./conversationService');
 
-const syncConversationLastMessage = async (conversationId) => {
-  if (!conversationId) {
+const syncConversationLastMessage = async (conversacionId) => {
+  if (!conversacionId) {
     return null;
   }
 
-  const latest = await Message.findOne({ conversationId }).sort({ sentAt: -1 }).lean();
+  const latest = await Message.findOne({ conversacionId }).sort({ enviadoEn: -1 }).lean();
   if (!latest) {
     await Conversation.updateOne(
-      { _id: conversationId },
-      { $unset: { lastMessage: '' } }
+      { _id: conversacionId },
+      { $unset: { ultimoMensaje: '' } }
     );
     return null;
   }
 
   const snapshot = {
-    messageId: latest._id.toString(),
-    content: latest.content,
-    sentAt: latest.sentAt,
-    senderId: latest.senderId,
+    idMensaje: latest._id.toString(),
+    contenido: latest.contenido,
+    enviadoEn: latest.enviadoEn,
+    remitenteId: latest.remitenteId,
   };
 
   await Conversation.updateOne(
-    { _id: conversationId },
-    { $set: { lastMessage: snapshot } }
+    { _id: conversacionId },
+    { $set: { ultimoMensaje: snapshot } }
   );
 
   return snapshot;
 };
 
-const sanitizeAttachments = (attachments = []) => {
-  if (!Array.isArray(attachments)) {
+const sanitizeAttachments = (adjuntos = []) => {
+  if (!Array.isArray(adjuntos)) {
     return [];
   }
 
-  return attachments
+  return adjuntos
     .map((attachment) => ({
-      type: attachment.type || 'text',
+      tipo: attachment.tipo || attachment.type || 'text',
       url: attachment.url,
-      name: attachment.name,
-      size: attachment.size,
-      metadata: attachment.metadata,
+      nombre: attachment.nombre ?? attachment.name,
+      tamano: attachment.tamano ?? attachment.size,
+      metadatos: attachment.metadatos ?? attachment.metadata,
     }))
-    .filter((attachment) => attachment.url || attachment.name);
+    .filter((attachment) => attachment.url || attachment.nombre);
 };
 
-const createMessage = async ({ senderId, recipientId, content, attachments, conversationId, metadata }) => {
-  if (!senderId || !recipientId) {
-    throw createError(400, 'senderId y recipientId son obligatorios');
+const createMessage = async ({
+  remitenteId,
+  destinatarioId,
+  contenido,
+  adjuntos,
+  conversacionId,
+  metadatos,
+}) => {
+  if (!remitenteId || !destinatarioId) {
+    throw createError(400, 'remitenteId y destinatarioId son obligatorios');
   }
 
-  if (!content && (!attachments || attachments.length === 0)) {
+  if (!contenido && (!adjuntos || adjuntos.length === 0)) {
     throw createError(400, 'El mensaje debe incluir contenido o algun adjunto');
   }
 
   let conversation;
-  if (conversationId) {
-    conversation = await getConversationOrFail(conversationId);
+  if (conversacionId) {
+    conversation = await getConversationOrFail(conversacionId);
     if (
-      !conversation.participants.includes(senderId) ||
-      !conversation.participants.includes(recipientId)
+      !conversation.participantes.includes(remitenteId) ||
+      !conversation.participantes.includes(destinatarioId)
     ) {
       throw createError(403, 'Los participantes no coinciden con la conversacion solicitada');
     }
   } else {
-    conversation = await ensureConversation([senderId, recipientId], metadata);
+    conversation = await ensureConversation([remitenteId, destinatarioId], metadatos);
   }
 
-  const sanitizedAttachments = sanitizeAttachments(attachments);
+  const sanitizedAttachments = sanitizeAttachments(adjuntos);
 
   const participantMetadata = {
-    ...(metadata?.participants || {}),
+    ...(metadatos?.participants || metadatos?.participantes || {}),
   };
-  participantMetadata[senderId] = participantMetadata[senderId] || metadata?.senderName || senderId;
-  participantMetadata[recipientId] =
-    participantMetadata[recipientId] || metadata?.recipientName || recipientId;
+  participantMetadata[remitenteId] =
+    participantMetadata[remitenteId] || metadatos?.senderName || metadatos?.remitenteNombre || remitenteId;
+  participantMetadata[destinatarioId] =
+    participantMetadata[destinatarioId] ||
+    metadatos?.recipientName ||
+    metadatos?.destinatarioNombre ||
+    destinatarioId;
 
   const avatarsMetadata = {
-    ...(metadata?.avatars || {}),
+    ...(metadatos?.avatars || metadatos?.avatares || {}),
   };
 
   const hasMetadataUpdate = mergeParticipantsMetadata(conversation, {
@@ -102,12 +113,12 @@ const createMessage = async ({ senderId, recipientId, content, attachments, conv
   }
 
   const message = await Message.create({
-    conversationId: conversation._id,
-    senderId,
-    recipientId,
-    content,
-    attachments: sanitizedAttachments,
-    metadata,
+    conversacionId: conversation._id,
+    remitenteId,
+    destinatarioId,
+    contenido,
+    adjuntos: sanitizedAttachments,
+    metadatos,
   });
 
   await applyMessageEffect(conversation, message);
@@ -115,12 +126,12 @@ const createMessage = async ({ senderId, recipientId, content, attachments, conv
   return message.toPublicJSON();
 };
 
-const editMessageContent = async (messageId, editorId, content) => {
+const editMessageContent = async (messageId, editorId, contenido) => {
   if (!editorId) {
     throw createError(400, 'editorId es obligatorio para editar mensajes');
   }
 
-  const trimmed = (content || '').trim();
+  const trimmed = (contenido || '').trim();
   if (!trimmed) {
     throw createError(400, 'El mensaje editado no puede quedar vacio');
   }
@@ -130,23 +141,23 @@ const editMessageContent = async (messageId, editorId, content) => {
     throw createError(404, 'Mensaje no encontrado');
   }
 
-  if (message.senderId !== editorId) {
+  if (message.remitenteId !== editorId) {
     throw createError(403, 'Solo el autor del mensaje puede editarlo');
   }
 
-  message.content = trimmed;
-  message.editedAt = dayjs().toDate();
-  message.editedBy = editorId;
+  message.contenido = trimmed;
+  message.editadoEn = dayjs().toDate();
+  message.editadoPor = editorId;
   await message.save();
 
-  await syncConversationLastMessage(message.conversationId);
+  await syncConversationLastMessage(message.conversacionId);
 
   return message.toPublicJSON();
 };
 
-const deleteMessage = async (messageId, requesterId) => {
-  if (!requesterId) {
-    throw createError(400, 'requesterId es obligatorio para borrar mensajes');
+const deleteMessage = async (messageId, solicitanteId) => {
+  if (!solicitanteId) {
+    throw createError(400, 'solicitanteId es obligatorio para borrar mensajes');
   }
 
   const message = await Message.findById(messageId);
@@ -154,35 +165,35 @@ const deleteMessage = async (messageId, requesterId) => {
     throw createError(404, 'Mensaje no encontrado');
   }
 
-  if (message.senderId !== requesterId) {
+  if (message.remitenteId !== solicitanteId) {
     throw createError(403, 'Solo puedes eliminar tus propios mensajes');
   }
 
-  const conversation = await Conversation.findById(message.conversationId);
+  const conversation = await Conversation.findById(message.conversacionId);
   if (!conversation) {
     await Message.deleteOne({ _id: messageId });
     return {
       id: messageId,
-      conversationId: message.conversationId.toString(),
-      senderId: message.senderId,
-      recipientId: message.recipientId,
-      deletedBy: requesterId,
+      conversacionId: message.conversacionId.toString(),
+      remitenteId: message.remitenteId,
+      destinatarioId: message.destinatarioId,
+      deletedBy: solicitanteId,
     };
   }
 
-  if (!conversation.participants.includes(requesterId)) {
+  if (!conversation.participantes.includes(solicitanteId)) {
     throw createError(403, 'No perteneces a esta conversacion');
   }
 
   await Message.deleteOne({ _id: messageId });
 
-  if (!message.readAt && message.recipientId) {
-    const unreadCounts = Conversation.toPlainUnreadCounts(conversation.unreadCounts);
-    if (typeof unreadCounts[message.recipientId] === 'number') {
-      unreadCounts[message.recipientId] = Math.max(0, unreadCounts[message.recipientId] - 1);
+  if (!message.leidoEn && message.destinatarioId) {
+    const unreadCounts = Conversation.toPlainUnreadCounts(conversation.noLeidos);
+    if (typeof unreadCounts[message.destinatarioId] === 'number') {
+      unreadCounts[message.destinatarioId] = Math.max(0, unreadCounts[message.destinatarioId] - 1);
       await Conversation.updateOne(
         { _id: conversation._id },
-        { $set: { unreadCounts } }
+        { $set: { noLeidos: unreadCounts } }
       );
     }
   }
@@ -191,10 +202,10 @@ const deleteMessage = async (messageId, requesterId) => {
 
   return {
     id: messageId,
-    conversationId: conversation._id.toString(),
-    senderId: message.senderId,
-    recipientId: message.recipientId,
-    deletedBy: requesterId,
+    conversacionId: conversation._id.toString(),
+    remitenteId: message.remitenteId,
+    destinatarioId: message.destinatarioId,
+    deletedBy: solicitanteId,
   };
 };
 
@@ -206,12 +217,12 @@ const getMessagesByConversation = async (conversationId, { page = 1, limit, orde
   const safeOrder = order === 'desc' ? -1 : 1;
 
   const [messages, total] = await Promise.all([
-    Message.find({ conversationId: conversation._id })
-      .sort({ sentAt: safeOrder })
+    Message.find({ conversacionId: conversation._id })
+      .sort({ enviadoEn: safeOrder })
       .skip(skip)
       .limit(safeLimit)
       .lean(),
-    Message.countDocuments({ conversationId: conversation._id }),
+    Message.countDocuments({ conversacionId: conversation._id }),
   ]);
 
   return {
@@ -224,24 +235,24 @@ const getMessagesByConversation = async (conversationId, { page = 1, limit, orde
     },
     items: messages.map((message) => ({
       id: message._id.toString(),
-      conversationId: message.conversationId.toString(),
-      senderId: message.senderId,
-      recipientId: message.recipientId,
-      content: message.content,
-      attachments: message.attachments,
-      metadata: message.metadata,
-      status: message.status,
-      readAt: message.readAt,
-      sentAt: message.sentAt,
-      createdAt: message.createdAt,
-      updatedAt: message.updatedAt,
+      conversacionId: message.conversacionId.toString(),
+      remitenteId: message.remitenteId,
+      destinatarioId: message.destinatarioId,
+      contenido: message.contenido,
+      adjuntos: message.adjuntos,
+      metadatos: message.metadatos,
+      estado: message.estado,
+      leidoEn: message.leidoEn,
+      enviadoEn: message.enviadoEn,
+      creadoEn: message.creadoEn,
+      actualizadoEn: message.actualizadoEn,
     })),
   };
 };
 
-const markMessageAsRead = async (messageId, readerId) => {
-  if (!readerId) {
-    throw createError(400, 'readerId es obligatorio para marcar como leido');
+const markMessageAsRead = async (messageId, lectorId) => {
+  if (!lectorId) {
+    throw createError(400, 'lectorId es obligatorio para marcar como leido');
   }
 
   const message = await Message.findById(messageId);
@@ -249,40 +260,40 @@ const markMessageAsRead = async (messageId, readerId) => {
     throw createError(404, 'Mensaje no encontrado');
   }
 
-  if (message.recipientId !== readerId) {
+  if (message.destinatarioId !== lectorId) {
     throw createError(403, 'Solo el destinatario puede marcar el mensaje como leido');
   }
 
-  if (!message.readAt) {
-    message.readAt = dayjs().toDate();
-    message.status = 'read';
+  if (!message.leidoEn) {
+    message.leidoEn = dayjs().toDate();
+    message.estado = 'read';
     await message.save();
 
-    const conversation = await Conversation.findById(message.conversationId);
+    const conversation = await Conversation.findById(message.conversacionId);
     if (conversation) {
-      await decrementUnreadCounter(conversation, readerId, 1);
+      await decrementUnreadCounter(conversation, lectorId, 1);
     }
   }
 
   return message.toPublicJSON();
 };
 
-const markConversationAsRead = async (conversationId, readerId) => {
-  if (!readerId) {
-    throw createError(400, 'readerId es obligatorio');
+const markConversationAsRead = async (conversationId, lectorId) => {
+  if (!lectorId) {
+    throw createError(400, 'lectorId es obligatorio');
   }
 
   const conversation = await getConversationOrFail(conversationId);
-  if (!conversation.participants.includes(readerId)) {
+  if (!conversation.participantes.includes(lectorId)) {
     throw createError(403, 'El usuario no pertenece a la conversacion');
   }
 
   const now = dayjs().toDate();
   await Message.updateMany(
-    { conversationId, recipientId: readerId, readAt: null },
-    { $set: { readAt: now, status: 'read' } }
+    { conversacionId: conversationId, destinatarioId: lectorId, leidoEn: null },
+    { $set: { leidoEn: now, estado: 'read' } }
   );
-  await setUnreadCounter(conversation, readerId, 0);
+  await setUnreadCounter(conversation, lectorId, 0);
 
   return conversation.toPublicJSON();
 };

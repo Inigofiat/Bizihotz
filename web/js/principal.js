@@ -63,6 +63,33 @@ const buildComunicacionBases = () => {
 
 const COMUNICACION_API_BASES = buildComunicacionBases().map((base) => `${base}/api`);
 
+// Refresca solo al reentrar (p.ej. volver a la pestaña o recuperar del bfcache), no cada X segundos.
+(() => {
+  let shouldReload = false;
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      shouldReload = true;
+    } else if (shouldReload) {
+      shouldReload = false;
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    if (shouldReload) {
+      shouldReload = false;
+      window.location.reload();
+    }
+  });
+})();
+
 const CITA_ESTADOS = [
   {
     value: "Pendiente",
@@ -599,7 +626,9 @@ const handleGlobalScroll = () => {
 
 const getConversationRecipient = (conversation) => {
   if (!conversation || !Array.isArray(conversation.participants)) {
-    return null;
+    const alt = conversation.participantes;
+    if (!Array.isArray(alt)) return null;
+    conversation.participants = alt;
   }
   const userId = getUsuarioId();
   if (!userId) {
@@ -627,7 +656,7 @@ const renderDashboardNotifications = () => {
   }
   const unread = notificationConversations
     .filter((conversation) => (conversation.unreadCounts?.[userId] || 0) > 0)
-    .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+    .sort((a, b) => new Date(b.updatedAt || b.actualizadoEn || 0) - new Date(a.updatedAt || a.actualizadoEn || 0));
   if (!unread.length) {
     badge.hidden = true;
     list.innerHTML = "";
@@ -688,8 +717,16 @@ const loadConversationNotifications = async () => {
     return;
   }
   try {
-    const response = await fetchComunicacion(`/conversations?userId=${encodeURIComponent(userId)}`);
-    notificationConversations = response?.data || response || [];
+    const response = await fetchComunicacion(`/conversations?usuarioId=${encodeURIComponent(userId)}`);
+    const data = response?.data || response || [];
+    // Normaliza campos cuando vienen en castellano
+    notificationConversations = data.map((conv) => ({
+      id: conv.id || conv._id || conv.conversationId,
+      participants: conv.participants || conv.participantes || [],
+      unreadCounts: conv.unreadCounts || conv.noLeidos || {},
+      updatedAt: conv.updatedAt || conv.actualizadoEn || conv.creadoEn || null,
+      metadata: conv.metadata || conv.metadatos || {},
+    }));
     renderDashboardNotifications();
   } catch (error) {
     console.warn("No se pudieron cargar las notificaciones de mensajes:", error);
@@ -718,9 +755,18 @@ const initNotificationCenter = () => {
     }
   });
 
-  loadConversationNotifications();
-  window.addEventListener("focus", loadConversationNotifications);
-  setInterval(loadConversationNotifications, 30000);
+  const startNotifications = () => loadConversationNotifications();
+  startNotifications();
+  if (window.LiveRefresh?.start) {
+    LiveRefresh.start(loadConversationNotifications, {
+      intervalMs: 12000,
+      immediate: false,
+      label: "dashboard-mensajes"
+    });
+  } else {
+    window.addEventListener("focus", loadConversationNotifications);
+    setInterval(loadConversationNotifications, 30000);
+  }
 };
 
 const resolveNombreConversacion = (participantId, conversation) => {
@@ -1023,6 +1069,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
   initNotificationCenter();
+  if (window.LiveRefresh?.start) {
+    LiveRefresh.start(cargarCitas, {
+      intervalMs: 12000,
+      immediate: false,
+      label: "dashboard-citas"
+    });
+  }
 
   const agendaButton = document.querySelector('.nav-button[data-nav="agenda"]');
   if (agendaButton) {

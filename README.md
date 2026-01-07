@@ -15,6 +15,15 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 | API Gateway           | FastAPI                | `5000`             | `api-gateway/` |
 | Frontend              | HTML/CSS/JS estatico   | `8080`             | `web/` |
 
+## Tecnologias por servicio
+
+- **API Gateway (`api-gateway/`)**: FastAPI + Uvicorn para orquestar, `httpx` como cliente HTTP asincrono y `python-dotenv` para configuracion por entorno.
+- **microservicioGestion (`microservicioGestion/`)**: Node.js 18, Express 5, MongoDB 6 con Mongoose, autenticacion JWT (`jsonwebtoken`), CORS y carga de ficheros con Multer.
+- **microservicioComunicacion (`microservicioComunicacion/`)**: Node.js 18, Express 5, Socket.IO para tiempo real, MongoDB con Mongoose, middleware de seguridad (helmet) y validacion con `express-validator`.
+- **microservicioNutricion (`microservicioNutricion/`)**: FastAPI, SQLAlchemy 2, PostgreSQL 16, Pydantic v2, Uvicorn y utilidades HTTP (`requests`/`httpx`) y generacion de PDF (`fpdf2`).
+- **microservicioDocumental (`microservicioDocumental/`)**: FastAPI, SQLAlchemy 2 + Alembic, PostgreSQL 16 y `httpx` para llamadas salientes si se requieren integraciones.
+- **Frontend (`web/`)**: HTML, CSS y JS plano (estatico); consume el gateway via llamadas fetch.
+
 ## Requisitos base
 
 - **Para el stack Docker**: Docker Desktop (o Engine) con Docker Compose v2.
@@ -48,8 +57,8 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    ```
 5. Para detener y limpiar:
    ```bash
-   docker compose down        # detiene los contenedores
-   docker compose down -v     # detiene y elimina volumenes (datos de Mongo/Postgres)
+   docker compose down        
+   docker compose down -v   
    ```
 
 > Si quieres desarrollar con recarga en vivo, deja el stack levantado con `docker compose up` para las bases de datos y arranca los servicios de aplicacion de manera manual.
@@ -72,7 +81,7 @@ Actualiza `microservicioGestion/.env` con la cadena correcta (`MONGO_URI`).
 
 ```bash
 cd microservicioGestion
-cp .env.example .env   # si corresponde; en ausencia, edita el archivo existente
+cp .env.example .env 
 npm install
 MONGO_URI=mongodb://localhost:27017/gestion npm run dev
 ```
@@ -110,7 +119,7 @@ Guarda la URL en `microservicioNutricion/.env` (variable `DATABASE_URL`).
 cd microservicioNutricion
 cp .env.example .env
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        
 pip install -r requirements.txt
 uvicorn app:app --reload --port 5002
 ```
@@ -125,7 +134,7 @@ uvicorn app:app --reload --port 5002
 cd microservicioDocumental
 cp .env.example .env
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        
 pip install -r requirements.txt
 uvicorn app:app --reload --port 5100
 ```
