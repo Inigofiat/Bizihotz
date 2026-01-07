@@ -5,19 +5,19 @@ const path = require("path");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-const { connectDB } = require("../config/db");
-const Paciente = require("../data/pacienteModel");
-const Cita = require("../data/citaModel");
-const HistorialPaciente = require("../data/historialPacienteModel");
-const RegistroAntropometrico = require("../data/registroAntropometricoModel");
-const PacienteUsuario = require("../data/pacienteUsuarioModelo");
-const Usuario = require("../data/usuarioModel");
+const { connectDB } = require("../src/config/db");
+const Paciente = require("../src/models/pacienteModel");
+const Cita = require("../src/models/citaModel");
+const HistorialPaciente = require("../src/models/historialPacienteModel");
+const RegistroAntropometrico = require("../src/models/registroAntropometricoModel");
+const PacienteUsuario = require("../src/models/pacienteUsuarioModelo");
+const Usuario = require("../src/models/usuarioModel");
 
 require("dotenv").config({
   path: path.resolve(__dirname, "..", ".env")
 });
 
-const profesionalesSeedPath = path.resolve(__dirname, "..", "data", "profesionales.seed.json");
+const profesionalesSeedPath = path.resolve(__dirname, "..", "src", "models", "profesionales.seed.json");
 const profesionalesSeed = JSON.parse(fs.readFileSync(profesionalesSeedPath, "utf8"));
 
 const nombres = [

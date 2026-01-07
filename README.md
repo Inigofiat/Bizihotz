@@ -41,7 +41,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    docker compose up -d --build
    ```
 3. Accede a:
-   - Frontend: http://localhost:8080
+   - Frontend: http://localhost:8080 o http://<ip_dispositivo>:8080/
    - API Gateway: http://localhost:5000 (docs en `/docs`, health en `/health`)
    - Microservicio de gestion: http://localhost:4002 (el contenedor expone 4001, se publica en 4002)
    - Microservicio de comunicacion: http://localhost:4103 (contenedor en 4100, publicado en 4103)

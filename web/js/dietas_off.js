@@ -307,6 +307,26 @@
     introClose: document.getElementById("introClose"),
   };
 
+  // Evita que el overlay se reabra dentro de la misma carga de página.
+  let introShown = false;
+
+  const cameFromEntryPage = () => {
+    try {
+      const ref = document.referrer || "";
+      if (!ref) return false;
+      const url = new URL(ref, window.location.origin);
+      const path = (url.pathname || "").toLowerCase();
+      return (
+        path.endsWith("/principal.html") ||
+        path.endsWith("/principal") ||
+        path.endsWith("/historialclinico.html") ||
+        path.endsWith("/historialclinico")
+      );
+    } catch {
+      return false;
+    }
+  };
+
   const state = {
     recetasLoading: false,
     alimentosLoading: false,
@@ -2235,11 +2255,15 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
         loadAlimentos();
         loadPacientes();
         loadDietas();
-        if (!planState.id && selectors.introOverlay) {
+
+        const shouldShowIntro =
+          selectors.introOverlay && !introShown && !planState.id && cameFromEntryPage();
+        if (shouldShowIntro) {
           document.body.classList.add("intro-blur");
           selectors.introOverlay.hidden = false;
           selectors.introOverlay.classList.add("is-open");
-        } else if (planState.id) {
+          introShown = true;
+        } else {
           hideIntroOverlay();
         }
       });
@@ -2251,7 +2275,7 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
       selectors.introOverlay.classList.remove("is-open");
       selectors.introOverlay.hidden = true;
     }
-    markIntroSeen();
+    introShown = true;
     document.body.classList.remove("intro-blur");
   });
 
