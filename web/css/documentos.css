@@ -151,6 +151,7 @@ a:hover {
   position: relative;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-left-color 0.2s ease;
+  height: 100%;
 }
 
 .doc-card::after {
@@ -211,10 +212,9 @@ a:hover {
 
 .doc-footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1; /* ocupa el espacio restante para alinear el botón */
 }
 
 .doc-etiquetas {
@@ -235,6 +235,7 @@ a:hover {
 .doc-links {
   display: flex;
   gap: 10px;
+  margin-top: auto; /* lleva el botón al fondo del card */
 }
 
 .doc-link {
