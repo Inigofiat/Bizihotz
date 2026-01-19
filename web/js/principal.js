@@ -63,33 +63,6 @@ const buildComunicacionBases = () => {
 
 const COMUNICACION_API_BASES = buildComunicacionBases().map((base) => `${base}/api`);
 
-// Refresca solo al reentrar (p.ej. volver a la pestaña o recuperar del bfcache), no cada X segundos.
-(() => {
-  let shouldReload = false;
-
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-      window.location.reload();
-    }
-  });
-
-  window.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      shouldReload = true;
-    } else if (shouldReload) {
-      shouldReload = false;
-      window.location.reload();
-    }
-  });
-
-  window.addEventListener("focus", () => {
-    if (shouldReload) {
-      shouldReload = false;
-      window.location.reload();
-    }
-  });
-})();
-
 const CITA_ESTADOS = [
   {
     value: "Pendiente",

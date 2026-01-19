@@ -1,3 +1,3 @@
-from .ingestion import sync_fuente
+"""Servicios para el microservicio documental."""
 
-__all__ = ["sync_fuente"]
+__all__ = []
