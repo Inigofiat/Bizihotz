@@ -89,6 +89,78 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+const buildUserResponse = (usuario) => {
+  const plain =
+    typeof usuario.toJSON === "function"
+      ? usuario.toJSON()
+      : usuario.toObject
+        ? usuario.toObject()
+        : usuario;
+
+  const id =
+    plain.idUsuario ||
+    plain._id?.toString?.() ||
+    plain._id ||
+    plain.id ||
+    null;
+
+  return {
+    idUsuario: id,
+    nombreUsuario: plain.nombreUsuario,
+    email: plain.email,
+    rol: plain.rol,
+    nombre: plain.nombre ?? "",
+    apellidos: plain.apellidos ?? "",
+    telefono: plain.telefono ?? "",
+    foto: plain.foto ?? "",
+    debeActualizarPassword: plain.debeActualizarPassword ?? false,
+    ultimoCambioPassword: plain.ultimoCambioPassword ?? null
+  };
+};
+
+router.put("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
+    }
+
+    if (!req.user || String(req.user.idUsuario) !== String(id)) {
+      return res.status(403).json({ mensaje: "No puedes modificar otro usuario." });
+    }
+
+    const { nombre, apellidos, telefono, email, nombreUsuario, rol } = req.body ?? {};
+
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    }
+
+    const applyIfPresent = (field, value, formatter) => {
+      if (typeof value === "string" && value.trim().length > 0) {
+        usuario[field] = formatter ? formatter(value) : value.trim();
+      }
+    };
+
+    applyIfPresent("nombre", nombre);
+    applyIfPresent("apellidos", apellidos);
+    applyIfPresent("telefono", telefono);
+    applyIfPresent("email", email, (val) => val.toLowerCase().trim());
+    applyIfPresent("nombreUsuario", nombreUsuario);
+    applyIfPresent("rol", rol);
+
+    await usuario.save();
+
+    return res.json({
+      mensaje: "Perfil actualizado correctamente.",
+      usuario: buildUserResponse(usuario)
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 const uploadsBaseDir = process.env.UPLOADS_DIR
   ? path.resolve(process.env.UPLOADS_DIR)
   : path.join(process.cwd(), "uploads");

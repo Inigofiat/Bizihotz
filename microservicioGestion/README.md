@@ -54,6 +54,7 @@ Asegurate de que `MONGO_URI` apunta al contenedor de Mongo expuesto (por defecto
 - `GET /status`: salud (incluye estado de la conexion a Mongo).
 - `POST /api/auth/login`: login JWT (email o nombreUsuario + password).
 - `POST /api/auth/cambiar-password`, `/confirmar-password`, `/logout`.
+- `PUT /api/usuarios/:id`: actualizar tu propio perfil (nombre, apellidos, telefono, email, nombreUsuario, rol).
 - CRUD protegido para `pacientes`, `citas`, `historiales`, `registros`, `pacientes-usuarios`, `usuarios` bajo `/api/...`.
 - `GET /docs`: Swagger UI (requiere `docs/openapi.json` presente).
 

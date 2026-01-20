@@ -2,6 +2,6 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
-    window.location.href = "login.html";
+    window.location.replace("/pages/login.html");
   }, 3000);
 });

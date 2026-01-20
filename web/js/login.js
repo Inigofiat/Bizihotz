@@ -43,11 +43,6 @@
     return;
   }
 
-  if (!document.referrer && history.length <= 1) {
-    window.location.replace(loadingPagePath);
-    return;
-  }
-
   const resetMessage = () => {
     loginMessage.textContent = "";
     loginMessage.classList.remove("is-error");

@@ -14,6 +14,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 | microservicioDocumental| FastAPI + SQLAlchemy  | `5100`             | `microservicioDocumental/` |
 | API Gateway           | FastAPI                | `5000`             | `api-gateway/` |
 | Frontend              | HTML/CSS/JS estatico   | `8080`             | `web/` |
+| Nginx (frontend)      | Nginx Alpine           | `8080 -> 80`       | `frontend` (usa `nginx/frontend.conf`) |
 
 ## Tecnologias por servicio
 
@@ -157,16 +158,16 @@ Verifica que las variables `GESTION_*`, `NUTRICION_*`, `COMUNICACION_*` y `DOCUM
 
 ### Frontend web
 
-Los archivos estan en `web/` y son estaticos. Puedes servirlos con cualquier servidor sencillo:
+- En Docker, el servicio `frontend` (Nginx) monta `nginx/frontend.conf` y sirve `/web`; la home y fallback van a `pages/cargando.html`.
+- Servir manualmente:
+  ```bash
+  npx serve ./web -l 8080
+  # o
+  python -m http.server 8080 -d web
+  ```
+  Si lo sirves asi, abre directamente `http://localhost:8080/pages/login.html`.
 
-```bash
-npx serve ./web -l 8080
-# o
-python -m http.server 8080 -d web
-```
-
-Configura las variables de entorno del frontend (en los archivos JS) si necesitas apuntar a URLs distintas para el gateway.
-La pagina de documentos (`web/pages/documentos.html`) consulta el microservicio documental via gateway (`/documentos/api/documentos`), asi que debe estar levantado para ver contenido.
+Configura las variables de entorno del frontend (en los archivos JS) si necesitas apuntar a URLs distintas para el gateway. La pagina de documentos (`web/pages/documentos.html`) consulta el microservicio documental via gateway (`/documentos/api/documentos`), asi que debe estar levantado para ver contenido.
 
 ## Recursos adicionales
 

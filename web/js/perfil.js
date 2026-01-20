@@ -227,8 +227,22 @@ async function guardarPerfil(event) {
     return;
   }
 
-  actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario, rol });
   try {
+    const perfilActualizado = await actualizarPerfilRemoto({
+      nombre,
+      apellidos,
+      telefono,
+      email,
+      nombreUsuario,
+      rol
+    });
+    const usuarioDesdeServidor = perfilActualizado?.usuario;
+    if (usuarioDesdeServidor) {
+      actualizarUsuarioLocal(usuarioDesdeServidor);
+    } else {
+      actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario, rol });
+    }
+
     if (avatarArchivoPendiente) {
       const resultado = await subirAvatar(avatarArchivoPendiente);
       const fotoUrl = resultado?.fotoUrl ?? resultado?.foto ?? "";
@@ -312,6 +326,38 @@ const eliminarAvatar = async () => {
   }
 
   throw lastError ?? new Error("No se pudo eliminar la foto de perfil.");
+};
+
+const actualizarPerfilRemoto = async (payload = {}) => {
+  const endpoints = [`${API_URL}/usuarios/${usuarioActual.idUsuario}`];
+  if (API_FALLBACK) {
+    endpoints.push(`${API_FALLBACK}/usuarios/${usuarioActual.idUsuario}`);
+  }
+
+  const body = JSON.stringify(payload);
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "PUT",
+        headers: buildAuthHeaders({ "Content-Type": "application/json" }),
+        body
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || `No se pudo actualizar el perfil (${response.status}).`);
+      }
+
+      return data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("No se pudo actualizar el perfil.");
 };
 
 async function guardarContrasena(event) {

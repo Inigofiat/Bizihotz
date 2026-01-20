@@ -183,13 +183,6 @@
 
   const initDocumentos = () => {
     loadDocs();
-    if (window.LiveRefresh?.start) {
-      LiveRefresh.start(loadDocs, {
-        intervalMs: 15000,
-        immediate: false,
-        label: "documentos"
-      });
-    }
   };
 
   document.addEventListener("DOMContentLoaded", initDocumentos);
