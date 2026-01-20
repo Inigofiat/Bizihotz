@@ -111,12 +111,23 @@ const resolveCitaId = (cita) => {
   );
 };
 
+const resolvePacienteId = (cita = {}) => {
+  const ref = cita.idPaciente;
+  if (!ref) return null;
+  if (typeof ref === "string") return ref;
+  if (typeof ref === "object") {
+    return ref.idPaciente || ref._id || ref.id || null;
+  }
+  return null;
+};
+
 let statusMenu = null;
 let statusMenuTrigger = null;
 
 let usuarioActual = null;
 let notificationDropdownOpen = false;
 let notificationConversations = [];
+let appointmentsClickHandlerBound = false;
 const notificationRefs = {
   toggle: null,
   badge: null,
@@ -947,6 +958,7 @@ const cargarCitas = async () => {
     citas.forEach((cita) => {
       const fila = document.createElement("tr");
       const citaId = resolveCitaId(cita);
+      const pacienteId = resolvePacienteId(cita);
       if (citaId) {
         fila.dataset.citaId = citaId;
       }
@@ -956,7 +968,17 @@ const cargarCitas = async () => {
       fila.appendChild(horaCell);
 
       const pacienteCell = document.createElement("td");
-      pacienteCell.textContent = cita.paciente ? String(cita.paciente) : "Sin nombre";
+      const nombrePaciente = cita.paciente ? String(cita.paciente) : "Sin nombre";
+      if (pacienteId) {
+        const pacienteLink = document.createElement("button");
+        pacienteLink.type = "button";
+        pacienteLink.className = "patient-link";
+        pacienteLink.dataset.pacienteId = pacienteId;
+        pacienteLink.textContent = nombrePaciente;
+        pacienteCell.appendChild(pacienteLink);
+      } else {
+        pacienteCell.textContent = nombrePaciente;
+      }
       fila.appendChild(pacienteCell);
 
       const motivoCell = document.createElement("td");
@@ -972,6 +994,16 @@ const cargarCitas = async () => {
       fragment.appendChild(fila);
     });
     tbody.appendChild(fragment);
+    if (!appointmentsClickHandlerBound) {
+      tbody.addEventListener("click", (event) => {
+        const link = event.target.closest(".patient-link");
+        if (!link || !tbody.contains(link)) return;
+        const pacienteId = link.dataset.pacienteId;
+        if (!pacienteId) return;
+        window.location.href = `pacienteDetalle.html?id=${encodeURIComponent(pacienteId)}`;
+      });
+      appointmentsClickHandlerBound = true;
+    }
   } catch (error) {
     console.warn("No se pudieron cargar las citas:", error);
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Error al cargar citas</td></tr>`;

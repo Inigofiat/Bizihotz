@@ -29,6 +29,20 @@
     </main>
   </div>
 
+  <div class="doc-viewer" id="docViewer" hidden>
+    <div class="doc-viewer__backdrop"></div>
+    <div class="doc-viewer__dialog" role="dialog" aria-modal="true" aria-labelledby="docViewerTitle">
+      <div class="doc-viewer__header">
+        <h3 id="docViewerTitle">Documento</h3>
+        <button type="button" class="doc-viewer__close" id="closeDocViewer" aria-label="Cerrar visor">×</button>
+      </div>
+      <div class="doc-viewer__body">
+        <iframe id="docViewerFrame" title="Visor de documento" loading="lazy"></iframe>
+        <div class="doc-viewer__loading" id="docViewerLoading">Cargando documento...</div>
+      </div>
+    </div>
+  </div>
+
   <template id="docCardTemplate">
     <article class="doc-card">
       <div class="doc-meta">
@@ -40,7 +54,7 @@
       <div class="doc-footer">
         <div class="doc-etiquetas"></div>
         <div class="doc-links">
-          <a class="doc-link descarga" target="_blank" rel="noopener">Abrir</a>
+          <a class="doc-link descarga">Abrir</a>
         </div>
       </div>
     </article>

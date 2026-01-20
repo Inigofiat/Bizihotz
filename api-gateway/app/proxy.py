@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import httpx
 from fastapi import HTTPException, Request
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 
 from .config import ServiceConfig
 
@@ -46,24 +46,34 @@ async def proxy_request(request: Request, service: ServiceConfig, path: str = ""
     body = await request.body()
     content = body if body else None
 
+    stream_ctx = client.stream(
+        request.method,
+        target_url,
+        content=content,
+        headers=headers,
+        cookies=request.cookies,
+    )
     try:
-        response = await client.request(
-            request.method,
-            target_url,
-            content=content,
-            headers=headers,
-            cookies=request.cookies,
-        )
-        filtered_headers = _filter_response_headers(response.headers)
-        body_bytes = await response.aread()
-        return Response(
-            content=body_bytes,
-            status_code=response.status_code,
-            headers=filtered_headers,
-            media_type=response.headers.get("content-type"),
-        )
+        upstream = await stream_ctx.__aenter__()
     except httpx.HTTPError as exc:
+        await stream_ctx.__aexit__(None, None, None)
         raise HTTPException(
             status_code=502,
             detail=f"Error al contactar con el servicio {service.name}: {exc}",
         ) from exc
+
+    filtered_headers = _filter_response_headers(upstream.headers)
+
+    async def iterator():
+        try:
+            async for chunk in upstream.aiter_raw():
+                yield chunk
+        finally:
+            await stream_ctx.__aexit__(None, None, None)
+
+    return StreamingResponse(
+        iterator(),
+        status_code=upstream.status_code,
+        headers=filtered_headers,
+        media_type=upstream.headers.get("content-type"),
+    )

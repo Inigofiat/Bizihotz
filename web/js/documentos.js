@@ -18,11 +18,10 @@
     return `${protocol}//${hostname}:5100`;
   };
 
+  const DIRECT_BASE = resolveDirectBase().replace(/\/+$/, "");
+
   const buildApiBases = () => {
-    const candidates = [
-      `${resolveGatewayBase()}/documentos/api`,
-      `${resolveDirectBase()}/api`,
-    ];
+    const candidates = [`${resolveGatewayBase()}/documentos/api`, `${DIRECT_BASE}/api`];
     const seen = new Set();
     return candidates
       .filter(Boolean)
@@ -35,13 +34,24 @@
   };
 
   const API_BASES = buildApiBases();
+  let activeApiBase = API_BASES[0] || null;
 
   const selectors = {
     list: document.getElementById("documentList"),
     template: document.getElementById("docCardTemplate"),
     feedback: document.getElementById("feedback"),
     count: document.getElementById("docCount"),
+    viewer: document.getElementById("docViewer"),
+    viewerFrame: document.getElementById("docViewerFrame"),
+    viewerTitle: document.getElementById("docViewerTitle"),
+    viewerClose: document.getElementById("closeDocViewer"),
+    viewerLoading: document.getElementById("docViewerLoading"),
   };
+
+  let viewerFallbackTimer = null;
+  let viewerBlobUrl = null;
+
+  const getApiBase = () => activeApiBase || API_BASES[0] || "";
 
   const setFeedback = (message, variant = "info") => {
     if (!selectors.feedback) return;
@@ -60,6 +70,12 @@
     if (selectors.count) {
       selectors.count.textContent = Number.isFinite(value) ? String(value) : "--";
     }
+  };
+
+  const resolveDocLinks = (doc) => {
+    const directUrl = doc?.url_descarga || doc?.ruta_archivo || doc?.url || (doc?.metadata_json && doc.metadata_json.url) || null;
+    const inlineUrl = doc?.id && DIRECT_BASE ? `${DIRECT_BASE}/api/documentos/${doc.id}/contenido` : null;
+    return { directUrl, inlineUrl };
   };
 
   const renderDocs = (docs) => {
@@ -82,7 +98,7 @@
     const chapterNumber = (title = "") => {
       const match = String(title || "")
         .toLowerCase()
-        .match(/cap[ií]tulo\s*([0-9]+)/i);
+        .match(/cap[iヴ]tulo\s*([0-9]+)/i);
       return match ? parseInt(match[1], 10) : null;
     };
 
@@ -124,18 +140,18 @@
         });
       }
 
-      const url =
-        doc.url_descarga ||
-        doc.ruta_archivo ||
-        doc.url ||
-        (doc.metadata_json && doc.metadata_json.url) ||
-        null;
+      const { directUrl, inlineUrl } = resolveDocLinks(doc);
+      const hasUrl = Boolean(directUrl || inlineUrl);
 
-      if (url) {
-        descargaLink.href = url;
+      if (hasUrl) {
+        descargaLink.href = inlineUrl || directUrl;
         descargaLink.textContent = "Abrir";
-        descargaLink.target = "_blank";
-        descargaLink.rel = "noopener";
+        descargaLink.dataset.docUrl = directUrl || "";
+        if (inlineUrl) {
+          descargaLink.dataset.docInlineUrl = inlineUrl;
+        }
+        descargaLink.dataset.docTitle = doc.titulo || "Documento";
+        descargaLink.dataset.docId = doc.id ?? "";
       } else {
         descargaLink.href = "#";
         descargaLink.textContent = "Sin enlace";
@@ -159,6 +175,7 @@
           const text = await resp.text();
           throw new Error(text || `Error ${resp.status}`);
         }
+        activeApiBase = base;
         return await resp.json();
       } catch (error) {
         lastError = error;
@@ -181,8 +198,147 @@
     }
   };
 
+  const closeViewer = () => {
+    if (!selectors.viewer) return;
+    selectors.viewer.hidden = true;
+    if (viewerFallbackTimer) {
+      clearTimeout(viewerFallbackTimer);
+      viewerFallbackTimer = null;
+    }
+    if (viewerBlobUrl) {
+      URL.revokeObjectURL(viewerBlobUrl);
+      viewerBlobUrl = null;
+    }
+    if (selectors.viewerFrame) {
+      selectors.viewerFrame.src = "";
+      selectors.viewerFrame.onload = null;
+      selectors.viewerFrame.onerror = null;
+    }
+  };
+
+  const showViewerError = (message, externalUrl) => {
+    if (!selectors.viewerLoading) return;
+    selectors.viewerLoading.hidden = false;
+    selectors.viewerLoading.textContent = message;
+    if (externalUrl) {
+      const helper = document.createElement("div");
+      helper.style.marginTop = "8px";
+      const link = document.createElement("a");
+      link.href = externalUrl;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Abrir en una pestaña nueva";
+      helper.appendChild(link);
+      selectors.viewerLoading.appendChild(helper);
+    }
+  };
+
+  const loadInViewer = async ({ title, inlineUrl, directUrl }) => {
+    if (!selectors.viewer || !selectors.viewerFrame || !selectors.viewerLoading || !selectors.viewerTitle) {
+      if (directUrl) {
+        window.open(directUrl, "_blank", "noopener");
+      }
+      return;
+    }
+
+    selectors.viewer.hidden = false;
+    selectors.viewerTitle.textContent = title || "Documento";
+    selectors.viewerLoading.hidden = false;
+    selectors.viewerLoading.textContent = "Cargando documento...";
+    selectors.viewerFrame.src = "about:blank";
+
+    if (viewerFallbackTimer) {
+      clearTimeout(viewerFallbackTimer);
+      viewerFallbackTimer = null;
+    }
+    if (viewerBlobUrl) {
+      URL.revokeObjectURL(viewerBlobUrl);
+      viewerBlobUrl = null;
+    }
+
+    const targetUrl = inlineUrl || directUrl;
+    if (!targetUrl) {
+      showViewerError("Este documento no tiene un enlace disponible.");
+      return;
+    }
+
+    const tryLoad = (url, fallbackUrl = null) => {
+      selectors.viewerFrame.onload = () => {
+        if (viewerFallbackTimer) {
+          clearTimeout(viewerFallbackTimer);
+          viewerFallbackTimer = null;
+        }
+        selectors.viewerLoading.hidden = true;
+      };
+
+      selectors.viewerFrame.onerror = () => {
+        if (viewerFallbackTimer) {
+          clearTimeout(viewerFallbackTimer);
+          viewerFallbackTimer = null;
+        }
+        if (fallbackUrl) {
+          tryLoad(fallbackUrl, null);
+          return;
+        }
+        showViewerError("No pudimos mostrar el documento en el visor.", directUrl);
+      };
+
+      // Oculta el overlay aunque el evento load no dispare (algunos visores PDF no emiten onload)
+      viewerFallbackTimer = setTimeout(() => {
+        selectors.viewerLoading.hidden = true;
+      }, 1600);
+
+      selectors.viewerFrame.src = url;
+    };
+
+    const fetchAsBlob = async (url) => {
+      const resp = await fetch(url, { headers: { Accept: "application/pdf" } });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        throw new Error(text || `HTTP ${resp.status}`);
+      }
+      return await resp.blob();
+    };
+
+    try {
+      const blob = await fetchAsBlob(targetUrl);
+      viewerBlobUrl = URL.createObjectURL(blob);
+      tryLoad(viewerBlobUrl, null);
+    } catch (error) {
+      const fallbackUrl = inlineUrl && directUrl && inlineUrl !== directUrl ? directUrl : null;
+      if (fallbackUrl) {
+        tryLoad(fallbackUrl, null);
+      } else {
+        showViewerError("No pudimos recuperar el documento.", directUrl || targetUrl);
+      }
+    }
+  };
+
   const initDocumentos = () => {
     loadDocs();
+
+    if (selectors.viewer && selectors.viewerClose) {
+      selectors.viewerClose.addEventListener("click", closeViewer);
+      selectors.viewer.addEventListener("click", (event) => {
+        if (event.target === selectors.viewer) {
+          closeViewer();
+        }
+      });
+    }
+
+    if (selectors.list) {
+      selectors.list.addEventListener("click", (event) => {
+        const link = event.target.closest(".doc-link.descarga");
+        if (!link) return;
+        event.preventDefault();
+        const { docUrl, docTitle, docInlineUrl } = link.dataset;
+        loadInViewer({
+          title: docTitle || "Documento",
+          inlineUrl: docInlineUrl || null,
+          directUrl: docUrl || null,
+        });
+      });
+    }
   };
 
   document.addEventListener("DOMContentLoaded", initDocumentos);

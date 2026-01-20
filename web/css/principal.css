@@ -326,6 +326,26 @@ th {
   z-index: 1;
 }
 
+.patient-link {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.patient-link:hover,
+.patient-link:focus-visible {
+  color: #0b703e;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
 tr:nth-child(even) {
   background-color: #e8f8ef;
 }
