@@ -34,6 +34,35 @@ const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const getAvatarFileName = (path = "") =>
   path ? path.replace(/\\/g, "/").split("/").pop() : "";
 const getStoredAvatarName = () => localStorage.getItem("perfil_avatar_nombre") || "";
+const resolveTokenOrRedirect = () => {
+  const stored = getStoredUser();
+  const token =
+    usuarioActual?.token ||
+    usuarioActual?.accessToken ||
+    usuarioActual?.authToken ||
+    stored?.token ||
+    stored?.accessToken ||
+    stored?.authToken;
+  if (!token) {
+    localStorage.removeItem("bizihotzUsuario");
+    window.location.href = LOGIN_PAGE;
+    throw new Error("Sesion no valida. Inicia sesion de nuevo.");
+  }
+  return token;
+};
+
+const buildAuthHeaders = (baseHeaders = {}) => {
+  const headers = Object.assign({ Accept: "application/json" }, baseHeaders || {});
+  try {
+    const token = resolveTokenOrRedirect();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.warn(error?.message || "Sesion no valida");
+  }
+  return headers;
+};
 
 const buildAvatarSrc = (fotoPath) => {
   if (!fotoPath) {
@@ -95,6 +124,9 @@ function cerrarModal(id) {
     if (avatarInput) {
       avatarInput.value = "";
     }
+    if (typeof closeCropModal === "function") {
+      closeCropModal(false);
+    }
     if (usuarioActual) {
       actualizarPerfilUI();
     }
@@ -123,15 +155,12 @@ const actualizarUsuarioLocal = (parciales = {}) => {
 };
 
 function actualizarPerfilUI() {
-  const nombre = localStorage.getItem("perfil_nombre") ?? usuarioActual?.nombre ?? "";
-  const apellidos =
-    localStorage.getItem("perfil_apellidos") ?? usuarioActual?.apellidos ?? "";
-  const telefono =
-    localStorage.getItem("perfil_telefono") ?? usuarioActual?.telefono ?? "";
-  const email = localStorage.getItem("perfil_email") ?? usuarioActual?.email ?? "";
-  const nombreUsuario =
-    localStorage.getItem("perfil_nombreUsuario") ?? usuarioActual?.nombreUsuario ?? "";
-  const rol = localStorage.getItem("perfil_rol") ?? usuarioActual?.rol ?? "";
+  const nombre = usuarioActual?.nombre ?? "";
+  const apellidos = usuarioActual?.apellidos ?? "";
+  const telefono = usuarioActual?.telefono ?? "";
+  const email = usuarioActual?.email ?? "";
+  const nombreUsuario = usuarioActual?.nombreUsuario ?? "";
+  const rol = usuarioActual?.rol ?? "";
 
   const visibleName = [nombre, apellidos].filter(Boolean).join(" ").trim() || nombreUsuario;
 
@@ -198,13 +227,6 @@ async function guardarPerfil(event) {
     return;
   }
 
-  localStorage.setItem("perfil_nombre", nombre);
-  localStorage.setItem("perfil_apellidos", apellidos);
-  localStorage.setItem("perfil_telefono", telefono);
-  localStorage.setItem("perfil_email", email);
-  localStorage.setItem("perfil_nombreUsuario", nombreUsuario);
-  localStorage.setItem("perfil_rol", rol);
-
   actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario, rol });
   try {
     if (avatarArchivoPendiente) {
@@ -247,6 +269,7 @@ const subirAvatar = async (file) => {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
+        headers: buildAuthHeaders(),
         body: formData
       });
 
@@ -275,7 +298,7 @@ const eliminarAvatar = async () => {
 
   for (const endpoint of endpoints) {
     try {
-      const response = await fetch(endpoint, { method: "DELETE" });
+      const response = await fetch(endpoint, { method: "DELETE", headers: buildAuthHeaders() });
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
@@ -402,6 +425,28 @@ const avatarButton = document.getElementById("btnSelectAvatar");
 const avatarFilename = document.getElementById("avatarFilename");
 const removeAvatarButton = document.getElementById("btnRemoveAvatar");
 const avatarNode = document.getElementById("avatarImage");
+const cropModal = document.getElementById("cropModal");
+const cropImage = document.getElementById("cropImage");
+const cropZoom = document.getElementById("cropZoom");
+const cropViewport = document.getElementById("cropViewport");
+const closeCropModalButton = document.getElementById("closeCropModal");
+const cancelCropButton = document.getElementById("cancelCrop");
+const applyCropButton = document.getElementById("applyCrop");
+
+const CROP_CANVAS_SIZE = 480;
+const cropState = {
+  image: null,
+  originalName: "",
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
+  minScale: 1,
+  maxScale: 3,
+  startX: 0,
+  startY: 0,
+  dragging: false,
+  viewportSize: 260
+};
 
 function actualizarNombreArchivoAvatar(nombre) {
   if (avatarFilename) {
@@ -425,19 +470,213 @@ if (avatarButton && avatarInput) {
   avatarButton.addEventListener("click", () => avatarInput.click());
 }
 
+const getViewportSize = () => {
+  if (!cropViewport) {
+    return cropState.viewportSize;
+  }
+  const rect = cropViewport.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  cropState.viewportSize = size || cropState.viewportSize;
+  return cropState.viewportSize;
+};
+
+const clampCropOffsets = () => {
+  if (!cropState.image) return;
+  const size = getViewportSize();
+  const scaledWidth = cropState.image.naturalWidth * cropState.scale;
+  const scaledHeight = cropState.image.naturalHeight * cropState.scale;
+  const maxOffsetX = Math.max(0, (scaledWidth - size) / 2);
+  const maxOffsetY = Math.max(0, (scaledHeight - size) / 2);
+  cropState.offsetX = Math.min(maxOffsetX, Math.max(-maxOffsetX, cropState.offsetX));
+  cropState.offsetY = Math.min(maxOffsetY, Math.max(-maxOffsetY, cropState.offsetY));
+};
+
+const applyCropTransform = () => {
+  if (!cropImage || !cropState.image) return;
+  clampCropOffsets();
+  cropImage.style.transform = `translate(calc(-50% + ${cropState.offsetX}px), calc(-50% + ${cropState.offsetY}px)) scale(${cropState.scale})`;
+};
+
+const closeCropModal = (resetInput = true) => {
+  if (cropModal) {
+    cropModal.style.display = "none";
+  }
+  cropState.image = null;
+  cropState.dragging = false;
+  if (resetInput && avatarInput) {
+    avatarInput.value = "";
+  }
+  if (cropViewport) {
+    cropViewport.classList.remove("is-dragging");
+  }
+};
+
+const openCropModal = (dataUrl, fileName = "avatar.jpg") => {
+  if (!cropModal || !cropImage || !cropZoom) {
+    return;
+  }
+  const img = new Image();
+  cropState.originalName = fileName;
+  img.onload = () => {
+    cropState.image = img;
+    const size = getViewportSize();
+    const baseScale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+    cropState.minScale = baseScale;
+    cropState.maxScale = baseScale * 3;
+    cropState.scale = baseScale;
+    cropState.offsetX = 0;
+    cropState.offsetY = 0;
+    cropZoom.min = cropState.minScale.toFixed(2);
+    cropZoom.max = cropState.maxScale.toFixed(2);
+    cropZoom.step = "0.01";
+    cropZoom.value = cropState.scale.toFixed(2);
+    applyCropTransform();
+    cropModal.style.display = "flex";
+  };
+  img.src = dataUrl;
+  cropImage.src = dataUrl;
+};
+
+const startCropDrag = (clientX, clientY) => {
+  cropState.dragging = true;
+  cropState.startX = clientX;
+  cropState.startY = clientY;
+  cropViewport?.classList.add("is-dragging");
+};
+
+const moveCropDrag = (clientX, clientY) => {
+  if (!cropState.dragging) return;
+  const dx = clientX - cropState.startX;
+  const dy = clientY - cropState.startY;
+  cropState.startX = clientX;
+  cropState.startY = clientY;
+  cropState.offsetX += dx;
+  cropState.offsetY += dy;
+  applyCropTransform();
+};
+
+const endCropDrag = () => {
+  cropState.dragging = false;
+  cropViewport?.classList.remove("is-dragging");
+};
+
+const producirAvatarRecortado = async () => {
+  if (!cropState.image) {
+    throw new Error("No hay ninguna imagen cargada para recortar.");
+  }
+  const viewportSize = getViewportSize();
+  const scale = cropState.scale;
+  const scaledWidth = cropState.image.naturalWidth * scale;
+  const scaledHeight = cropState.image.naturalHeight * scale;
+  const originX = (viewportSize - scaledWidth) / 2 + cropState.offsetX;
+  const originY = (viewportSize - scaledHeight) / 2 + cropState.offsetY;
+  const sx = Math.max(0, -originX / scale);
+  const sy = Math.max(0, -originY / scale);
+  const sWidth = viewportSize / scale;
+  const sHeight = viewportSize / scale;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = CROP_CANVAS_SIZE;
+  canvas.height = CROP_CANVAS_SIZE;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, CROP_CANVAS_SIZE, CROP_CANVAS_SIZE);
+  ctx.drawImage(
+    cropState.image,
+    sx,
+    sy,
+    sWidth,
+    sHeight,
+    0,
+    0,
+    CROP_CANVAS_SIZE,
+    CROP_CANVAS_SIZE
+  );
+
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blobResult) => {
+        if (blobResult) return resolve(blobResult);
+        reject(new Error("No se pudo generar la imagen recortada."));
+      },
+      "image/jpeg",
+      0.9
+    );
+  });
+
+  const baseName = (cropState.originalName || "avatar").split(".")[0] || "avatar";
+  const file = new File([blob], `${baseName}-recortado.jpg`, { type: "image/jpeg" });
+  return { file, preview: dataUrl };
+};
+
 if (avatarInput) {
   avatarInput.addEventListener("change", function () {
-    const file = this.files[0];
+    const file = this.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function (e) {
-      avatarPreviewTemporal = e.target.result;
-      setAvatarImage(avatarNode, avatarPreviewTemporal);
+      if (!e?.target?.result) return;
+      openCropModal(e.target.result, file.name);
     };
-    avatarArchivoPendiente = file;
-    actualizarNombreArchivoAvatar(file.name);
-    actualizarEstadoEliminarAvatar();
     reader.readAsDataURL(file);
+  });
+}
+
+if (cropViewport) {
+  cropViewport.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+    startCropDrag(event.clientX, event.clientY);
+  });
+  cropViewport.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    startCropDrag(touch.clientX, touch.clientY);
+  });
+  window.addEventListener("mousemove", (event) => moveCropDrag(event.clientX, event.clientY));
+  window.addEventListener("touchmove", (event) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    moveCropDrag(touch.clientX, touch.clientY);
+  });
+  window.addEventListener("mouseup", endCropDrag);
+  window.addEventListener("touchend", endCropDrag);
+}
+
+if (cropZoom) {
+  cropZoom.addEventListener("input", () => {
+    const value = Number(cropZoom.value);
+    if (Number.isNaN(value)) return;
+    cropState.scale = Math.min(cropState.maxScale, Math.max(cropState.minScale, value));
+    applyCropTransform();
+  });
+}
+
+if (closeCropModalButton) {
+  closeCropModalButton.addEventListener("click", () => closeCropModal());
+}
+
+if (cancelCropButton) {
+  cancelCropButton.addEventListener("click", () => closeCropModal());
+}
+
+if (applyCropButton) {
+  applyCropButton.addEventListener("click", async () => {
+    try {
+      const resultado = await producirAvatarRecortado();
+      avatarArchivoPendiente = resultado.file;
+      avatarPreviewTemporal = resultado.preview;
+      setAvatarImage(avatarNode, avatarPreviewTemporal);
+      actualizarNombreArchivoAvatar(resultado.file.name);
+      actualizarEstadoEliminarAvatar();
+      closeCropModal(false);
+      if (avatarInput) {
+        avatarInput.value = "";
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "No se pudo aplicar el recorte.");
+    }
   });
 }
 

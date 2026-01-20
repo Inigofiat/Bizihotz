@@ -191,6 +191,95 @@ body {
   color: #2d8b57;
 }
 
+.modal-content.modal-crop {
+  max-width: 520px;
+  text-align: center;
+}
+
+.cropper {
+  margin: 12px 0 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.cropper-viewport {
+  width: 260px;
+  height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: #f6f8fb;
+  border: 8px solid #e5ecf2;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  cursor: grab;
+  border-radius: 50%;
+}
+
+.cropper-viewport::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1200px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.cropper-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.cropper-viewport img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  will-change: transform;
+  user-select: none;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.crop-label {
+  display: block;
+  font-weight: bold;
+  color: #2f3e34;
+  margin-bottom: 6px;
+}
+
+#cropZoom {
+  width: 100%;
+  accent-color: #2d8b57;
+  margin-bottom: 12px;
+}
+
+.crop-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modal-crop .btn,
+.modal-crop .btn-filled {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 140px;
+  margin-top: 0;
+}
+
+.btn.ghost {
+  background-color: transparent;
+  border: 2px solid #b6c5d3;
+  color: #2f3e34;
+}
+
+.btn.ghost:hover {
+  background-color: #eef2f6;
+}
+
 .password-field {
   position: relative;
   margin-bottom: 12px;
