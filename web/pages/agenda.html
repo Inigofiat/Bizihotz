@@ -1,300 +1,185 @@
 <!doctype html>
-
 <html lang="es">
-
 <head>
-
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <title>Gestion de Calendarios y Citas</title>
-
   <link rel="stylesheet" href="../css/agenda.css" />
   <link rel="stylesheet" href="../css/chatbot.css" />
-
 </head>
-
 <body>
-
   <div class="app">
-
     <header class="header">
-
       <div class="brand">
-
         <a class="logo" href="principal.html"></a>
-
         <h1>Gestion de Calendarios y Citas</h1>
-
       </div>
 
       <div class="toolbar">
-
-        <div class="group">
-
-          <select id="professionalSelect" class="select" title="Profesional" aria-label="Profesional">
-
+        <div class="group professional">
+          <span id="professionalBadge" class="chip">Profesional</span>
+          <button id="changeProfessionalBtn" class="btn ghost" type="button" hidden>Cambiar</button>
+          <select id="professionalSelect" class="select visually-hidden" title="Profesional" aria-label="Profesional">
             <option value="" selected>Cargando profesional.</option>
-
           </select>
-
           <button id="todayBtn" class="btn" type="button">Hoy</button>
-
         </div>
 
-        <div class="group">
-
+        <div class="group month-group">
           <button id="prevBtn" class="btn icon" type="button" aria-label="Mes anterior">&#x25C0;</button>
-
-          <div id="monthLabel" class="btn primary" style="pointer-events: none;"></div>
-
+          <button id="monthLabel" class="btn primary month-button" type="button" title="Elegir mes y año">Mes</button>
           <button id="nextBtn" class="btn icon" type="button" aria-label="Mes siguiente">&#x25B6;</button>
-
+          <input id="monthJump" type="month" class="visually-hidden" aria-label="Elegir mes y año" />
         </div>
 
         <input
-
           id="searchInput"
-
           class="input"
-
           type="search"
-
-          placeholder="Buscar paciente o motivo."
-
-          aria-label="Buscar cita"
-
+          placeholder="Filtra el día: paciente, motivo o notas"
+          aria-label="Filtrar citas del día (paciente, motivo o notas)"
         />
-
       </div>
-
     </header>
 
     <main class="layout">
-
       <section class="card calendar" aria-label="Calendario">
-
         <div class="cal-head">
-
           <div class="legend">
-
             <span class="item"><span class="swatch low"></span>Poca carga</span>
-
             <span class="item"><span class="swatch med"></span>Media carga</span>
-
             <span class="item"><span class="swatch high"></span>Mucha carga</span>
-
           </div>
-
         </div>
 
         <div class="grid" id="dow"></div>
-
         <div class="grid" id="days"></div>
-
       </section>
 
       <aside class="card side" aria-live="polite" aria-hidden="true">
-
         <button id="closePanel" class="close-panel" type="button" aria-label="Cerrar panel">&times;</button>
-
         <div class="side-header">
-
           <div>
-
             <h2 id="panelTitle">Citas del <span id="prettyDate"></span></h2>
-
           </div>
-
           <div class="pill" id="totalBadge" title="Total del dia">0 citas</div>
-
         </div>
-
         <div id="appointments" class="list" data-empty="No hay citas para este dia."></div>
-
       </aside>
 
       <div id="panelBackdrop" class="side-backdrop" hidden aria-hidden="true"></div>
-
     </main>
-
   </div>
 
-
+  <div id="monthPicker" class="month-picker" hidden>
+    <div class="month-picker__card">
+      <div class="month-picker__header">
+        <div>
+          <p class="month-picker__eyebrow">Calendario</p>
+          <h3 id="monthPickerTitle">Elige un año</h3>
+        </div>
+        <button id="closeMonthPicker" class="month-picker__close" type="button" aria-label="Cerrar selector de mes">&times;</button>
+      </div>
+      <div class="month-picker__years-nav" id="yearNav">
+        <button id="yearPrev" type="button" aria-label="Años anteriores">&#x25C0;</button>
+        <span id="yearRangeLabel"></span>
+        <button id="yearNext" type="button" aria-label="Años siguientes">&#x25B6;</button>
+      </div>
+      <div class="month-picker__body">
+        <div id="yearGrid" class="month-picker__grid"></div>
+        <div id="monthGrid" class="month-picker__grid month-grid" hidden></div>
+      </div>
+      <div class="month-picker__footer" id="monthPickerFooter" hidden>
+        <button id="backToYears" type="button">Elegir otro año</button>
+      </div>
+    </div>
+  </div>
 
   <script src="../js/live-refresh.js"></script>
   <script src="../js/perfil-modal.js"></script>
   <script src="../js/agenda.js"></script>
   <script src="../js/chatbot.js"></script>
 
-
-
   <!-- Edit appointment modal -->
-
   <div class="modal-overlay" id="editAppointmentModal" hidden>
-
     <div class="modal-content edit-appointment">
-
       <button type="button" class="modal-close" id="closeEditAppointment">&times;</button>
-
       <h3>Editar cita</h3>
-
       <form id="editAppointmentForm" autocomplete="off">
-
         <input type="hidden" id="editCitaId" />
-
         <div class="form-group">
-
           <label for="editEstado">Estado</label>
-
           <select id="editEstado">
-
             <option value="Pendiente">Pendiente</option>
-
             <option value="Atendida">Atendida</option>
-
             <option value="Cancelada">Cancelada</option>
-
           </select>
-
         </div>
-
         <div class="form-group">
-
           <label for="editNotas">Observaciones</label>
-
           <textarea id="editNotas" rows="4" placeholder="Notas o detalles adicionales"></textarea>
-
         </div>
-
-
 
         <div class="form-actions">
-
           <button type="submit" class="btn primary" id="saveEditAppointment">Guardar</button>
-
           <button type="button" class="btn" id="cancelEditAppointment">Cancelar</button>
-
-          <!-- único cambio: añadimos la clase btn-danger -->
-
           <button type="button" class="btn btn-danger" id="deleteAppointment" style="margin-left:auto">Borrar cita</button>
-
         </div>
-
-
 
         <p class="modal-feedback" id="editAppointmentFeedback"></p>
-
       </form>
-
     </div>
-
   </div>
-
-
 
   <!-- Add appointment modal -->
-
   <div class="modal-overlay" id="addAppointmentModal" hidden>
-
     <div class="modal-content add-appointment">
-
       <button type="button" class="modal-close" id="closeAddAppointment">&times;</button>
-
       <h3>Nueva cita</h3>
-
       <form id="addAppointmentForm" autocomplete="off">
-
         <input type="hidden" id="addDateIso" />
-
         <input type="hidden" id="addHoraClave" />
-
         <div class="form-group">
-
           <label for="addPacienteSearch">Paciente</label>
-
           <div class="patient-picker" id="patientPicker">
-
             <input
-
               type="search"
-
               id="addPacienteSearch"
-
               placeholder="Buscar paciente."
-
               autocomplete="off"
-
               spellcheck="false"
-
             />
-
             <ul class="patient-picker__results" id="addPacienteResults"></ul>
-
           </div>
-
           <input type="hidden" id="addPacienteId" />
-
         </div>
-
         <div class="form-group">
-
           <label for="addTipoConsulta">Tipo de consulta</label>
-
           <input type="text" id="addTipoConsulta" placeholder="Ej. Seguimiento nutricional" required />
-
         </div>
-
         <div class="form-group">
-
           <label for="addNotas">Notas</label>
-
           <textarea id="addNotas" rows="3" placeholder="Observaciones adicionales"></textarea>
-
         </div>
-
         <div class="form-actions">
-
           <button type="submit" class="btn primary">Guardar cita</button>
-
           <button type="button" class="btn" id="cancelAddAppointment">Cancelar</button>
-
         </div>
-
         <p class="modal-feedback" id="addAppointmentFeedback"></p>
-
       </form>
-
     </div>
-
   </div>
 
-
-
-  <!-- Modal de confirmación para borrar cita (nuevo) -->
-
+  <!-- Modal de confirmación para borrar cita -->
   <div class="modal-overlay" id="confirmDeleteModal" hidden>
-
     <div class="modal-content modal-confirm">
-
       <h3>Eliminar cita</h3>
-
       <p>¿Seguro que quieres borrar esta cita? Esta acción no se puede deshacer.</p>
-
       <div class="form-actions">
-
         <button type="button" class="btn" id="confirmDeleteNo">Cancelar</button>
-
         <button type="button" class="btn btn-danger" id="confirmDeleteYes">Borrar definitivamente</button>
-
       </div>
-
     </div>
-
   </div>
-
 </body>
-
 </html>
-

@@ -21,82 +21,130 @@ const profesionalesSeedPath = path.resolve(__dirname, "..", "src", "models", "pr
 const profesionalesSeed = JSON.parse(fs.readFileSync(profesionalesSeedPath, "utf8"));
 
 const nombres = [
-  "Ane",
-  "Jon",
-  "Leire",
-  "Mikel",
-  "Naiara",
-  "Iker",
-  "Irati",
-  "Asier",
-  "Uxue",
-  "Oier",
-  "Amaia",
-  "Gaizka",
-  "Itziar",
-  "Unai",
-  "Maddi",
-  "Aritz",
-  "Maialen",
-  "Luken",
-  "Naroa",
-  "Ander",
-  "June",
-  "Peio",
-  "Iraia",
-  "Kerman",
-  "Haizea",
-  "Ekhi",
-  "Xabat",
-  "Iholdi",
-  "Markel",
-  "Lorea"
+  "Ane","Jon","Leire","Mikel","Naiara","Iker","Irati","Asier","Uxue","Oier",
+  "Amaia","Gaizka","Itziar","Unai","Maddi","Aritz","Maialen","Luken","Naroa","Ander",
+  "June","Peio","Iraia","Kerman","Haizea","Ekhi","Xabat","Iholdi","Markel","Lorea",
+
+  "Ana","Luis","Maria","Carlos","Laura","Javier","Marta","Pablo","Lucia","Sergio",
+  "Elena","Daniel","Paula","Alberto","Claudia","Miguel","Sofia","Andres","Natalia","David",
+  "Raquel","Ruben","Irene","Jorge","Silvia","Adrian","Beatriz","Marcos","Noelia","Ivan",
+  "Carmen","Oscar","Patricia","Diego","Teresa","Fernando","Rosa","Manuel","Victor","Alba",
+
+  "Alex","Emma","Liam","Olivia","Noah","Ava","Lucas","Mia","Leo","Zoe",
+  "Ethan","Chloe","Oliver","Lily","James","Emily","Jack","Grace","Henry","Sophia",
+  "Benjamin","Ella","William","Amelia","Logan","Harper","Sebastian","Julia","Samuel","Natalie",
+
+  "Elio","Noa","Kai","Vega","Luca","Neo","Alma","Axel","Indi","Milo",
+  "Arya","Enzo","Gala","Dylan","Iris","Theo","Luna","Brisa","Yara","Nil",
+  "Ciro","Kiara","Ivo","Elara","Dalia","Lyra","Nox","Roan","Sael","Zion",
+
+  "Aaron","Abel","Abril","Adam","Adriana","Aimar","Ainara","Alan","Alejandra","Alicia",
+  "Amaya","Bruno","Candela","Cristian","Dario","Elsa","Eric","Estela","Fabio","Gabriel",
+  "Hugo","Ines","Joel","Lara","Mario","Mateo","Nuria","Rocio","Tomas","Valeria"
 ];
 
 const apellidos = [
-  "Irigoyen",
-  "Etxeberria",
-  "Olaizola",
-  "Aranburu",
-  "Zubizarreta",
-  "Goikoetxea",
-  "Agirre",
-  "Aldanondo",
-  "Garmendia",
-  "Sarasola",
-  "Altuna",
-  "Zuazo",
-  "Aramburu",
-  "Lizarralde",
-  "Mendizabal",
-  "Arrieta",
-  "Bengoetxea",
-  "Altzaga",
-  "Goenaga",
-  "Lazkano",
-  "Muguruza",
-  "Lete",
-  "Arruabarrena",
-  "Iturriaga",
-  "Larrarte",
-  "Olabarria",
-  "Urrutia",
-  "Arrizabalaga",
-  "Idigoras",
-  "Etxaniz",
-  "Manterola",
-  "Erro",
-  "Egia",
-  "Araneta",
-  "Otegi"
+  "Irigoyen","Etxeberria","Olaizola","Aranburu","Zubizarreta","Goikoetxea","Agirre","Aldanondo","Garmendia","Sarasola",
+  "Altuna","Zuazo","Aramburu","Lizarralde","Mendizabal","Arrieta","Bengoetxea","Altzaga","Goenaga","Lazkano",
+  "Muguruza","Lete","Arruabarrena","Iturriaga","Larrarte","Olabarria","Urrutia","Arrizabalaga","Idigoras","Etxaniz",
+  "Manterola","Erro","Egia","Araneta","Otegi","Aizpurua","Amezaga","Arizaga","Arizti","Aristizabal",
+  "Arteaga","Artola","Atutxa","Aurrekoetxea","Azkarate","Azpitarte","Badiola","Barandiaran","Barrenechea","Basabe",
+  "Basurto","Belaustegi","Berasategi","Bereziartua","Beristain","Berriozabal","Berrueta","Bidegain","Eceiza","Egaña",
+  "Egiguren","Eizagirre","Eizaguirre","Elizalde","Elizondo","Elorriaga","Elorza","Elosegi","Epalza","Erdozia",
+  "Ereño","Erkoreka","Errasti","Etxanobe","Etxebarria","Etxegarai","Etxeita","Etxepare","Etxezarreta","Ezkurdia",
+  "Gandarias","Gandarias","Garaialde","Garamendi","Garatea","Garmendia","Garrastazu","Gaztañaga","Gaztelu","Gernika",
+  "Gisasola","Goñi","Gorrotxategi","Ibarluzea","Ibarra","Ibarretxe","Ibarrola","Ibarguren","Idiakez","Idiazabal",
+  "Igarza","Iglesias","Imaz","Inda","Intxausti","Iparragirre","Iraeta","Irastorza","Iriarte","Iriondo",
+  "Isasi","Iturralde","Iturriza","Jauregi","Juaristi","Korta","Kortabarria","Kortazar","Labaien","Lakarra",
+  "Landa","Landaburu","Landaluze","Larrabeiti","Larrinaga","Lasa","Lasarte","Legarreta","Legorburu","Legorreta",
+  "Leibar","Leizaola","Lekuona","Loidi","Lopetegi","Madariaga","Maeztu","Manterola","Mendiguren","Mendikoetxea",
+  "Mendoza","Mitxelena","Mugica","Muguruza","Odriozola","Oiarzabal","Oihartzabal","Olabarria","Olabide","Olalde",
+  "Olano","Olarra","Olarte","Olasagasti","Olaso","Olazabal","Ondarra","Ondarroa","Orbea","Ormaetxea",
+  "Ormazabal","Ostolaza","Otxandiano","Otxoa","Salaberria","Sarriegi","Sodupe","Ugarte","Urrutia","Urkijo",
+  "Urkullu","Urresti","Zabala","Zabaleta","Zaldua","Zallo","Zarate","Zelaia","Zubeldia","Zubiaur",
+  "Zubiri","Zugasti","Zuñiga",
+
+  "Garcia","Gonzalez","Rodriguez","Fernandez","Lopez","Martinez","Sanchez","Perez","Gomez","Martin",
+  "Jimenez","Ruiz","Hernandez","Diaz","Moreno","Muñoz","Alvarez","Romero","Alonso","Gutierrez",
+  "Navarro","Torres","Dominguez","Vazquez","Ramos","Gil","Ramirez","Serrano","Blanco","Molina",
+  "Suarez","Ortega","Castro","Ortiz","Rubio","Marin","Sanz","Iglesias","Nuñez","Cruz",
+  "Flores","Prieto","Mendez","Herrera","Cabrera","Leon","Campos","Vega","Fuentes","Rey",
+  "Cortes","Calvo","Bravo","Pascual","Parra","Roca","Cano","Arias","Benitez","Vidal",
+  "Montero","Carmona","Pardo","Rojas","Duran","Pastor","Esteban","Mora","Santos","Velasco",
+  "Padilla","Hidalgo","Peña","Redondo","Casado","Valle","Aguilar","Ferrer","Lorenzo","Marquez",
+  "Castillo","Reyes","Morales","Vargas","Mendoza","Guerrero","Medina","Rios","Soto","Acosta",
+  "Campos","Crespo","Del Valle","De la Fuente","De la Cruz","De la Rosa","De Lucas","De Miguel","De Pedro","De Diego",
+  "Santana","Montes","Carrasco","Arenas","Pineda","Valero","Quintana","Gallardo","Nieto","Soler",
+  "Pacheco","Rivas","Camarero","Otero","Cordero","Bautista","Salas","Castaño","Palacios","Moya",
+  "Luna","Farias","Segura","Aguado","Polo","Mateos","Cuenca","Garrido","Gimenez","Beltran",
+  "Escudero","Linares","Ceballos","Saez","Cifuentes","Tejada","Ros","Avila","Toledo","Bermudez",
+  "Escobar","Espinosa","Carrera","Delgado","Haro","Diosdado","Baeza","Caballero","Soria","Bernal",
+  "Paredes","Villar","Lara","Vicente","Santamaria","Barrios","Benito","Tapia","Sampedro","Macias",
+  "Soria","Franco","Montalvo","Izquierdo","Arroyo","Quesada","Maldonado","Villanueva","Valencia","Cervantes",
+  "Requena","Alarcon","Montoro","Aranda","Cifuentes","Castañeda","Valverde","Ayllon","Llamas","Manzano"
 ];
 
 const tiposConsulta = [
-  "Valoracion inicial",
+  "Valoración inicial",
   "Seguimiento nutricional",
-  "Control antropometrico",
-  "Reeducacion alimentaria",
-  "Consulta online"
+  "Control antropométrico",
+  "Reeducación alimentaria",
+  "Consulta online",
+
+  "Plan nutricional personalizado",
+  "Revisión de objetivos",
+  "Control de peso",
+  "Pérdida de grasa",
+  "Aumento de masa muscular",
+  "Nutrición deportiva",
+  "Nutrición clínica",
+  "Nutrición infantil",
+  "Nutrición adolescente",
+  "Nutrición para adultos",
+  "Nutrición para personas mayores",
+
+  "Educación nutricional",
+  "Hábitos alimentarios saludables",
+  "Planificación de menús",
+  "Ajuste de plan alimentario",
+  "Consulta de mantenimiento",
+  "Consulta de refuerzo motivacional",
+
+  "Control de composición corporal",
+  "Medición de pliegues cutáneos",
+  "Análisis de bioimpedancia",
+  "Seguimiento antropométrico avanzado",
+
+  "Nutrición para patologías digestivas",
+  "Nutrición para diabetes",
+  "Nutrición para colesterol",
+  "Nutrición para hipertensión",
+  "Nutrición para intolerancias alimentarias",
+  "Nutrición sin gluten",
+  "Nutrición vegetariana",
+  "Nutrición vegana",
+
+  "Nutrición en embarazo",
+  "Nutrición en lactancia",
+  "Nutrición para fertilidad",
+  "Nutrición postparto",
+
+  "Nutrición emocional",
+  "Gestión de ansiedad alimentaria",
+  "Trastornos de la conducta alimentaria",
+  "Mindful eating",
+
+  "Asesoramiento nutricional exprés",
+  "Consulta de segunda opinión",
+  "Consulta intensiva",
+  "Consulta presencial",
+  "Consulta mixta presencial y online",
+
+  "Valoración metabólica",
+  "Revisión de analíticas",
+  "Plan nutricional terapéutico",
+  "Consulta preventiva",
+  "Programa nutricional integral"
 ];
 
 const horasDisponibles = [
@@ -227,7 +275,7 @@ const generarCitas = (
 ) => {
   const {
     diasPasado = 45,
-    diasFuturo = 60,
+    diasFuturo = 180,
     minCitasDia = 2,
     maxCitasDia = 6,
     probDiaLibre = 0.25,
@@ -383,11 +431,9 @@ const seed = async () => {
 
     await PacienteUsuario.insertMany(pacienteUsuarioSeed);
 
-    const usuarioDemo = usuariosInsertados.find(
-      (usuarioDoc) => usuarioDoc.nombreUsuario?.toLowerCase?.() === "a"
-    );
+    const usuariosDemo = usuariosInsertados;
 
-    if (usuarioDemo && pacientesInsertados.length > 0) {
+    if (usuariosDemo.length > 0 && pacientesInsertados.length > 0) {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
@@ -397,55 +443,57 @@ const seed = async () => {
       fechaInicioDemo.setHours(0, 0, 0, 0);
       fechaFinDemo.setHours(23, 59, 59, 999);
 
-      await Cita.deleteMany({
-        idUsuario: usuarioDemo._id,
-        fechaCita: {
-          $gte: fechaInicioDemo,
-          $lte: fechaFinDemo
-        }
-      });
-
-      const citasDemo = [];
-      const totalPacientes = pacientesInsertados.length;
-      let contadorPacientesDemo = 0;
-
-      for (let offset = -diasDemo; offset <= diasDemo; offset += 1) {
-        const fecha = addDays(hoy, offset);
-        fecha.setHours(0, 0, 0, 0);
-
-        let citasDia = randomInt(2, 6);
-        const esDiaEspecial = Math.abs(offset) % 12 === 0 || seededRandom() < 0.25;
-        if (esDiaEspecial) {
-          const incremento = randomInt(3, 6);
-          citasDia = Math.min(Math.max(citasDia + incremento, 10), horasDisponibles.length);
-        }
-        const horasDelDia = shuffle(horasDisponibles).slice(0, citasDia).sort();
-
-        horasDelDia.forEach((hora) => {
-          const pacienteDemo =
-            pacientesInsertados[contadorPacientesDemo % totalPacientes];
-
-          citasDemo.push({
-            fechaCita: new Date(fecha),
-            hora,
-            tipoConsulta: randomElement(tiposConsulta),
-            notas: `Consulta demo con ${pacienteDemo.nombrePaciente} ${pacienteDemo.apellidos}.`,
-            atendida: offset < 0,
-            idUsuario: usuarioDemo._id,
-            idPaciente: pacienteDemo._id
-          });
-
-          contadorPacientesDemo += 1;
+      for (const usuarioDemo of usuariosDemo) {
+        await Cita.deleteMany({
+          idUsuario: usuarioDemo._id,
+          fechaCita: {
+            $gte: fechaInicioDemo,
+            $lte: fechaFinDemo
+          }
         });
-      }
 
-      await Cita.insertMany(citasDemo);
-      console.log(
-        `Se generaron ${citasDemo.length} citas demo para el usuario '${usuarioDemo.nombreUsuario}' cubriendo aproximadamente ${diasDemo * 2 + 1} dias.`
-      );
+        const citasDemo = [];
+        const totalPacientes = pacientesInsertados.length;
+        let contadorPacientesDemo = 0;
+
+        for (let offset = -diasDemo; offset <= diasDemo; offset += 1) {
+          const fecha = addDays(hoy, offset);
+          fecha.setHours(0, 0, 0, 0);
+
+          let citasDia = randomInt(2, 6);
+          const esDiaEspecial = Math.abs(offset) % 12 === 0 || seededRandom() < 0.25;
+          if (esDiaEspecial) {
+            const incremento = randomInt(3, 6);
+            citasDia = Math.min(Math.max(citasDia + incremento, 10), horasDisponibles.length);
+          }
+          const horasDelDia = shuffle(horasDisponibles).slice(0, citasDia).sort();
+
+          horasDelDia.forEach((hora) => {
+            const pacienteDemo =
+              pacientesInsertados[contadorPacientesDemo % totalPacientes];
+
+            citasDemo.push({
+              fechaCita: new Date(fecha),
+              hora,
+              tipoConsulta: randomElement(tiposConsulta),
+              notas: `Consulta demo con ${pacienteDemo.nombrePaciente} ${pacienteDemo.apellidos}.`,
+              atendida: offset < 0,
+              idUsuario: usuarioDemo._id,
+              idPaciente: pacienteDemo._id
+            });
+
+            contadorPacientesDemo += 1;
+          });
+        }
+
+        await Cita.insertMany(citasDemo);
+        console.log(
+          `Se generaron ${citasDemo.length} citas demo para el usuario '${usuarioDemo.nombreUsuario}' cubriendo aproximadamente ${diasDemo * 2 + 1} dias.`
+        );
+      }
     } else {
       console.warn(
-        "No se generaron citas demo porque falta el usuario 'a' o no hay pacientes disponibles."
+        "No se generaron citas demo porque faltan usuarios o no hay pacientes disponibles."
       );
     }
 

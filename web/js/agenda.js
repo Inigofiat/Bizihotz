@@ -54,6 +54,12 @@ const agendaState = {
 
   monthAnchor: null,
 
+  monthPickerYear: null,
+
+  monthPickerStartYear: null,
+
+  monthPickerMode: "years",
+
   professionalId: null,
 
   citas: [],
@@ -88,6 +94,10 @@ const agendaElements = {
 
   professionalSelect: null,
 
+  professionalBadge: null,
+
+  changeProfessionalBtn: null,
+
   todayBtn: null,
 
   prevBtn: null,
@@ -95,6 +105,30 @@ const agendaElements = {
   nextBtn: null,
 
   monthLabel: null,
+
+  monthInput: null,
+
+  monthPicker: null,
+
+  monthPickerTitle: null,
+
+  yearGrid: null,
+
+  monthGrid: null,
+
+  yearRangeLabel: null,
+
+  yearPrev: null,
+
+  yearNext: null,
+
+  closeMonthPickerBtn: null,
+
+  yearNav: null,
+
+  monthPickerFooter: null,
+
+  backToYearsBtn: null,
 
   searchInput: null,
 
@@ -580,6 +614,10 @@ const cacheAgendaElements = () => {
 
   agendaElements.professionalSelect = document.getElementById("professionalSelect");
 
+  agendaElements.professionalBadge = document.getElementById("professionalBadge");
+
+  agendaElements.changeProfessionalBtn = document.getElementById("changeProfessionalBtn");
+
   agendaElements.todayBtn = document.getElementById("todayBtn");
 
   agendaElements.prevBtn = document.getElementById("prevBtn");
@@ -587,6 +625,30 @@ const cacheAgendaElements = () => {
   agendaElements.nextBtn = document.getElementById("nextBtn");
 
   agendaElements.monthLabel = document.getElementById("monthLabel");
+
+  agendaElements.monthInput = document.getElementById("monthJump");
+
+  agendaElements.monthPicker = document.getElementById("monthPicker");
+
+  agendaElements.monthPickerTitle = document.getElementById("monthPickerTitle");
+
+  agendaElements.yearGrid = document.getElementById("yearGrid");
+
+  agendaElements.monthGrid = document.getElementById("monthGrid");
+
+  agendaElements.yearRangeLabel = document.getElementById("yearRangeLabel");
+
+  agendaElements.yearPrev = document.getElementById("yearPrev");
+
+  agendaElements.yearNext = document.getElementById("yearNext");
+
+  agendaElements.closeMonthPickerBtn = document.getElementById("closeMonthPicker");
+
+  agendaElements.yearNav = document.getElementById("yearNav");
+
+  agendaElements.monthPickerFooter = document.getElementById("monthPickerFooter");
+
+  agendaElements.backToYearsBtn = document.getElementById("backToYears");
 
   agendaElements.searchInput = document.getElementById("searchInput");
 
@@ -2761,6 +2823,40 @@ const poblarProfesionalesSelect = () => {
 
   agendaState.professionalId = select.value || null;
 
+  const selectedOption = select.options[select.selectedIndex] || null;
+
+  const selectedName = (selectedOption && selectedOption.textContent) || obtenerNombreProfesional(usuarioActual) || "Profesional";
+
+  const hasMultiple = select.options.length > 1;
+
+  if (agendaElements.professionalBadge) {
+
+    agendaElements.professionalBadge.textContent = selectedName || "Profesional";
+
+    agendaElements.professionalBadge.hidden = hasMultiple;
+
+  }
+
+  if (agendaElements.changeProfessionalBtn) {
+
+    agendaElements.changeProfessionalBtn.hidden = true;
+
+  }
+
+  if (hasMultiple) {
+
+    select.classList.remove("visually-hidden");
+
+    select.disabled = false;
+
+  } else {
+
+    select.classList.add("visually-hidden");
+
+    select.disabled = true;
+
+  }
+
 };
 
 
@@ -2984,6 +3080,147 @@ const handleSearchInput = (event) => {
 };
 
 
+const renderYearGrid = () => {
+  agendaState.monthPickerMode = "years";
+  if (agendaElements.monthPickerTitle) {
+    agendaElements.monthPickerTitle.textContent = "Elige un año";
+  }
+  if (agendaElements.monthPicker) {
+    agendaElements.monthPicker.classList.remove("month-picker--months");
+  }
+  if (agendaElements.yearNav) {
+    agendaElements.yearNav.hidden = false;
+  }
+  if (agendaElements.yearGrid) {
+    agendaElements.yearGrid.hidden = false;
+  }
+  if (agendaElements.monthPickerFooter) {
+    agendaElements.monthPickerFooter.hidden = true;
+  }
+  if (agendaElements.monthGrid) {
+    agendaElements.monthGrid.hidden = true;
+  }
+  if (!agendaElements.yearGrid) return;
+  const anchorYear = agendaState.monthAnchor ? agendaState.monthAnchor.getFullYear() : new Date().getFullYear();
+  if (!agendaState.monthPickerStartYear) {
+    agendaState.monthPickerStartYear = Math.max(1900, anchorYear - 5);
+  }
+  const startYear = agendaState.monthPickerStartYear;
+  const years = Array.from({ length: 12 }, (_, idx) => startYear + idx);
+  agendaElements.yearGrid.innerHTML = "";
+  years.forEach((year) => {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "month-picker__cell is-year";
+    if (year === anchorYear) {
+      cell.classList.add("is-selected");
+    }
+    cell.textContent = String(year);
+    cell.addEventListener("click", () => {
+      agendaState.monthPickerMode = "months";
+      agendaState.monthPickerYear = year;
+      if (agendaElements.monthPickerTitle) {
+        agendaElements.monthPickerTitle.textContent = `Meses de ${year}`;
+      }
+      if (agendaElements.monthPicker) {
+        agendaElements.monthPicker.classList.add("month-picker--months");
+      }
+      if (agendaElements.yearGrid) {
+        agendaElements.yearGrid.hidden = true;
+      }
+      if (agendaElements.yearNav) {
+        agendaElements.yearNav.hidden = true;
+      }
+      if (agendaElements.monthPickerFooter) {
+        agendaElements.monthPickerFooter.hidden = false;
+      }
+      renderMonthGrid(year);
+      if (agendaElements.monthGrid) {
+        agendaElements.monthGrid.hidden = false;
+      }
+    });
+    agendaElements.yearGrid.appendChild(cell);
+  });
+  if (agendaElements.yearRangeLabel) {
+    agendaElements.yearRangeLabel.textContent = `${years[0]} - ${years[years.length - 1]}`;
+  }
+  if (agendaElements.monthGrid) {
+    agendaElements.monthGrid.hidden = true;
+  }
+};
+
+const renderMonthGrid = (year) => {
+  if (!agendaElements.monthGrid) return;
+  const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const anchorMonth = agendaState.monthAnchor ? agendaState.monthAnchor.getMonth() : new Date().getMonth();
+  agendaState.monthPickerMode = "months";
+  if (agendaElements.yearNav) {
+    agendaElements.yearNav.hidden = true;
+  }
+  if (agendaElements.monthPickerFooter) {
+    agendaElements.monthPickerFooter.hidden = false;
+  }
+  agendaElements.monthGrid.innerHTML = "";
+  monthNames.forEach((name, idx) => {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "month-picker__cell";
+    if (agendaState.monthAnchor && agendaState.monthAnchor.getFullYear() === year && anchorMonth === idx) {
+      cell.classList.add("is-selected");
+    }
+    cell.textContent = name;
+    cell.addEventListener("click", () => {
+      const diasEnMes = new Date(year, idx + 1, 0).getDate();
+      const diaSeleccionado = Math.min(agendaState.selectedDate.getDate(), diasEnMes);
+      agendaState.monthAnchor = new Date(year, idx, 1);
+      agendaState.selectedDate = new Date(year, idx, diaSeleccionado);
+      renderCalendar();
+      cargarCitasMensuales(agendaState.panelOpen);
+      closeMonthPicker();
+      renderYearGrid();
+    });
+    agendaElements.monthGrid.appendChild(cell);
+  });
+};
+
+const openMonthPicker = () => {
+  if (!agendaElements.monthPicker) {
+    if (agendaElements.monthInput) {
+      agendaElements.monthInput.showPicker?.();
+    }
+    return;
+  }
+  const anchorYear = agendaState.monthAnchor ? agendaState.monthAnchor.getFullYear() : new Date().getFullYear();
+  agendaState.monthPickerYear = anchorYear;
+  agendaState.monthPickerStartYear = Math.max(1900, anchorYear - 5);
+  renderYearGrid();
+  agendaElements.monthPicker.hidden = false;
+};
+
+const closeMonthPicker = () => {
+  if (agendaElements.monthPicker) {
+    agendaElements.monthPicker.hidden = true;
+  }
+  agendaState.monthPickerYear = null;
+  agendaState.monthPickerMode = "years";
+  if (agendaElements.monthGrid) {
+    agendaElements.monthGrid.hidden = true;
+  }
+  if (agendaElements.yearNav) {
+    agendaElements.yearNav.hidden = false;
+  }
+  if (agendaElements.monthPickerFooter) {
+    agendaElements.monthPickerFooter.hidden = true;
+  }
+  if (agendaElements.yearGrid) {
+    agendaElements.yearGrid.hidden = false;
+  }
+  if (agendaElements.monthPicker) {
+    agendaElements.monthPicker.classList.remove("month-picker--months");
+  }
+};
+
+const handleMonthInputChange = () => {};
 
 const attachEventListeners = () => {
 
@@ -3013,6 +3250,73 @@ const attachEventListeners = () => {
 
 
 
+  if (agendaElements.monthLabel) {
+
+    agendaElements.monthLabel.addEventListener("click", openMonthPicker);
+
+  }
+
+
+
+  if (agendaElements.monthPicker) {
+
+    agendaElements.monthPicker.addEventListener("click", (event) => {
+
+      if (event.target === agendaElements.monthPicker) {
+
+        closeMonthPicker();
+
+      }
+
+    });
+
+  }
+
+
+
+  if (agendaElements.closeMonthPickerBtn) {
+
+    agendaElements.closeMonthPickerBtn.addEventListener("click", closeMonthPicker);
+
+  }
+
+
+
+  if (agendaElements.yearPrev) {
+
+    agendaElements.yearPrev.addEventListener("click", () => {
+
+      agendaState.monthPickerStartYear = Math.max(1900, (agendaState.monthPickerStartYear || new Date().getFullYear()) - 12);
+
+      renderYearGrid();
+
+    });
+
+  }
+
+
+
+  if (agendaElements.yearNext) {
+
+    agendaElements.yearNext.addEventListener("click", () => {
+
+      const base = agendaState.monthPickerStartYear || new Date().getFullYear();
+
+      agendaState.monthPickerStartYear = base + 12;
+
+      renderYearGrid();
+
+    });
+
+  }
+
+
+
+  if (agendaElements.backToYearsBtn) {
+
+    agendaElements.backToYearsBtn.addEventListener("click", renderYearGrid);
+
+  }
   if (agendaElements.nextBtn) {
 
     agendaElements.nextBtn.addEventListener("click", () => moverMes(1));
