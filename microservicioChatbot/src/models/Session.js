@@ -82,6 +82,6 @@ sessionSchema.methods.toPublicJSON = function toPublicJSON() {
 
 sessionSchema.statics.toPlainUnread = toPlainUnread;
 
-const Session = model('ChatbotSession', sessionSchema, 'chatbot_sessions');
+const Session = model('ChatbotSession', sessionSchema, 'sesiones');
 
 module.exports = Session;

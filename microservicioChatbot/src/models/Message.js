@@ -53,6 +53,6 @@ messageSchema.methods.toPublicJSON = function toPublicJSON() {
   };
 };
 
-const Message = model('ChatbotMessage', messageSchema, 'chatbot_messages');
+const Message = model('ChatbotMessage', messageSchema, 'mensajes');
 
 module.exports = Message;
