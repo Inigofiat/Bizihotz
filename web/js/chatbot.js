@@ -16,9 +16,10 @@
   })();
   const CHAT_LOGO = new URL("2.png", ASSETS_BASE).href;
 
-  const DEFAULT_ASSISTANT_GREETING =
-    "Hola, soy el asistente de nutricion clinica. Puedo ayudarte a interpretar IMC, ajustar calorias/macros y proponer recomendaciones con alertas. " +
-    "Dame los datos claves (edad, peso, altura, objetivo, patologias, sintomas, analitica, medicacion, alergias/intolerancias, preferencias) y te devolvere un plan estructurado.";
+const DEFAULT_ASSISTANT_GREETING =
+  "Hola, soy tu asistente de nutrición clínica. Puedo ayudarte a calcular el IMC, ajustar calorías y macronutrientes, y ofrecerte recomendaciones personalizadas basadas en tu situación. " +
+  "Si quieres, dime datos como edad, peso, altura, objetivo, patologías, síntomas, analítica, medicación, alergias o preferencias alimentarias, y te devolveré un plan estructurado y claro.";
+
 
   const DEFAULT_USER_NAME = "Tu";
   const BOT_NAME = "BizIA";
@@ -503,6 +504,49 @@
     historyModalCard.appendChild(historyModalList);
     historyModal.appendChild(historyModalCard);
 
+    const renameModal = document.createElement("div");
+    renameModal.className = "bh-chat-modal";
+    renameModal.hidden = true;
+    const renameCard = document.createElement("div");
+    renameCard.className = "bh-chat-modal__card";
+    const renameHeader = document.createElement("div");
+    renameHeader.className = "bh-chat-modal__header";
+    const renameTitle = document.createElement("p");
+    renameTitle.className = "bh-chat-modal__title";
+    renameTitle.textContent = "Renombrar sesión";
+    const renameClose = document.createElement("button");
+    renameClose.type = "button";
+    renameClose.className = "bh-chat-icon-btn bh-chat-modal__close";
+    renameClose.innerHTML = "&times;";
+    renameHeader.appendChild(renameTitle);
+    renameHeader.appendChild(renameClose);
+    const renameBody = document.createElement("div");
+    renameBody.className = "bh-chat-modal__body";
+    const renameLabel = document.createElement("label");
+    renameLabel.textContent = "Nuevo título";
+    const renameInput = document.createElement("input");
+    renameInput.type = "text";
+    renameInput.className = "bh-chat-input__field";
+    renameInput.placeholder = "Sesion chatbot";
+    renameBody.appendChild(renameLabel);
+    renameBody.appendChild(renameInput);
+    const renameActions = document.createElement("div");
+    renameActions.className = "bh-chat-modal__actions";
+    const renameCancel = document.createElement("button");
+    renameCancel.type = "button";
+    renameCancel.className = "bh-chat-btn bh-chat-btn--ghost";
+    renameCancel.textContent = "Cancelar";
+    const renameSave = document.createElement("button");
+    renameSave.type = "button";
+    renameSave.className = "bh-chat-btn bh-chat-btn--primary";
+    renameSave.textContent = "Guardar";
+    renameActions.appendChild(renameCancel);
+    renameActions.appendChild(renameSave);
+    renameCard.appendChild(renameHeader);
+    renameCard.appendChild(renameBody);
+    renameCard.appendChild(renameActions);
+    renameModal.appendChild(renameCard);
+
     const messagesList = document.createElement("div");
     messagesList.className = "bh-chat-messages";
 
@@ -543,6 +587,7 @@
     body.appendChild(threadbar);
     body.appendChild(mainLayout);
     body.appendChild(historyModal);
+    body.appendChild(renameModal);
 
     panel.appendChild(header);
     panel.appendChild(body);
@@ -567,7 +612,12 @@
       messagesList,
       textarea,
       sendBtn,
-      statusNode: status
+      statusNode: status,
+      renameModal,
+      renameInput,
+      renameSave,
+      renameCancel,
+      renameClose
     };
   };
 
@@ -749,24 +799,45 @@
       renderThreadSelect();
       renderHistory();
       if (state.activeId) {
+        setInputEnabled(true);
         renderMessages(state.activeId);
       } else {
         ui.messagesList.innerHTML = "";
+        setStatus("Crea o selecciona una sesion para empezar a chatear.");
+        setInputEnabled(false, "Crea o selecciona una sesion para empezar a chatear.");
       }
+    };
+
+    const closeRenameModal = () => {
+      ui.renameModal.hidden = true;
     };
 
     const promptRenameSession = async () => {
       if (!state.activeId) return;
       const current = state.sessions.find((s) => s.id === state.activeId);
       const baseTitle = current?.titulo || "Sesion chatbot";
-      const nuevoTitulo = window.prompt("Nuevo titulo de la sesion:", baseTitle);
-      const clean = sanitizeText(nuevoTitulo || "");
-      if (!clean || clean === baseTitle) return;
+      ui.renameInput.value = baseTitle;
+      ui.renameModal.hidden = false;
+      ui.renameInput.focus();
+    };
+
+    const submitRename = async () => {
+      if (!state.activeId) {
+        closeRenameModal();
+        return;
+      }
+      const nuevoTitulo = sanitizeText(ui.renameInput.value || "");
+      const current = state.sessions.find((s) => s.id === state.activeId);
+      const baseTitle = current?.titulo || "Sesion chatbot";
+      if (!nuevoTitulo || nuevoTitulo === baseTitle) {
+        closeRenameModal();
+        return;
+      }
       try {
         const res = await requestChatbot(`/sessions/${state.activeId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ solicitanteId: usuarioId, titulo: clean })
+          body: JSON.stringify({ solicitanteId: usuarioId, titulo: nuevoTitulo })
         });
         const data = res?.data;
         if (data?.id) {
@@ -777,6 +848,8 @@
         }
       } catch (error) {
         console.warn("No se pudo renombrar la sesion:", error);
+      } finally {
+        closeRenameModal();
       }
     };
 
@@ -793,6 +866,14 @@
       ui.statusNode.textContent = text;
     };
 
+    const setInputEnabled = (enabled, placeholder) => {
+      ui.textarea.disabled = !enabled;
+      ui.sendBtn.disabled = !enabled;
+      ui.textarea.placeholder =
+        placeholder || "Describe el caso (IMC, objetivo, sintomas, patologias)...";
+      ui.textarea.classList.toggle("bh-chat-input--disabled", !enabled);
+    };
+
     const fetchSessions = async () => {
       if (!usuarioId) return;
       try {
@@ -800,6 +881,8 @@
         const data = Array.isArray(res?.data) ? res.data : [];
         state.sessions = data;
         if (!state.sessions.length) {
+          setStatus("No hay sesiones. Creando una nueva...");
+          setInputEnabled(false, "Creando sesion...");
           await createSessionOnServer();
           return;
         }
@@ -846,6 +929,7 @@
     const createSessionOnServer = async () => {
       if (!usuarioId) return;
       try {
+        setInputEnabled(false, "Creando sesion...");
         const res = await requestChatbot("/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -860,11 +944,13 @@
           state.messages.set(session.id, []);
           await sendAssistantMessage(session.id, DEFAULT_ASSISTANT_GREETING);
           await fetchMessages(session.id);
+          setStatus("Sesion creada. Puedes empezar a chatear.");
         }
       } catch (error) {
         console.warn("No se pudo crear la sesion:", error);
         setStatus("No se pudo crear la sesion de chatbot.");
       } finally {
+        setInputEnabled(Boolean(state.activeId));
         refreshUI();
       }
     };
@@ -1010,6 +1096,9 @@
           await fetchMessages(state.activeId);
         } else {
           state.activeId = null;
+          setStatus("No hay sesiones. Creando una nueva...");
+          setInputEnabled(false, "Creando sesion...");
+          await createSessionOnServer();
         }
       } catch (error) {
         console.warn("No se pudo borrar la sesion:", error);
@@ -1036,6 +1125,20 @@
     ui.historyModalClose.addEventListener("click", closeHistoryModal);
     ui.historyModal.addEventListener("click", (event) => {
       if (event.target === ui.historyModal) closeHistoryModal();
+    });
+    ui.renameModal.addEventListener("click", (event) => {
+      if (event.target === ui.renameModal) closeRenameModal();
+    });
+    ui.renameClose.addEventListener("click", closeRenameModal);
+    ui.renameCancel.addEventListener("click", closeRenameModal);
+    ui.renameSave.addEventListener("click", submitRename);
+    ui.renameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitRename();
+      } else if (event.key === "Escape") {
+        closeRenameModal();
+      }
     });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeHistoryModal();

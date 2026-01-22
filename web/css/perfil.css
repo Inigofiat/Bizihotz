@@ -393,3 +393,49 @@ body {
 .page-close:hover {
   background-color: rgba(0, 0, 0, 0.16);
 }
+
+#perfilToastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+}
+
+.perfil-toast {
+  min-width: 240px;
+  max-width: 320px;
+  background: #ffffff;
+  border: 1px solid #e4c9d0;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #2f3e34;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.perfil-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.perfil-toast--success {
+  border-color: #5e7f65;
+  background: #f2fff5;
+}
+
+.perfil-toast--error {
+  border-color: #c0392b;
+  background: #fff3f3;
+  color: #7c1d1d;
+}
+
+.perfil-toast--info {
+  border-color: #6ba8c1;
+  background: #f3fbff;
+}

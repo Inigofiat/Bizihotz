@@ -153,7 +153,9 @@ router.put('/:id', async (req, res) => {
   try {
     // Verificar que la petición venga del Gateway en ambientes de producción.
     // Permitir accesos directos solo si la variable ALLOW_DIRECT está establecida a 'true' (desarrollo).
-    const allowDirect = String(process.env.ALLOW_DIRECT || '').toLowerCase() === 'true';
+    const allowDirect =
+      process.env.NODE_ENV !== 'production' ||
+      String(process.env.ALLOW_DIRECT || '').toLowerCase() === 'true';
     if (!allowDirect) {
       const forwarded = req.headers['x-forwarded-by'] || req.headers['x-forwarded-host'];
       if (forwarded !== 'bizihotz-gateway') {

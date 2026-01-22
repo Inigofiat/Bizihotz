@@ -34,6 +34,30 @@ const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const getAvatarFileName = (path = "") =>
   path ? path.replace(/\\/g, "/").split("/").pop() : "";
 const getStoredAvatarName = () => localStorage.getItem("perfil_avatar_nombre") || "";
+
+const ensureToastContainer = () => {
+  let container = document.getElementById("perfilToastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "perfilToastContainer";
+    document.body.appendChild(container);
+  }
+  return container;
+};
+
+const showToast = (message, type = "info", duration = 2800) => {
+  const container = ensureToastContainer();
+  const toast = document.createElement("div");
+  toast.className = `perfil-toast perfil-toast--${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("is-visible"));
+  window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  }, duration);
+};
+
 const logoutAndRedirect = async (mensaje) => {
   try {
     await fetch(`${API_URL}/auth/logout`, { method: "POST", headers: buildAuthHeaders() }).catch(
@@ -47,9 +71,11 @@ const logoutAndRedirect = async (mensaje) => {
   } finally {
     localStorage.removeItem("bizihotzUsuario");
     if (mensaje) {
-      alert(mensaje);
+      showToast(mensaje, "success", 2000);
     }
-    window.location.href = LOGIN_PAGE;
+    window.setTimeout(() => {
+      window.location.href = LOGIN_PAGE;
+    }, 600);
   }
 };
 const resolveTokenOrRedirect = () => {
@@ -203,7 +229,8 @@ function actualizarPerfilUI() {
 
   document.getElementById("inputNombre").value = nombre;
   document.getElementById("inputApellidos").value = apellidos;
-  document.getElementById("inputTelefono").value = telefono;
+  const telefonoLimpio = (telefono || "").replace(/\D/g, "").slice(0, 9);
+  document.getElementById("inputTelefono").value = telefonoLimpio;
   document.getElementById("inputEmail").value = email;
   document.getElementById("inputNombreUsuario").value = nombreUsuario;
   document.getElementById("inputRol").value = rol;
@@ -237,14 +264,21 @@ async function guardarPerfil(event) {
 
   const nombre = document.getElementById("inputNombre").value.trim();
   const apellidos = document.getElementById("inputApellidos").value.trim();
-  const telefono = document.getElementById("inputTelefono").value.trim();
+  const telefonoInput = document.getElementById("inputTelefono");
+  const telefono = (telefonoInput?.value || "").replace(/\D/g, "").slice(0, 9);
+  if (telefonoInput) telefonoInput.value = telefono;
   const email = document.getElementById("inputEmail").value.trim().toLowerCase();
   const nombreUsuario = document.getElementById("inputNombreUsuario").value.trim();
   // El rol no se edita desde el perfil: se conserva el actual del usuario.
   const rol = usuarioActual?.rol ?? "";
 
   if (!nombre || !apellidos) {
-    alert("Nombre y apellidos son obligatorios.");
+    showToast("Nombre y apellidos son obligatorios.", "error");
+    return;
+  }
+
+  if (telefono.length !== 9) {
+    showToast("El teléfono debe tener exactamente 9 dígitos.", "error");
     return;
   }
 
@@ -279,14 +313,14 @@ async function guardarPerfil(event) {
     }
   } catch (error) {
     console.error("Error subiendo avatar:", error);
-    alert(error.message || "No se pudo actualizar la foto de perfil.");
+      showToast(error.message || "No se pudo actualizar la foto de perfil.", "error");
     return;
   }
 
   actualizarPerfilUI();
 
   cerrarModal("modalEditar");
-  alert("Perfil actualizado correctamente.");
+  showToast("Perfil actualizado correctamente.", "success");
 }
 
 const subirAvatar = async (file) => {
@@ -738,7 +772,7 @@ if (applyCropButton) {
       }
     } catch (error) {
       console.error(error);
-      alert(error.message || "No se pudo aplicar el recorte.");
+      showToast(error.message || "No se pudo aplicar el recorte.", "error");
     }
   });
 }
@@ -746,7 +780,7 @@ if (applyCropButton) {
 if (removeAvatarButton) {
   removeAvatarButton.addEventListener("click", async () => {
     if (!usuarioActual) {
-      alert("Inicia sesion de nuevo para modificar tu foto de perfil.");
+      showToast("Inicia sesion de nuevo para modificar tu foto de perfil.", "error");
       return;
     }
 
@@ -798,9 +832,9 @@ if (removeAvatarButton) {
       setAvatarImage(avatarNode, DEFAULT_AVATAR_URL);
       actualizarNombreArchivoAvatar("");
       actualizarEstadoEliminarAvatar();
-      alert("Foto de perfil eliminada.");
+      showToast("Foto de perfil eliminada.", "success");
     } catch (error) {
-      alert(error.message || "No se pudo eliminar la foto de perfil.");
+      showToast(error.message || "No se pudo eliminar la foto de perfil.", "error");
     } finally {
       removeAvatarButton.disabled = false;
       removeAvatarButton.textContent = previousLabel || "Quitar foto";
@@ -853,6 +887,14 @@ const formCambiarContrasena = document.getElementById("formCambiarContrasena");
 if (formCambiarContrasena) {
   formCambiarContrasena.addEventListener("submit", (event) => {
     guardarContrasena(event);
+  });
+}
+
+const telefonoInput = document.getElementById("inputTelefono");
+if (telefonoInput) {
+  telefonoInput.addEventListener("input", () => {
+    const digits = telefonoInput.value.replace(/\D/g, "").slice(0, 9);
+    telefonoInput.value = digits;
   });
 }
 
