@@ -1,5 +1,6 @@
 const express = require('express');
 const Paciente = require('../models/pacienteModel');
+const PacienteUsuario = require('../models/pacienteUsuarioModelo');
 const Cita = require('../models/citaModel');
 const HistorialPaciente = require('../models/historialPacienteModel');
 const RegistroAntropometrico = require('../models/registroAntropometricoModel');
@@ -84,7 +85,50 @@ const buildSortCriteria = (value) => {
 router.get('/', async (req, res) => {
   try {
     const { buscar, page, limit, sort, estado } = req.query;
+    const pageNumber = parsePositiveInt(page, null);
+    const pageSize = parsePositiveInt(limit, null);
     const filtro = {};
+
+    const scopeRaw = typeof req.query.scope === 'string' ? req.query.scope.trim().toLowerCase() : '';
+    const asignadoA = req.query.asignadoA || req.query.idUsuarioAsignado || req.query.idUsuario;
+    const shouldFilterByAssignments = scopeRaw === 'mine' || scopeRaw === 'mios' || Boolean(asignadoA);
+
+    if (shouldFilterByAssignments) {
+      const usuarioObjetivo = asignadoA || req.user?.idUsuario || req.user?.id;
+
+      if (!usuarioObjetivo) {
+        const emptyPayload = pageNumber || pageSize
+          ? {
+              items: [],
+              total: 0,
+              page: pageNumber || 1,
+              pageSize: pageSize || 20,
+              pages: 1
+            }
+          : [];
+        return res.json(emptyPayload);
+      }
+
+      ensureValidObjectId(usuarioObjetivo, 'usuario');
+
+      const relaciones = await PacienteUsuario.find({ idUsuario: usuarioObjetivo }).select('idPaciente');
+      const pacientesAsignadosIds = relaciones.map((rel) => rel.idPaciente).filter(Boolean);
+
+      if (!pacientesAsignadosIds.length) {
+        const emptyPayload = pageNumber || pageSize
+          ? {
+              items: [],
+              total: 0,
+              page: pageNumber || 1,
+              pageSize: pageSize || 20,
+              pages: 1
+            }
+          : [];
+        return res.json(emptyPayload);
+      }
+
+      filtro._id = { $in: pacientesAsignadosIds };
+    }
 
     // Por defecto incluimos pacientes en standby/baja; solo se excluyen si el cliente lo pide.
     const includeInactive = (Object.prototype.hasOwnProperty.call(req.query, 'incluirBaja')
@@ -166,8 +210,6 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const pageNumber = parsePositiveInt(page, null);
-    const pageSize = parsePositiveInt(limit, null);
     const criteria = buildSortCriteria(sort);
 
     if (pageNumber || pageSize) {

@@ -20,6 +20,16 @@
     <main class="content">
       <section class="filters card">
         <form id="filtersForm" class="filters-form" autocomplete="off">
+          <div class="view-toggle" id="scopeToggle" role="group" aria-label="Filtro por pacientes">
+            <button type="button" class="view-toggle__btn" data-scope="mine" aria-pressed="false">
+              <span class="view-toggle__label">Mis pacientes</span>
+              <span class="view-toggle__count" id="countMine"></span>
+            </button>
+            <button type="button" class="view-toggle__btn" data-scope="all" aria-pressed="false">
+              <span class="view-toggle__label">Todos</span>
+              <span class="view-toggle__count" id="countAll"></span>
+            </button>
+          </div>
           <label class="field search">
             <span>Búsqueda</span>
             <input type="search" id="buscarPacientes" placeholder="Nombre, apellidos, email o teléfono" />

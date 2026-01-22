@@ -96,6 +96,70 @@ body {
   gap: 12px;
 }
 
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #e8f5ed, #f4fff8);
+  border: 1px solid #c8e0cf;
+  align-self: flex-start;
+}
+
+.view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #234936;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.view-toggle__btn:hover {
+  border-color: #12814c;
+  background: #eaf7ef;
+}
+
+.view-toggle__btn.is-active {
+  background: #12814c;
+  color: #ffffff;
+  border-color: #0f6f41;
+  box-shadow: 0 10px 20px rgba(18, 129, 76, 0.18);
+}
+
+.view-toggle__btn.is-active:hover {
+  background: #0f6f41;
+}
+
+.view-toggle__label {
+  line-height: 1.2;
+}
+
+.view-toggle__count {
+  min-width: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background-color: rgba(18, 129, 76, 0.12);
+  color: #0f6f41;
+  font-weight: 700;
+  text-align: center;
+}
+
+.view-toggle__btn.is-active .view-toggle__count {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -242,6 +306,11 @@ tbody tr:last-child td {
 
   .ghost-link {
     font-size: 13px;
+  }
+
+  .view-toggle {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   th,

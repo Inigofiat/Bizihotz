@@ -39,7 +39,12 @@ const state = {
   pages: 1,
   search: "",
   loading: false,
-  debounceId: null
+  debounceId: null,
+  scope: "all",
+  counts: {
+    all: null,
+    mine: null
+  }
 };
 
 const elements = {
@@ -50,7 +55,9 @@ const elements = {
   next: null,
   pagerInfo: null,
   status: null,
-  back: null
+  back: null,
+  scopeToggle: null,
+  scopeButtons: []
 };
 
 let usuarioActual = null;
@@ -160,6 +167,27 @@ const calculateAge = (fechaNac) => {
   return `${edad} años`;
 };
 
+const resolveDefaultScope = () => "mine";
+
+const updateScopeButtons = () => {
+  if (!Array.isArray(elements.scopeButtons)) {
+    return;
+  }
+
+  elements.scopeButtons.forEach((button) => {
+    const scopeValue = button.dataset.scope || "";
+    const isActive = scopeValue === state.scope;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+
+    const countNode = button.querySelector(".view-toggle__count");
+    if (countNode) {
+      const totalValue = state.counts?.[scopeValue];
+      countNode.textContent = Number.isFinite(totalValue) ? String(totalValue) : "";
+    }
+  });
+};
+
 const setStatus = (message) => {
   if (elements.status) {
     elements.status.textContent = message || "";
@@ -181,7 +209,9 @@ const renderPatients = (items) => {
   if (!body) return;
 
   if (!Array.isArray(items) || items.length === 0) {
-    const emptyText = body.dataset.empty || "No se encontraron pacientes.";
+    const emptyFallback =
+      state.scope === "mine" ? "No tienes pacientes asignados." : "No se encontraron pacientes.";
+    const emptyText = body.dataset.empty || emptyFallback;
     body.innerHTML = `<tr><td colspan="5" class="empty">${emptyText}</td></tr>`;
     return;
   }
@@ -240,6 +270,7 @@ const fetchPatients = async () => {
     limit: String(state.pageSize),
     sort: "nombrePaciente:asc"
   });
+  params.set("scope", state.scope === "all" ? "all" : "mine");
   if (state.search) {
     params.set("buscar", state.search);
   }
@@ -261,6 +292,11 @@ const fetchPatients = async () => {
       state.pages = 1;
     }
 
+    if (state.counts && state.scope) {
+      state.counts[state.scope] = state.total;
+    }
+    updateScopeButtons();
+
     const normalize = (value = "") =>
       String(value || "")
         .toLocaleLowerCase("es-ES")
@@ -275,10 +311,11 @@ const fetchPatients = async () => {
 
     renderPatients(items);
     renderPager();
+    const scopeLabel = state.scope === "mine" ? "mis pacientes" : "todos los pacientes";
     const summary =
       state.total === 0
-        ? "No se encontraron pacientes."
-        : `${state.total} paciente${state.total === 1 ? "" : "s"} encontrados.`;
+        ? `No se encontraron pacientes en ${scopeLabel}.`
+        : `${state.total} paciente${state.total === 1 ? "" : "s"} en ${scopeLabel}.`;
     setStatus(summary);
   } catch (error) {
     console.error("No se pudieron cargar los pacientes:", error);
@@ -301,6 +338,21 @@ const handleSearchInput = (event) => {
   }, 350);
 };
 
+const handleScopeClick = (event) => {
+  const button = event.target.closest("[data-scope]");
+  if (!button || !elements.scopeToggle?.contains(button)) {
+    return;
+  }
+  const nextScope = button.dataset.scope;
+  if (!nextScope || nextScope === state.scope) {
+    return;
+  }
+  state.scope = nextScope;
+  state.page = 1;
+  updateScopeButtons();
+  fetchPatients();
+};
+
 const handlePrevPage = () => {
   if (state.page <= 1) return;
   state.page -= 1;
@@ -311,6 +363,33 @@ const handleNextPage = () => {
   if (state.page >= state.pages) return;
   state.page += 1;
   fetchPatients();
+};
+
+const fetchScopeTotal = async (scopeValue) => {
+  const params = new URLSearchParams({
+    page: "1",
+    limit: "1",
+    sort: "nombrePaciente:asc",
+    scope: scopeValue === "all" ? "all" : "mine"
+  });
+
+  try {
+    const response = await requestJson(`/pacientes?${params.toString()}`);
+    if (response && typeof response.total === "number") {
+      state.counts[scopeValue] = response.total;
+    } else if (Array.isArray(response)) {
+      state.counts[scopeValue] = response.length;
+    }
+    updateScopeButtons();
+  } catch (error) {
+    console.warn(`No se pudo obtener el total para scope=${scopeValue}:`, error);
+  }
+};
+
+const prefetchCounts = () => {
+  // Siempre queremos mostrar los totales iniciales en ambos botones.
+  fetchScopeTotal("all");
+  fetchScopeTotal("mine");
 };
 
 const handleBack = (event) => {
@@ -336,12 +415,21 @@ const init = () => {
   elements.pagerInfo = document.getElementById("pagerInfo");
   elements.status = document.getElementById("listStatus");
   elements.back = document.getElementById("volverPanel");
+  elements.scopeToggle = document.getElementById("scopeToggle");
+  elements.scopeButtons = elements.scopeToggle
+    ? Array.from(elements.scopeToggle.querySelectorAll("[data-scope]"))
+    : [];
+
+  state.scope = resolveDefaultScope();
+  updateScopeButtons();
 
   elements.search?.addEventListener("input", handleSearchInput);
+  elements.scopeToggle?.addEventListener("click", handleScopeClick);
   elements.prev?.addEventListener("click", handlePrevPage);
   elements.next?.addEventListener("click", handleNextPage);
   elements.back?.addEventListener("click", handleBack);
 
+  prefetchCounts();
   fetchPatients();
 };
 
