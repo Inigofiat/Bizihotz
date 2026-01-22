@@ -34,6 +34,24 @@ const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const getAvatarFileName = (path = "") =>
   path ? path.replace(/\\/g, "/").split("/").pop() : "";
 const getStoredAvatarName = () => localStorage.getItem("perfil_avatar_nombre") || "";
+const logoutAndRedirect = async (mensaje) => {
+  try {
+    await fetch(`${API_URL}/auth/logout`, { method: "POST", headers: buildAuthHeaders() }).catch(
+      async () => {
+        if (!API_FALLBACK) return undefined;
+        return fetch(`${API_FALLBACK}/auth/logout`, { method: "POST", headers: buildAuthHeaders() });
+      }
+    );
+  } catch (error) {
+    console.warn("No se pudo notificar logout al servidor:", error);
+  } finally {
+    localStorage.removeItem("bizihotzUsuario");
+    if (mensaje) {
+      alert(mensaje);
+    }
+    window.location.href = LOGIN_PAGE;
+  }
+};
 const resolveTokenOrRedirect = () => {
   const stored = getStoredUser();
   const token =
@@ -189,6 +207,8 @@ function actualizarPerfilUI() {
   document.getElementById("inputEmail").value = email;
   document.getElementById("inputNombreUsuario").value = nombreUsuario;
   document.getElementById("inputRol").value = rol;
+  document.getElementById("inputRol").setAttribute("disabled", "true");
+  document.getElementById("inputRol").setAttribute("aria-disabled", "true");
   const avatarImageNode = document.getElementById("avatarImage");
   const fotoActual = usuarioActual?.foto ?? "";
   const avatarSrc = avatarPreviewTemporal ?? buildAvatarSrc(fotoActual);
@@ -220,7 +240,8 @@ async function guardarPerfil(event) {
   const telefono = document.getElementById("inputTelefono").value.trim();
   const email = document.getElementById("inputEmail").value.trim().toLowerCase();
   const nombreUsuario = document.getElementById("inputNombreUsuario").value.trim();
-  const rol = document.getElementById("inputRol").value.trim();
+  // El rol no se edita desde el perfil: se conserva el actual del usuario.
+  const rol = usuarioActual?.rol ?? "";
 
   if (!nombre || !apellidos) {
     alert("Nombre y apellidos son obligatorios.");
@@ -234,13 +255,13 @@ async function guardarPerfil(event) {
       telefono,
       email,
       nombreUsuario,
-      rol
+      // rol no se envía, el backend ignora cambios de rol
     });
     const usuarioDesdeServidor = perfilActualizado?.usuario;
     if (usuarioDesdeServidor) {
       actualizarUsuarioLocal(usuarioDesdeServidor);
     } else {
-      actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario, rol });
+      actualizarUsuarioLocal({ nombre, apellidos, telefono, email, nombreUsuario });
     }
 
     if (avatarArchivoPendiente) {
@@ -417,13 +438,9 @@ async function guardarContrasena(event) {
       ultimoCambioPassword: new Date().toISOString()
     });
 
-    feedback.textContent = "Contraseña actualizada correctamente.";
+    feedback.textContent = "Contraseña actualizada correctamente. Cerrando sesión...";
     feedback.classList.add("success");
-
-    setTimeout(() => {
-      cerrarModal("modalContrasena");
-      alert("Contraseña actualizada correctamente.");
-    }, 700);
+    await logoutAndRedirect("Contraseña actualizada. Vuelve a iniciar sesión.");
   } catch (error) {
     console.warn("Error actualizando contraseña:", error);
     feedback.textContent = error.message || "No se pudo cambiar la contraseña.";

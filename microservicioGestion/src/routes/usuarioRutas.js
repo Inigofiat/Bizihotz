@@ -130,7 +130,8 @@ router.put("/:id", async (req, res, next) => {
       return res.status(403).json({ mensaje: "No puedes modificar otro usuario." });
     }
 
-    const { nombre, apellidos, telefono, email, nombreUsuario, rol } = req.body ?? {};
+    // El rol no se puede modificar desde la edicion de perfil.
+    const { nombre, apellidos, telefono, email, nombreUsuario } = req.body ?? {};
 
     const usuario = await Usuario.findById(id);
     if (!usuario) {
@@ -148,7 +149,6 @@ router.put("/:id", async (req, res, next) => {
     applyIfPresent("telefono", telefono);
     applyIfPresent("email", email, (val) => val.toLowerCase().trim());
     applyIfPresent("nombreUsuario", nombreUsuario);
-    applyIfPresent("rol", rol);
 
     await usuario.save();
 

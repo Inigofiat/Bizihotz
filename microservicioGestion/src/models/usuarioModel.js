@@ -9,7 +9,7 @@ const usuarioSchema = new mongoose.Schema(
     apellidos: { type: String, default: "", trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     telefono: { type: String, default: "", trim: true },
-    rol: { type: String, required: true, default: "profesional", trim: true },
+    rol: { type: String, required: true, default: "Nutricionista", trim: true },
     foto: { type: String, default: "" },
     passwordHash: { type: String, required: true },
     activo: { type: Boolean, default: true },

@@ -3,7 +3,7 @@
     "nombreUsuario": "a",
     "email": "a",
     "telefono": "987654321",
-    "rol": "nutricionista",
+    "rol": "Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -11,7 +11,7 @@
     "nombreUsuario": "Iñigo Fiat",
     "email": "inigofiat@bizihotz.com",
     "telefono": "123456789",
-    "rol": "nutricionista",
+    "rol": "Dietista Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$Ur9qb.sqzoXn3.9g4d.i7uc17w5o3SYYt/mTZ81JszS3x7l.Gztj."
   },
@@ -19,7 +19,7 @@
     "nombreUsuario": "Marta García",
     "email": "marta.garcia@bizihotz.com",
     "telefono": "600100001",
-    "rol": "nutricionista",
+    "rol": "Nutricionista Clínico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -27,7 +27,7 @@
     "nombreUsuario": "Iker Laso",
     "email": "iker.laso@bizihotz.com",
     "telefono": "600100002",
-    "rol": "nutricionista",
+    "rol": "Nutricionista Deportivo",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -35,7 +35,7 @@
     "nombreUsuario": "June Salazar",
     "email": "june.salazar@bizihotz.com",
     "telefono": "600100003",
-    "rol": "nutricionista",
+    "rol": "Nutricionista Pediátrico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -43,7 +43,7 @@
     "nombreUsuario": "Laura Uribe",
     "email": "laura.uribe@bizihotz.com",
     "telefono": "600100004",
-    "rol": "medico",
+    "rol": "Nutricionista Geriátrico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -51,7 +51,7 @@
     "nombreUsuario": "Ander Olaizola",
     "email": "ander.olaizola@bizihotz.com",
     "telefono": "600100005",
-    "rol": "nutricionista",
+    "rol": "Psicólogo Especialista en Conducta Alimentaria",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -59,7 +59,7 @@
     "nombreUsuario": "Nahikari Goenaga",
     "email": "nahikari.goenaga@bizihotz.com",
     "telefono": "600100006",
-    "rol": "psicologa",
+    "rol": "Entrenador Personal",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -67,7 +67,7 @@
     "nombreUsuario": "Jon Ander Etxeberria",
     "email": "jonander.etxeberria@bizihotz.com",
     "telefono": "600100007",
-    "rol": "nutricionista",
+    "rol": "Fisioterapeuta",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -75,7 +75,7 @@
     "nombreUsuario": "Maialen Sanz",
     "email": "maialen.sanz@bizihotz.com",
     "telefono": "600100008",
-    "rol": "fisioterapeuta",
+    "rol": "Médico Especialista en Nutrición",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -83,7 +83,7 @@
     "nombreUsuario": "Gorka Garitano",
     "email": "gorka.garitano@bizihotz.com",
     "telefono": "600100009",
-    "rol": "nutricionista",
+    "rol": "Endocrinólogo",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -91,7 +91,7 @@
     "nombreUsuario": "Amaia Legarra",
     "email": "amaia.legarra@bizihotz.com",
     "telefono": "600100010",
-    "rol": "coach deportivo",
+    "rol": "Coach de Hábitos Saludables",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -99,7 +99,7 @@
     "nombreUsuario": "Iñigo Gaztañaga",
     "email": "inigo.gaztanaga@bizihotz.com",
     "telefono": "600100011",
-    "rol": "nutricionista",
+    "rol": "Educador en Salud y Nutrición",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -107,7 +107,7 @@
     "nombreUsuario": "Nerea Azurmendi",
     "email": "nerea.azurmendi@bizihotz.com",
     "telefono": "600100012",
-    "rol": "nutricionista",
+    "rol": "Técnico en Dietética",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -115,7 +115,7 @@
     "nombreUsuario": "Unai Aranburu",
     "email": "unai.aranburu@bizihotz.com",
     "telefono": "600100013",
-    "rol": "nutricionista",
+    "rol": "Especialista en Trastornos de la Conducta Alimentaria",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -123,7 +123,7 @@
     "nombreUsuario": "Itsaso Mendizabal",
     "email": "itsaso.mendizabal@bizihotz.com",
     "telefono": "600100014",
-    "rol": "psicologa",
+    "rol": "Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -131,7 +131,7 @@
     "nombreUsuario": "Asier Olaberria",
     "email": "asier.olaberria@bizihotz.com",
     "telefono": "600100015",
-    "rol": "nutricionista",
+    "rol": "Dietista Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -139,7 +139,7 @@
     "nombreUsuario": "Irati Larrea",
     "email": "irati.larrea@bizihotz.com",
     "telefono": "600100016",
-    "rol": "medico",
+    "rol": "Nutricionista Clínico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -147,7 +147,7 @@
     "nombreUsuario": "Oier Lizarralde",
     "email": "oier.lizarralde@bizihotz.com",
     "telefono": "600100017",
-    "rol": "nutricionista",
+    "rol": "Nutricionista Deportivo",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -155,7 +155,7 @@
     "nombreUsuario": "Leire Altuna",
     "email": "leire.altuna@bizihotz.com",
     "telefono": "600100018",
-    "rol": "nutricionista",
+    "rol": "Nutricionista Pediátrico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -163,7 +163,7 @@
     "nombreUsuario": "Xabier Elosegi",
     "email": "xabier.elosegi@bizihotz.com",
     "telefono": "600100019",
-    "rol": "psicologo",
+    "rol": "Nutricionista Geriátrico",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -171,7 +171,7 @@
     "nombreUsuario": "Ane Arizmendi",
     "email": "ane.arizmendi@bizihotz.com",
     "telefono": "600100020",
-    "rol": "nutricionista",
+    "rol": "Psicólogo Especialista en Conducta Alimentaria",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -179,7 +179,7 @@
     "nombreUsuario": "Markel Ugarte",
     "email": "markel.ugarte@bizihotz.com",
     "telefono": "600100021",
-    "rol": "nutricionista",
+    "rol": "Entrenador Personal",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -187,7 +187,7 @@
     "nombreUsuario": "Naroa Urrutia",
     "email": "naroa.urrutia@bizihotz.com",
     "telefono": "600100022",
-    "rol": "coach deportivo",
+    "rol": "Fisioterapeuta",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -195,7 +195,7 @@
     "nombreUsuario": "Gaizka Loyola",
     "email": "gaizka.loyola@bizihotz.com",
     "telefono": "600100023",
-    "rol": "nutricionista",
+    "rol": "Médico Especialista en Nutrición",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -203,7 +203,7 @@
     "nombreUsuario": "Uxue Balerdi",
     "email": "uxue.balerdi@bizihotz.com",
     "telefono": "600100024",
-    "rol": "nutricionista",
+    "rol": "Endocrinólogo",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -211,7 +211,7 @@
     "nombreUsuario": "Endika Aristegui",
     "email": "endika.aristegui@bizihotz.com",
     "telefono": "600100025",
-    "rol": "medico",
+    "rol": "Coach de Hábitos Saludables",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -219,7 +219,7 @@
     "nombreUsuario": "Amaia Irizar",
     "email": "amaia.irizar@bizihotz.com",
     "telefono": "600100026",
-    "rol": "nutricionista",
+    "rol": "Educador en Salud y Nutrición",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -227,7 +227,7 @@
     "nombreUsuario": "Ibai Arrieta",
     "email": "ibai.arrieta@bizihotz.com",
     "telefono": "600100027",
-    "rol": "nutricionista",
+    "rol": "Técnico en Dietética",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -235,7 +235,7 @@
     "nombreUsuario": "Garazi Beristain",
     "email": "garazi.beristain@bizihotz.com",
     "telefono": "600100028",
-    "rol": "nutricionista",
+    "rol": "Especialista en Trastornos de la Conducta Alimentaria",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -243,7 +243,7 @@
     "nombreUsuario": "Mikel Etxegarai",
     "email": "mikel.etxegarai@bizihotz.com",
     "telefono": "600100029",
-    "rol": "psicologo",
+    "rol": "Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
@@ -251,7 +251,7 @@
     "nombreUsuario": "Nahia Bengoetxea",
     "email": "nahia.bengoetxea@bizihotz.com",
     "telefono": "600100030",
-    "rol": "nutricionista",
+    "rol": "Dietista Nutricionista",
     "foto": "",
     "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   }

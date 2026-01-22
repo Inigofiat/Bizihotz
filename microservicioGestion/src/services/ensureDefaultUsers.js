@@ -47,7 +47,7 @@ const buildUsuarioDocs = (seedUsuarios, passwordHash) => {
       apellidos,
       email,
       telefono: profesional.telefono ?? "",
-      rol: profesional.rol ?? "profesional",
+      rol: profesional.rol ?? "Nutricionista",
       foto: profesional.foto ?? "",
       passwordHash: profesional.passwordHash ?? passwordHash,
       activo: profesional.activo ?? true,

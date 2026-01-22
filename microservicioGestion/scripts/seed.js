@@ -366,7 +366,7 @@ const seed = async () => {
         apellidos,
         email,
         telefono: profesional.telefono ?? "",
-        rol: profesional.rol ?? "profesional",
+        rol: profesional.rol ?? "Nutricionista",
         foto: profesional.foto ?? "",
         passwordHash: bcrypt.hashSync("Bizihotz2025!", 12),
         activo: profesional.activo ?? true,
