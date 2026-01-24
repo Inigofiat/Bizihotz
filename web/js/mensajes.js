@@ -33,6 +33,8 @@
   const CONTACTS_STORAGE_KEY = "bizihotzContactos";
   const PROFESSIONALS_MIN_CHARS = 2;
   const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
+  const MAX_ATTACHMENTS = 5;
+  const MAX_ATTACHMENT_SIZE = 12 * 1024 * 1024;
 
   const dedupeCandidates = (items) => {
     const seen = new Set();
@@ -147,6 +149,8 @@
   let confirmResolver = null;
   const CONVERSATION_TARGET_KEY = "bizihotzConversationTarget";
   let pendingConversationId = null;
+  let pendingAttachments = [];
+  let isSendingMessage = false;
 
   const refs = {
     socketStatus: document.getElementById("socketStatus"),
@@ -165,6 +169,10 @@
     messageList: document.getElementById("messageList"),
     composerForm: document.getElementById("composerForm"),
     messageInput: document.getElementById("messageInput"),
+    attachmentInput: document.getElementById("attachmentInput"),
+    attachmentList: document.getElementById("attachmentList"),
+    openAttachmentPicker: document.getElementById("openAttachmentPicker"),
+    sendMessageButton: document.getElementById("sendMessageButton"),
     newChatModal: document.getElementById("newChatModal"),
     openNewChat: document.getElementById("openNewChat"),
     closeNewChat: document.getElementById("closeNewChat"),
@@ -413,7 +421,8 @@
           messageId: lastRaw.idMensaje || lastRaw.messageId,
           content: lastRaw.contenido || lastRaw.content,
           sentAt: lastRaw.enviadoEn || lastRaw.sentAt,
-          senderId: lastRaw.remitenteId || lastRaw.senderId
+          senderId: lastRaw.remitenteId || lastRaw.senderId,
+          attachments: lastRaw.adjuntos || lastRaw.attachments || []
         }
       : raw.lastMessage || null;
     return {
@@ -676,6 +685,138 @@
     const normalizedBase = base.replace(/\/$/, "");
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${normalizedBase}${normalizedPath}`;
+  };
+
+  const resolveAttachmentUrl = (path) => {
+    if (!path) {
+      return null;
+    }
+    if (/^(https?:|data:|blob:)/i.test(path)) {
+      return path;
+    }
+    const base = (resolvedApiBase || API_BASES[0] || "").replace(/\/api$/, "");
+    const normalizedBase = base.replace(/\/$/, "");
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
+  };
+
+  const formatBytes = (bytes = 0) => {
+    if (!bytes || Number.isNaN(bytes)) {
+      return "";
+    }
+    const units = ["B", "KB", "MB", "GB"];
+    const exponent = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    const value = bytes / 1024 ** exponent;
+    const decimals = value >= 10 || exponent === 0 ? 0 : 1;
+    return `${value.toFixed(decimals)} ${units[exponent]}`;
+  };
+
+  const renderAttachmentList = () => {
+    if (!refs.attachmentList) {
+      return;
+    }
+    refs.attachmentList.innerHTML = "";
+    if (!pendingAttachments.length) {
+      refs.attachmentList.hidden = true;
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    pendingAttachments.forEach((file, index) => {
+      const chip = document.createElement("div");
+      chip.className = "attachment-chip";
+
+      const icon = document.createElement("span");
+      icon.className = "attachment-chip__icon";
+      icon.textContent = (file.type || "").startsWith("image/") ? "IMG" : "FILE";
+
+      const info = document.createElement("div");
+      info.className = "attachment-chip__info";
+      const name = document.createElement("p");
+      name.className = "attachment-chip__name";
+      name.textContent = file.name || "Adjunto";
+      const size = document.createElement("p");
+      size.className = "attachment-chip__size";
+      size.textContent = formatBytes(file.size);
+      info.appendChild(name);
+      info.appendChild(size);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "attachment-chip__remove";
+      removeBtn.setAttribute("aria-label", `Eliminar ${file.name || "adjunto"}`);
+      removeBtn.textContent = "x";
+      removeBtn.addEventListener("click", () => removeAttachmentAt(index));
+
+      chip.appendChild(icon);
+      chip.appendChild(info);
+      chip.appendChild(removeBtn);
+      fragment.appendChild(chip);
+    });
+
+    refs.attachmentList.appendChild(fragment);
+    refs.attachmentList.hidden = false;
+  };
+
+  const clearPendingAttachments = () => {
+    pendingAttachments = [];
+    renderAttachmentList();
+  };
+
+  const removeAttachmentAt = (index) => {
+    if (index < 0 || index >= pendingAttachments.length) {
+      return;
+    }
+    pendingAttachments.splice(index, 1);
+    renderAttachmentList();
+  };
+
+  const handleAttachmentInputChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) {
+      return;
+    }
+    let warned = false;
+    files.forEach((file) => {
+      if (pendingAttachments.length >= MAX_ATTACHMENTS) {
+        if (!warned) {
+          showChatFeedback(`Máximo ${MAX_ATTACHMENTS} adjuntos por mensaje.`, "error");
+          warned = true;
+        }
+        return;
+      }
+      if (file.size > MAX_ATTACHMENT_SIZE) {
+        showChatFeedback(
+          `El archivo ${file.name || ""} supera ${formatBytes(MAX_ATTACHMENT_SIZE)}.`,
+          "error"
+        );
+        warned = true;
+        return;
+      }
+      pendingAttachments.push(file);
+    });
+    renderAttachmentList();
+    if (refs.attachmentInput) {
+      refs.attachmentInput.value = "";
+    }
+  };
+
+  const requestAttachmentPicker = () => {
+    refs.attachmentInput?.click();
+  };
+
+  const setComposerDisabled = (disabled) => {
+    if (refs.messageInput) {
+      refs.messageInput.disabled = disabled;
+    }
+    if (refs.sendMessageButton) {
+      refs.sendMessageButton.disabled = disabled;
+    }
+    if (refs.openAttachmentPicker) {
+      refs.openAttachmentPicker.disabled = disabled;
+    }
+    if (refs.attachmentInput) {
+      refs.attachmentInput.disabled = disabled;
+    }
   };
 
   const highlightProfessionalCard = (id) => {
@@ -959,7 +1100,12 @@
       const title = document.createElement("h3");
       title.textContent = displayName;
       const preview = document.createElement("p");
-      preview.textContent = conversation.lastMessage?.content || "Sin mensajes";
+      const lastMessage = conversation.lastMessage || {};
+      const attachmentCount = lastMessage.attachments?.length || 0;
+      const previewText =
+        (lastMessage.content || "").trim() ||
+        (attachmentCount ? `${attachmentCount} adjunto${attachmentCount > 1 ? "s" : ""}` : "Sin mensajes");
+      preview.textContent = previewText;
       body.appendChild(title);
       body.appendChild(preview);
 
@@ -1002,6 +1148,63 @@
     }
 
     const fragment = document.createDocumentFragment();
+    const createAttachmentNode = (attachment) => {
+      if (!attachment) {
+        return null;
+      }
+      const url = resolveAttachmentUrl(attachment.url);
+      const type = (attachment.tipo || attachment.type || "").toLowerCase();
+      const name = attachment.nombre || attachment.name || "Adjunto";
+      const sizeLabel = formatBytes(attachment.tamano || attachment.size);
+      if (type === "image" && url) {
+        const link = document.createElement("a");
+        link.className = "message__attachment message__attachment--image";
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        const img = document.createElement("img");
+        img.className = "message__attachment-thumb";
+        img.src = url;
+        img.alt = name;
+        link.appendChild(img);
+        if (name) {
+          const caption = document.createElement("p");
+          caption.className = "message__attachment-title";
+          caption.textContent = name;
+          link.appendChild(caption);
+        }
+        return link;
+      }
+
+      const wrapper = document.createElement(url ? "a" : "div");
+      wrapper.className = "message__attachment";
+      if (url) {
+        wrapper.href = url;
+        wrapper.target = "_blank";
+        wrapper.rel = "noopener noreferrer";
+      }
+      const icon = document.createElement("span");
+      icon.className = "message__attachment-icon";
+      icon.textContent = type === "image" ? "IMG" : "FILE";
+
+      const body = document.createElement("div");
+      body.className = "message__attachment-body";
+      const title = document.createElement("p");
+      title.className = "message__attachment-title";
+      title.textContent = name;
+      const size = document.createElement("p");
+      size.className = "message__attachment-size";
+      size.textContent = sizeLabel || "";
+      body.appendChild(title);
+      if (size.textContent) {
+        body.appendChild(size);
+      }
+
+      wrapper.appendChild(icon);
+      wrapper.appendChild(body);
+      return wrapper;
+    };
+
     messages.forEach((message) => {
       const messageItem = document.createElement("li");
       const incoming = message.senderId !== currentUserId;
@@ -1009,9 +1212,28 @@
       messageItem.dataset.messageId = message.id;
       messageItem.dataset.senderId = message.senderId;
 
-      const content = document.createElement("p");
-      content.className = "message__content";
-      content.textContent = message.content || "";
+      const attachments = Array.isArray(message.attachments) ? message.attachments : [];
+      const textContent = (message.content || "").trim();
+      if (textContent || attachments.length === 0) {
+        const content = document.createElement("p");
+        content.className = "message__content";
+        content.textContent = textContent;
+        messageItem.appendChild(content);
+      }
+
+      if (attachments.length) {
+        const attachmentsContainer = document.createElement("div");
+        attachmentsContainer.className = "message__attachments";
+        attachments.forEach((attachment) => {
+          const node = createAttachmentNode(attachment);
+          if (node) {
+            attachmentsContainer.appendChild(node);
+          }
+        });
+        if (attachmentsContainer.childElementCount) {
+          messageItem.appendChild(attachmentsContainer);
+        }
+      }
 
       const meta = document.createElement("div");
       meta.className = "message__meta";
@@ -1044,7 +1266,6 @@
         meta.appendChild(sendingTag);
       }
 
-      messageItem.appendChild(content);
       messageItem.appendChild(meta);
       if (!incoming) {
         const actions = document.createElement("div");
@@ -1284,6 +1505,7 @@
     hideChatFeedback();
     updateConversationActionsState();
     showConversationWorkspace();
+    clearPendingAttachments();
 
     conversations = conversations.map((conversation) => {
       if (conversation.id === conversationId) {
@@ -1366,7 +1588,31 @@
     }
   };
 
-  const sendMessage = async (content) => {
+  const clearComposer = () => {
+    if (refs.messageInput) {
+      refs.messageInput.value = "";
+    }
+    clearPendingAttachments();
+  };
+
+  const uploadPendingAttachments = async () => {
+    if (!pendingAttachments.length) {
+      return [];
+    }
+    const formData = new FormData();
+    pendingAttachments.forEach((file) => formData.append("files", file, file.name));
+    const response = await buildFallbackFetch("/uploads/attachments", {
+      method: "POST",
+      body: formData
+    });
+    const payload = response?.data || response?.attachments || response;
+    if (!Array.isArray(payload)) {
+      throw new Error("No se pudieron subir los adjuntos.");
+    }
+    return payload;
+  };
+
+  const sendMessage = async (content, attachments = []) => {
     const conversation = conversations.find((item) => item.id === activeConversationId);
     if (!conversation) {
       return;
@@ -1382,12 +1628,14 @@
     const senderAvatarSource = currentUser?.foto || contacts[currentUserId]?.avatarSource || null;
     const recipientAvatarSource =
       conversation?.metadata?.avatars?.[recipientId] || contacts[recipientId]?.avatarSource || null;
+    const normalizedAttachments = Array.isArray(attachments) ? attachments : [];
+    const trimmedContent = (content || "").trim();
 
     const payload = {
       remitenteId: currentUserId,
       destinatarioId: recipientId,
       conversacionId: conversation.id,
-      contenido: content,
+      adjuntos: normalizedAttachments,
       metadatos: {
         participants: {
           [currentUserId]: senderAlias,
@@ -1400,6 +1648,9 @@
         clientRequestId
       },
     };
+    if (trimmedContent) {
+      payload.contenido = trimmedContent;
+    }
 
     const optimisticMessage = {
       id: clientRequestId,
@@ -1407,7 +1658,8 @@
       conversationId: conversation.id,
       senderId: currentUserId,
       recipientId,
-      content,
+      content: trimmedContent,
+      attachments: normalizedAttachments,
       status: "sending",
       sentAt: new Date().toISOString(),
       metadata: { clientRequestId }
@@ -1430,6 +1682,36 @@
     } catch (error) {
       removeOptimisticMessage(conversation.id, clientRequestId);
       showChatFeedback(error.message || "No se pudo enviar el mensaje.", "error");
+    }
+  };
+
+  const handleComposerSubmit = async (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+    if (isSendingMessage) {
+      return;
+    }
+    const content = (refs.messageInput?.value || "").trim();
+    const hasAttachments = pendingAttachments.length > 0;
+    if (!content && !hasAttachments) {
+      return;
+    }
+    isSendingMessage = true;
+    setComposerDisabled(true);
+    try {
+      let uploaded = [];
+      if (hasAttachments) {
+        showChatFeedback("Subiendo adjuntos...", "info", 2200);
+        uploaded = await uploadPendingAttachments();
+      }
+      await sendMessage(content, uploaded);
+      clearComposer();
+    } catch (error) {
+      showChatFeedback(error.message || "No se pudo enviar el mensaje.", "error");
+    } finally {
+      isSendingMessage = false;
+      setComposerDisabled(false);
     }
   };
 
@@ -1616,57 +1898,61 @@
   };
 
   const handleIncomingMessage = (message) => {
-    if (!message || !message.conversationId) {
+    const normalized = normalizeMessage(message);
+    if (!normalized || !normalized.conversationId) {
       return;
     }
-
-    const existingConversation = conversations.find((conversation) => conversation.id === message.conversationId);
+    const existingConversation = conversations.find(
+      (conversation) => conversation.id === normalized.conversationId
+    );
     if (!existingConversation) {
       fetchConversations();
     } else {
-      existingConversation.lastMessage = message;
-      existingConversation.updatedAt = message.sentAt;
-      if (message.senderId !== currentUserId) {
+      existingConversation.lastMessage = normalized;
+      existingConversation.updatedAt = normalized.sentAt;
+      if (normalized.senderId !== currentUserId) {
         const currentUnread = existingConversation.unreadCounts?.[currentUserId] || 0;
         existingConversation.unreadCounts[currentUserId] = currentUnread + 1;
-        if (activeConversationId === message.conversationId) {
+        if (activeConversationId === normalized.conversationId) {
           existingConversation.unreadCounts[currentUserId] = 0;
         }
       }
     }
 
-    const cache = messagesCache.get(message.conversationId) || [];
-    if (message.metadata?.clientRequestId) {
-      const optimisticIndex = cache.findIndex((item) => item.clientRequestId === message.metadata.clientRequestId);
+    const cache = messagesCache.get(normalized.conversationId) || [];
+    if (normalized.metadata?.clientRequestId) {
+      const optimisticIndex = cache.findIndex(
+        (item) => item.clientRequestId === normalized.metadata.clientRequestId
+      );
       if (optimisticIndex !== -1) {
         cache.splice(optimisticIndex, 1);
       }
     }
-    const existingIndex = cache.findIndex((item) => item.id === message.id);
+    const existingIndex = cache.findIndex((item) => item.id === normalized.id);
     if (existingIndex === -1) {
-      cache.push(message);
+      cache.push(normalized);
     } else {
-      cache[existingIndex] = message;
+      cache[existingIndex] = normalized;
     }
-    messagesCache.set(message.conversationId, cache);
-      if (message.senderId !== currentUserId) {
-        const alias = existingConversation
-          ? resolveDisplayName(message.senderId, existingConversation)
-          : contacts[message.senderId]?.alias;
-        if (alias) {
-          const avatarHint =
-            message.metadata?.avatars?.[message.senderId] ||
-            existingConversation?.metadata?.avatars?.[message.senderId] ||
-            contacts[message.senderId]?.avatarSource ||
-            null;
-          rememberContact(message.senderId, alias, avatarHint);
-        }
+    messagesCache.set(normalized.conversationId, cache);
+    if (normalized.senderId !== currentUserId) {
+      const alias = existingConversation
+        ? resolveDisplayName(normalized.senderId, existingConversation)
+        : contacts[normalized.senderId]?.alias;
+      if (alias) {
+        const avatarHint =
+          normalized.metadata?.avatars?.[normalized.senderId] ||
+          existingConversation?.metadata?.avatars?.[normalized.senderId] ||
+          contacts[normalized.senderId]?.avatarSource ||
+          null;
+        rememberContact(normalized.senderId, alias, avatarHint);
       }
+    }
 
-    if (activeConversationId === message.conversationId) {
+    if (activeConversationId === normalized.conversationId) {
       renderMessages(activeConversationId);
-      if (message.senderId !== currentUserId) {
-        markConversationAsRead(message.conversationId);
+      if (normalized.senderId !== currentUserId) {
+        markConversationAsRead(normalized.conversationId);
       }
     }
 
@@ -1788,15 +2074,7 @@ const attemptReconnect = (delay = 5000) => {
       renderConversationList(event.target.value);
     });
 
-    refs.composerForm?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const content = refs.messageInput.value.trim();
-      if (!content) {
-        return;
-      }
-      refs.messageInput.value = "";
-      await sendMessage(content);
-    });
+    refs.composerForm?.addEventListener("submit", handleComposerSubmit);
     refs.messageInput?.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
         if (event.isComposing) {
@@ -1810,6 +2088,8 @@ const attemptReconnect = (delay = 5000) => {
         }
       }
     });
+    refs.openAttachmentPicker?.addEventListener("click", requestAttachmentPicker);
+    refs.attachmentInput?.addEventListener("change", handleAttachmentInputChange);
 
     refs.openNewChat?.addEventListener("click", () => {
       refs.newChatForm?.reset();

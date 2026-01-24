@@ -44,6 +44,15 @@ const conversationSchema = new Schema(
       contenido: String,
       enviadoEn: Date,
       remitenteId: String,
+      adjuntos: [
+        {
+          tipo: String,
+          url: String,
+          nombre: String,
+          tamano: Number,
+          metadatos: Schema.Types.Mixed,
+        },
+      ],
     },
     noLeidos: {
       type: Map,

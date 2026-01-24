@@ -7,6 +7,7 @@ const createError = require('http-errors');
 const config = require('./config/env');
 const messageRoutes = require('./routes/messageRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -30,8 +31,10 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
+app.use('/uploads', express.static(config.uploadsDir));
 
 app.use('/health', healthRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/conversations', conversationRoutes);
 

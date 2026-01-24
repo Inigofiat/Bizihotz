@@ -31,6 +31,7 @@ const syncConversationLastMessage = async (conversacionId) => {
     contenido: latest.contenido,
     enviadoEn: latest.enviadoEn,
     remitenteId: latest.remitenteId,
+    adjuntos: latest.adjuntos || [],
   };
 
   await Conversation.updateOne(

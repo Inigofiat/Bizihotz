@@ -123,6 +123,7 @@ const applyMessageEffect = async (conversation, message) => {
     contenido: message.contenido,
     enviadoEn: message.enviadoEn,
     remitenteId: message.remitenteId,
+    adjuntos: message.adjuntos,
   };
 
   conversation.noLeidos ??= new Map();

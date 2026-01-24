@@ -28,6 +28,10 @@ const config = {
   socketAllowedOrigins: parseArray(process.env.SOCKET_ALLOWED_ORIGINS, ['*']),
   defaultPageSize: parseNumber(process.env.DEFAULT_PAGE_SIZE, 25),
   maxPageSize: parseNumber(process.env.MAX_PAGE_SIZE, 100),
+  uploadsDir: process.env.UPLOADS_DIR
+    ? path.resolve(process.env.UPLOADS_DIR)
+    : path.join(process.cwd(), 'uploads'),
+  maxAttachmentSize: parseNumber(process.env.MAX_ATTACHMENT_SIZE_MB, 15) * 1024 * 1024,
 };
 
 module.exports = config;
