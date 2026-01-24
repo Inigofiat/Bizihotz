@@ -7,8 +7,8 @@ require("dotenv").config({
   path: path.resolve(__dirname, "..", ".env")
 });
 
-const { connectDB } = require("../config/db");
-const Cita = require("../data/citaModel");
+const { connectDB } = require("../src/config/db");
+const Cita = require("../src/models/citaModel");
 
 const weekendCodes = [1, 7]; // Mongo $dayOfWeek: 1 = domingo, 7 = sabado
 const TIMEZONE = process.env.BIZIHOTZ_TZ || process.env.TZ || "Europe/Madrid";

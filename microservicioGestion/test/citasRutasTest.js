@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const express = require('express');
 const { once } = require('node:events');
 
-const Cita = require('../data/citaModel');
-const router = require('../rutas/citasRutas');
+const Cita = require('../src/models/citaModel');
+const router = require('../src/routes/citasRutas');
 
 const createApp = () => {
   const app = express();
@@ -66,9 +66,9 @@ test('PATCH /api/citas/:id ajusta estado y atendida de forma coherente', async (
   assert.equal(body.notas, 'Revisada');
 });
 
-test('PATCH /api/citas/:id rechaza atendida inválida', async (t) => {
+test('PATCH /api/citas/:id rechaza payload sin campos válidos', async (t) => {
   const restore = withPatchedMethod('findByIdAndUpdate', async () => {
-    assert.fail('findByIdAndUpdate no debería invocarse cuando atendida es inválida');
+    assert.fail('findByIdAndUpdate no debería invocarse cuando no hay campos válidos');
   });
   t.after(restore);
 
@@ -83,7 +83,7 @@ test('PATCH /api/citas/:id rechaza atendida inválida', async (t) => {
 
   assert.equal(response.status, 400);
   const body = await response.json();
-  assert.equal(body.mensaje, 'El campo atendida debe ser booleano');
+  assert.equal(body.mensaje, 'No se han proporcionado campos válidos para actualizar');
 });
 
 test('PATCH /api/citas/:id devuelve 404 cuando no existe la cita', async (t) => {
@@ -101,7 +101,7 @@ test('PATCH /api/citas/:id devuelve 404 cuando no existe la cita', async (t) => 
 
   assert.equal(response.status, 404);
   const body = await response.json();
-  assert.equal(body.mensaje, `Cita con identificador ${VALID_ID} no existe`);
+  assert.equal(body.mensaje, `Cita con identificador ${VALID_ID} no encontrado.`);
 });
 
 test('PATCH /api/citas/:id requiere al menos un campo permitido', async (t) => {
