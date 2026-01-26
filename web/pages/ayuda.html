@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centro de ayuda - Bizihotz</title>
+  <link rel="stylesheet" href="../css/ayuda.css" />
+</head>
+
+<body>
+  <main class="help-shell">
+    <section class="help-hero">
+      <a class="help-home" href="principal.html" aria-label="Volver a la página principal">
+        <div class="help-hero__icon">
+          <img src="../images/2.png" alt="Bizihotz" width="46" height="46" />
+        </div>
+      </a>
+      <div>
+        <h1>Centro de ayuda</h1>
+        <p id="statsArticles">Cargando artículos...</p>
+      </div>
+    </section>
+
+    <section class="help-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m16 16 4 4" />
+      </svg>
+      <input id="helpSearch" type="search" placeholder="Busca por tema: agenda, mensajes, planes, videollamada..." />
+    </section>
+
+    <section id="searchResults" class="help-grid" hidden></section>
+
+    <section id="categoryGrid" class="help-grid"></section>
+  </main>
+
+  <script src="../js/ayuda.js"></script>
+</body>
+
+</html>

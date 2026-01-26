@@ -1,0 +1,274 @@
+{
+  "updatedAt": "2026-01-24T17:30:00Z",
+  "categories": [
+    {
+      "id": "primeros-pasos",
+      "title": "Empieza por aquí",
+      "description": "Lo mínimo para empezar a trabajar.",
+      "icon": "book",
+      "articles": [
+        {
+          "id": "primer-login",
+          "title": "¿Qué hago tras mi primer inicio de sesión?",
+          "summary": "Checklist inicial en 3 minutos.",
+          "steps": [
+            "Revisa tu perfil y completa tus datos de contacto.",
+            "Configura la agenda básica: horarios y ubicaciones.",
+            "Crea un paciente de prueba y envíale un mensaje para verificar notificaciones."
+          ],
+          "tags": ["onboarding", "perfil"]
+        },
+        {
+          "id": "ver-citas-hoy",
+          "title": "¿Cómo veo mis citas de hoy?",
+          "summary": "Consulta rápida desde el panel.",
+          "steps": [
+            "En la página principal verás la tabla de citas.",
+            "Si no hay citas, aparecerá el mensaje “No hay citas disponibles”.",
+            "Para más detalle entra en Agenda."
+          ],
+          "tags": ["agenda", "panel"]
+        }
+      ]
+    },
+    {
+      "id": "agenda",
+      "title": "Agenda y citas",
+      "description": "Programar, mover y cancelar citas.",
+      "icon": "calendar",
+      "articles": [
+        {
+          "id": "nueva-cita",
+          "title": "¿Cómo marcar una nueva cita?",
+          "summary": "Crear y confirmar una cita en Agenda.",
+          "steps": [
+            "Abre Agenda y pulsa + Nueva cita.",
+            "Elige paciente y profesional; asigna fecha, hora y ubicación.",
+            "Guarda y verifica que aparezca en el calendario."
+          ],
+          "tags": ["agenda", "citas"]
+        },
+        {
+          "id": "editar-estado-cita",
+          "title": "¿Cómo actualizar el estado o notas de una cita?",
+          "summary": "Marca como atendida, pendiente o cancelada y añade notas.",
+          "steps": [
+            "En Agenda, haz clic en la cita que quieres editar.",
+            "En el modal, elige el estado (Pendiente/Atendida/Cancelada).",
+            "Añade o ajusta las notas si es necesario.",
+            "Guarda y verifica que el estado cambió en la agenda."
+          ],
+          "tags": ["agenda", "citas", "cancelar"]
+        }
+      ]
+    },
+    {
+      "id": "mensajes",
+      "title": "Mensajes y archivos",
+      "description": "Comunicaciones internas con adjuntos.",
+      "icon": "chat",
+      "articles": [
+        {
+          "id": "enviar-mensaje",
+          "title": "¿Cómo envío un mensaje interno?",
+          "summary": "Desde la pantalla de Mensajes.",
+          "steps": [
+            "Entra en Mensajes y pulsa + Nuevo chat o elige un contacto.",
+            "Escribe tu mensaje; añade asunto si lo necesitas.",
+            "Adjunta archivos opcionales (hasta 5, máx. 12 MB c/u).",
+            "Pulsa Enviar; verás el mensaje y los adjuntos en la conversación."
+          ],
+          "tags": ["mensajes", "adjuntos"]
+        },
+        {
+          "id": "buscar-conversacion",
+          "title": "¿Cómo busco una conversación?",
+          "summary": "Filtra por nombre desde la lista.",
+          "steps": [
+            "Usa el buscador sobre la lista de conversaciones.",
+            "Escribe el nombre del contacto; la lista se filtra al momento.",
+            "Selecciona la conversación para ver los mensajes."
+          ],
+          "tags": ["mensajes", "buscador"]
+        },
+        {
+          "id": "renombrar-eliminar-conversacion",
+          "title": "¿Cómo renombrar o eliminar una conversación?",
+          "summary": "Organiza tus chats.",
+          "steps": [
+            "Abre la conversación en Mensajes.",
+            "Pulsa Renombrar para cambiar el nombre visible.",
+            "Pulsa Eliminar para borrar la conversación y confirma.",
+            "Ten en cuenta que al eliminarla se quitan los mensajes para ambos."
+          ],
+          "tags": ["mensajes", "gestion"]
+        },
+        {
+          "id": "adjuntar-archivos",
+          "title": "¿Qué tipos de archivos puedo adjuntar?",
+          "summary": "Comparte imágenes o documentos.",
+          "steps": [
+            "En el campo de mensaje, pulsa el icono de clip y selecciona archivos.",
+            "Se aceptan imágenes (PNG/JPG) y documentos comunes (PDF, DOCX, XLSX) hasta 12 MB cada uno.",
+            "Envía: las imágenes se muestran como miniatura y los documentos como enlace de descarga."
+          ],
+          "tags": ["adjuntos", "formatos"]
+        },
+        {
+          "id": "mensaje-no-envia",
+          "title": "¿Por qué no se envía mi mensaje?",
+          "summary": "Checklist rápida.",
+          "steps": [
+            "Escribe texto o añade un archivo: no se envían mensajes vacíos.",
+            "Comprueba que arriba indique “Conectado”; si no, revisa tu conexión y recarga.",
+            "Borra espacios en blanco al final y vuelve a pulsar Enviar.",
+            "Si sigue sin salir, cierra sesión y reintenta; si persiste, informa al soporte con la hora del intento."
+          ],
+          "tags": ["errores", "mensajes"]
+        }
+      ]
+    },
+    {
+      "id": "pacientes",
+      "title": "Pacientes e historial",
+      "description": "Altas y consulta de historial clínico.",
+      "icon": "folder",
+      "articles": [
+        {
+          "id": "registrar-paciente",
+          "title": "¿Cómo registrar un paciente?",
+          "summary": "Alta rápida con datos básicos.",
+          "steps": [
+            "Ve a Nuevo paciente desde el menú principal.",
+            "Completa nombre y contacto; añade datos clínicos si los tienes.",
+            "Guarda para crear la ficha y poder agendar o enviar mensajes."
+          ],
+          "tags": ["pacientes", "alta"]
+        },
+        {
+          "id": "ver-historial",
+          "title": "¿Cómo consultar el historial clínico?",
+          "summary": "Revisa registros y antecedentes.",
+          "steps": [
+            "Entra en Historial clínico desde el menú principal.",
+            "Selecciona el paciente para ver sus registros y notas.",
+            "Usa los filtros disponibles según la vista."
+          ],
+          "tags": ["historial", "registros"]
+        }
+      ]
+    },
+    {
+      "id": "documentos",
+      "title": "Documentos",
+      "description": "Subir, ver y descargar archivos.",
+      "icon": "doc",
+      "articles": [
+        {
+          "id": "subir-documento",
+          "title": "¿Cómo subir un documento?",
+          "summary": "Añade PDFs o imágenes a la ficha.",
+          "steps": [
+            "Abre Documentos y pulsa + Subir.",
+            "Elige el archivo (PDF/imagen) y asigna título y categoría.",
+            "Guarda; el documento queda disponible para consulta."
+          ],
+          "tags": ["documentos", "subida"]
+        },
+        {
+          "id": "ver-documento",
+          "title": "No puedo ver un documento, ¿qué reviso?",
+          "summary": "Pasos si la vista previa falla.",
+          "steps": [
+            "Comprueba que el archivo se subió correctamente y su extensión es soportada.",
+            "Ábrelo en ventana nueva; si no carga, vuelve a subirlo.",
+            "Si sigue fallando, descárgalo y verifica que no esté corrupto."
+          ],
+          "tags": ["documentos", "errores"]
+        },
+        {
+          "id": "descargar-documento",
+          "title": "¿Cómo descargar un documento?",
+          "summary": "Guarda una copia local.",
+          "steps": [
+            "En Documentos, localiza el archivo deseado.",
+            "Haz clic para abrirlo.",
+            "Usa la opción Descargar o el botón de guardado del visor."
+          ],
+          "tags": ["documentos", "descarga"]
+        }
+      ]
+    },
+    {
+      "id": "dietas",
+      "title": "Dietas y nutrición",
+      "description": "Planes, alimentos y ajustes.",
+      "icon": "plate",
+      "articles": [
+        {
+          "id": "nuevo-alimento",
+          "title": "¿Cómo añado un nuevo alimento?",
+          "summary": "Crear un alimento personalizado.",
+          "steps": [
+            "Ve a la sección Dietas y abre Alimentos.",
+            "Pulsa + Añadir, completa nombre, porción y macronutrientes.",
+            "Guarda; el alimento queda disponible para planes y equivalentes."
+          ],
+          "tags": ["dietas", "alimentos"]
+        },
+        {
+          "id": "editar-plan",
+          "title": "¿Cómo editar un plan de alimentación?",
+          "summary": "Cambiar raciones y equivalentes.",
+          "steps": [
+            "Abre el plan del paciente y selecciona la comida a editar.",
+            "Modifica porciones o sustituye por equivalentes.",
+            "Guarda cambios y reenvía el plan si aplica."
+          ],
+          "tags": ["dietas", "planes"]
+        }
+      ]
+    },
+    {
+      "id": "perfil",
+      "title": "Perfil y cuenta",
+      "description": "Datos personales y acceso.",
+      "icon": "user",
+      "articles": [
+        {
+          "id": "cambiar-foto",
+          "title": "¿Cómo cambiar mi foto de perfil?",
+          "summary": "Actualiza tu avatar.",
+          "steps": [
+            "Abre tu Perfil desde la barra superior.",
+            "Selecciona una foto JPG/PNG y recorta si es necesario.",
+            "Guarda y recarga para ver el cambio."
+          ],
+          "tags": ["perfil", "avatar"]
+        },
+        {
+          "id": "cambiar-contrasena",
+          "title": "¿Cómo cambiar mi contraseña?",
+          "summary": "Actualiza tu clave de acceso.",
+          "steps": [
+            "En Perfil, pulsa Cambiar contraseña.",
+            "Introduce tu contraseña actual y la nueva (mínimo 8 caracteres).",
+            "Confirma la nueva contraseña y guarda."
+          ],
+          "tags": ["perfil", "seguridad"]
+        },
+        {
+          "id": "cerrar-sesion",
+          "title": "¿Cómo cerrar sesión?",
+          "summary": "Salir de tu cuenta de forma segura.",
+          "steps": [
+            "Pulsa el icono de salida en la barra superior.",
+            "Confirma cuando se te pregunte.",
+            "Vuelve a iniciar sesión cuando lo necesites."
+          ],
+          "tags": ["perfil", "seguridad"]
+        }
+      ]
+    }
+  ]
+}

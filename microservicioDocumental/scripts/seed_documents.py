@@ -24,6 +24,15 @@ from app.models.document import Documento
 
 SEED_DOCUMENTS = [
     {
+        "titulo": "Manual básico de Nutrición Clínica y Dietética",
+        "descripcion": "Manual del GEFP-SEFH (Valencia, 2012) sobre nutrición clínica y dietética.",
+        "fuente": "SEFH",
+        "tipo": "PDF",
+        "etiquetas": ["nutricion-clinica", "dietetica", "manual"],
+        "url_descarga": "https://gruposdetrabajo.sefh.es/gefp/images/stories/documentos/4-ATENCION-FARMACEUTICA/Nutricion/Manual_basico_N_clinica_y_Dietetica_Valencia_2012.pdf",
+        "external_id": "sefh-manual-nutricion-clinica-2012",
+    },
+    {
         "titulo": "Recomendaciones dietéticas",
         "descripcion": "Guía de la Agencia Española de Seguridad Alimentaria y Nutrición (AESAN).",
         "fuente": "AESAN",
@@ -40,6 +49,24 @@ SEED_DOCUMENTS = [
         "etiquetas": ["alimentacion", "divulgacion", "pediatria"],
         "url_descarga": "https://www.seghnp.org/sites/default/files/2017-06/conceptos-alimentacion.pdf",
         "external_id": "seghnp-conceptos",
+    },
+    {
+        "titulo": "Recomendaciones dietéticas para la población española (curso)",
+        "descripcion": "Capítulo 1 de un curso de nutrición clínica y dietética.",
+        "fuente": "Campus Panamericana",
+        "tipo": "PDF",
+        "etiquetas": ["nutricion", "dietetica", "curso", "capitulo"],
+        "url_descarga": "https://aula.campuspanamericana.com/_Cursos/Curso00577/Temario/Cap1.pdf",
+        "external_id": "campus-panamericana-cap1-curso00577",
+    },
+    {
+        "titulo": "Libro Blanco de la Nutrición en España (2013)",
+        "descripcion": "Publicación de la Sociedad Española de Nutrición (SEN) sobre la situación nutricional en España.",
+        "fuente": "SEN",
+        "tipo": "PDF",
+        "etiquetas": ["nutricion", "libro-blanco", "espana"],
+        "url_descarga": "https://www.sennutricion.org/media/Docs_Consenso/Libro_Blanco_Nutricion_Esp-2013.pdf",
+        "external_id": "sen-libro-blanco-nutricion-2013",
     },
     {
     "titulo": "Capítulo 1. Conceptos básicos",
