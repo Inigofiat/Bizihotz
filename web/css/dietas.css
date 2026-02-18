@@ -370,10 +370,55 @@ main.layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .meal-detail__macros .pill {
   justify-content: flex-start;
+}
+
+.meal-detail__recipes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.meal-detail__recipes label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.meal-detail__recipes .recipe-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.meal-detail__recipes select {
+  min-width: 240px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: #f4fbf6;
+  color: var(--color-primary-dark);
+  padding: 0 12px;
+  font-weight: 600;
+}
+
+.meal-detail__recipes select:focus {
+  outline: 2px solid var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.meal-detail__recipes .btn {
+  height: 44px;
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  font-weight: 600;
 }
 
 .meal-detail__items {
@@ -1901,18 +1946,22 @@ main.layout {
 .macro-chips {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin-top: 4px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .macro-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px 14px;
   border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: linear-gradient(145deg, #f5fbf7 0%, #e8f6ed 100%);
+  border: 1px solid rgba(19, 126, 80, 0.16);
+  box-shadow: 0 8px 18px rgba(18, 129, 76, 0.14);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .macro-chip .dot {
@@ -1931,6 +1980,12 @@ main.layout {
 .macro-chip.protein .dot { background: var(--macro-protein); }
 .macro-chip.fiber { background: var(--macro-fiber-bg); color: var(--macro-fiber); }
 .macro-chip.fiber .dot { background: var(--macro-fiber); }
+
+.macro-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(18, 129, 76, 0.18);
+  background: linear-gradient(145deg, #eef9f3 0%, #dff2e7 100%);
+}
 
 .analysis-card {
   border: 1px solid var(--color-border);

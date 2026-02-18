@@ -653,18 +653,10 @@ def exportar_dieta(
     formato: str = Query(default="pdf", enum=["pdf", "csv"]),
     session: Session = Depends(get_session),
 ):
-    dieta = _obtener_dieta(session, dieta_id)
-    settings = get_settings()
-
-    if formato == "pdf":
-        contenido, nombre = generar_pdf_dieta(dieta, settings.export_footer_note)
-        media_type = "application/pdf"
-    else:
-        contenido, nombre = generar_csv_dieta(dieta)
-        media_type = "text/csv"
-
-    headers = {"Content-Disposition": f'attachment; filename="{nombre}"'}
-    return Response(content=contenido, media_type=media_type, headers=headers)
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="La exportación de dietas (PDF/CSV) está deshabilitada."
+    )
 
 
 @router.post(
@@ -676,36 +668,10 @@ def notificar_dieta(
     payload: DietaNotificacionRequest,
     session: Session = Depends(get_session),
 ):
-    dieta = _obtener_dieta(session, dieta_id)
-    if dieta.paciente_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La dieta no esta asignada a un paciente.",
-        )
-
-    asignacion_actual = next((item for item in dieta.asignaciones if item.es_actual), None)
-    try:
-        resultado = enviar_notificacion_dieta(
-            dieta,
-            payload.canal,
-            payload.asunto,
-            payload.mensaje,
-            payload.adjuntar_pdf,
-            payload.adjuntar_csv,
-            payload.enviar_copia_profesional,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(exc),
-        ) from exc
-
-    if asignacion_actual:
-        asignacion_actual.notificado_en = datetime.utcnow()
-        session.add(asignacion_actual)
-        session.commit()
-
-    return {"resultado": resultado}
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="La notificación/publicación de dietas está deshabilitada."
+    )
 
 
 

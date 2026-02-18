@@ -228,6 +228,7 @@
 
   const postJson = (path, payload) => sendJson("POST", path, payload);
   const putJson = (path, payload) => sendJson("PUT", path, payload);
+  const deleteJson = (path) => sendJson("DELETE", path);
 
   const selectors = {
     recetasList: document.getElementById("recetasList"),
@@ -332,6 +333,7 @@
     alimentosLoading: false,
     pacientesLoading: false,
     pacientesLoaded: false,
+    recetas: [],
     bedcaSyncAttempted: false,
     alimentoEditId: null,
     alimentos: [],
@@ -1207,10 +1209,21 @@
           ${items.map((it) => `<li>${formatMealItemLabel(it)}</li>`).join("")}
         </ul>
       </div>
+      <div class="meal-detail__recipes">
+        <label for="mealRecetaSelect">Usar receta guardada</label>
+        <div class="inline-select">
+          <select id="mealRecetaSelect" name="mealRecetaSelect">
+            <option value="">Selecciona una receta</option>
+          </select>
+          <button type="button" class="btn ghost" data-action="apply-recipe" data-meal="${meal.nombre}">Cargar receta</button>
+        </div>
+      </div>
       <div class="dieta-card__actions">
         <button type="button" class="btn" data-action="add-food-modal" data-meal="${meal.nombre}">Añadir alimento</button>
+        <button type="button" class="btn ghost" data-action="save-recipe" data-meal="${meal.nombre}">Guardar como receta</button>
       </div>
     `;
+    ensureRecetasLoaded().then(populateMealRecetaSelect).catch(() => {});
     selectors.mealDetailModal.hidden = false;
     selectors.mealDetailModal.classList.add("is-open");
   };
@@ -1263,6 +1276,84 @@
       meal.items = meal.items || [];
       meal.items.push("Nuevo alimento pendiente de definir");
       renderPlan();
+    }
+  };
+
+  const applyRecetaToMeal = async (mealName, recetaId) => {
+    if (!recetaId) {
+      setGlobalAlert("Selecciona una receta para cargarla en la comida.", "error");
+      return;
+    }
+    const meal = (planState.comidas || []).find((item) => item.nombre === mealName);
+    if (!meal) return;
+    try {
+      const receta = await fetchJson(`/recetas/${recetaId}`);
+      meal.receta_id = receta.id;
+      meal.receta_nombre = receta.nombre;
+      const ingredientes = Array.isArray(receta.ingredientes) ? receta.ingredientes : [];
+      meal.items = ingredientes.map((ing) => {
+        const alimento = ing.alimento || {};
+        const macros = computeMacrosFromAlimento(alimento, ing.cantidad || 0);
+        return {
+          alimento_id: alimento.id || ing.alimento_id,
+          nombre: alimento.nombre || "Alimento",
+          cantidad: Number(ing.cantidad) || 0,
+          unidad: ing.unidad || alimento.unidad_base || "g",
+          macros,
+        };
+      });
+      recalcMealMacros(meal);
+      meal.empty = false;
+      renderPlan();
+      setGlobalAlert(`Receta "${receta.nombre}" aplicada a ${meal.nombre}.`, "success");
+      if (selectors.mealDetailModal) {
+        selectors.mealDetailModal.classList.remove("is-open");
+        selectors.mealDetailModal.hidden = true;
+      }
+    } catch (error) {
+      setGlobalAlert(error?.message || "No se pudo cargar la receta seleccionada.", "error");
+    }
+  };
+
+  const saveMealAsReceta = async (mealName) => {
+    const meal = (planState.comidas || []).find((item) => item.nombre === mealName);
+    if (!meal || !meal.items || !meal.items.length) {
+      setGlobalAlert("Agrega al menos un alimento antes de guardar como receta.", "error");
+      return;
+    }
+    const nombre = window.prompt("Nombre para la nueva receta:", meal.receta_nombre || meal.nombre || "Receta");
+    if (!nombre) return;
+
+    const ingredientes = meal.items
+      .filter((it) => it.alimento_id)
+      .map((it) => ({
+        alimento_id: it.alimento_id,
+        cantidad: it.cantidad || 0,
+        unidad: it.unidad || "g",
+        observaciones: it.nombre || "",
+      }));
+
+    if (!ingredientes.length) {
+      setGlobalAlert("No se pueden guardar recetas sin alimentos válidos.", "error");
+      return;
+    }
+
+    const payload = {
+      nombre: nombre.trim(),
+      descripcion: `Receta creada desde el plan para ${meal.nombre}`,
+      calorias_objetivo: meal.macros?.energia || null,
+      instrucciones: "",
+      ingredientes,
+    };
+    try {
+      const receta = await postJson("/recetas", payload);
+      state.recetas = [receta, ...(state.recetas || [])];
+      meal.receta_id = receta.id;
+      meal.receta_nombre = receta.nombre;
+      setGlobalAlert(`Receta "${receta.nombre}" guardada y vinculada a ${meal.nombre}.`, "success");
+      populateMealRecetaSelect(state.recetas);
+    } catch (error) {
+      setGlobalAlert(error?.message || "No se pudo guardar la receta.", "error");
     }
   };
 
@@ -1840,6 +1931,105 @@
     return `${basePath}?buscar=${encoded}`;
   };
 
+  const ensureRecetasLoaded = async () => {
+    if (state.recetas && state.recetas.length) return state.recetas;
+    const data = await fetchJson("/recetas");
+    state.recetas = Array.isArray(data) ? data : [];
+    return state.recetas;
+  };
+
+  const populateMealRecetaSelect = (recetas) => {
+    const select = document.getElementById("mealRecetaSelect");
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">Selecciona una receta</option>`;
+    recetas.forEach((receta) => {
+      const opt = document.createElement("option");
+      opt.value = receta.id || receta.receta_id || "";
+      opt.textContent = receta.nombre || `Receta #${receta.id}`;
+      select.appendChild(opt);
+    });
+    if (current) {
+      select.value = current;
+    }
+  };
+
+  const resolveAlimentoIdByName = async (name) => {
+    const query = encodeURIComponent(name);
+    const data = await fetchJson(`/alimentos?buscar=${query}`);
+    const items = Array.isArray(data) ? data : [];
+    const match = items.find(
+      (a) => (a.nombre || "").toLowerCase().trim() === name.toLowerCase().trim()
+    );
+    return match ? match.id : items[0]?.id;
+  };
+
+  const ensureDefaultRecipes = async () => {
+    if (!Array.isArray(state.recetas)) state.recetas = [];
+    const existingNames = new Set(
+      state.recetas.map((r) => (r.nombre || "").toLowerCase().trim())
+    );
+    const defaults = [
+      {
+        nombre: "Desayuno energetico",
+        descripcion: "Avena con yogur y manzana fresca.",
+        instrucciones: "Mezcla avena, yogur y agrega manzana en cubos.",
+        ingredientes: [
+          { alimento: "Avena integral", cantidad: 60, unidad: "g" },
+          { alimento: "Yogur natural descremado", cantidad: 200, unidad: "g" },
+          { alimento: "Manzana", cantidad: 120, unidad: "g" },
+        ],
+      },
+      {
+        nombre: "Bol de quinoa y pollo",
+        descripcion: "Quinoa con pollo asado y ensalada verde.",
+        instrucciones: "Quinoa base, pollo en tiras y ensalada verde encima.",
+        ingredientes: [
+          { alimento: "Quinoa cocida", cantidad: 180, unidad: "g" },
+          { alimento: "Pechuga de pollo asada", cantidad: 130, unidad: "g" },
+          { alimento: "Ensalada verde base", cantidad: 90, unidad: "g" },
+        ],
+      },
+    ];
+
+    const created = [];
+    for (const rec of defaults) {
+      if (existingNames.has(rec.nombre.toLowerCase())) continue;
+      const ingredientes = [];
+      let allResolved = true;
+      for (const ing of rec.ingredientes) {
+        const alimentoId = await resolveAlimentoIdByName(ing.alimento);
+        if (!alimentoId) {
+          allResolved = false;
+          break;
+        }
+        ingredientes.push({
+          alimento_id: alimentoId,
+          cantidad: ing.cantidad,
+          unidad: ing.unidad,
+        });
+      }
+      if (!allResolved || !ingredientes.length) continue;
+      try {
+        const payload = {
+          nombre: rec.nombre,
+          descripcion: rec.descripcion,
+          instrucciones: rec.instrucciones,
+          ingredientes,
+        };
+        const nueva = await postJson("/recetas", payload);
+        created.push(nueva);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (created.length) {
+      state.recetas = [...created, ...state.recetas];
+      populateMealRecetaSelect(state.recetas);
+      renderRecetas(state.recetas);
+    }
+  };
+
   const loadRecetas = async () => {
     if (!selectors.recetasList) return;
     if (state.recetasLoading) return;
@@ -1848,7 +2038,27 @@
     const query = selectors.recetaSearch?.value || "";
     try {
       const data = await fetchJson(buildQuery("/recetas", query));
-      renderRecetas(data);
+      const list = Array.isArray(data) ? data : [];
+      const MEAL_NAMES = new Set(["desayuno", "comida", "cena", "almuerzo", "merienda"]);
+      const empties = [];
+      const valid = [];
+      for (const rec of list) {
+        const hasIngredientes = Array.isArray(rec.ingredientes) && rec.ingredientes.length > 0;
+        const isMealName = MEAL_NAMES.has((rec.nombre || "").toLowerCase().trim());
+        if (!hasIngredientes || isMealName) {
+          if (rec.id) empties.push(rec);
+          continue;
+        }
+        valid.push(rec);
+      }
+      // Limpia recetas vacías o con nombres de comida base
+      for (const rec of empties) {
+        deleteJson(`/recetas/${rec.id}`).catch(() => {});
+      }
+      state.recetas = valid;
+      renderRecetas(valid);
+      populateMealRecetaSelect(state.recetas);
+      await ensureDefaultRecipes();
     } catch (error) {
       setPlaceholder(selectors.recetasList, error.message || "No pudimos cargar recetas.");
     } finally {
@@ -1995,6 +2205,16 @@
         e.preventDefault();
         const mealName = btn.dataset.meal || selectors.mealDetailModal?.dataset.meal;
         if (mealName) addFoodToMeal(mealName);
+      } else if (action === "apply-recipe") {
+        e.preventDefault();
+        const mealName = btn.dataset.meal || selectors.mealDetailModal?.dataset.meal;
+        const select = document.getElementById("mealRecetaSelect");
+        const recetaId = select?.value || "";
+        if (mealName) applyRecetaToMeal(mealName, recetaId);
+      } else if (action === "save-recipe") {
+        e.preventDefault();
+        const mealName = btn.dataset.meal || selectors.mealDetailModal?.dataset.meal;
+        if (mealName) saveMealAsReceta(mealName);
       }
     });
 
