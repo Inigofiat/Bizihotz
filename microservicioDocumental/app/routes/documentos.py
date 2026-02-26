@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response, StreamingResponse
-from sqlalchemy import func, or_, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
@@ -71,7 +71,9 @@ def listar_documentos(
     if tipo:
         query = query.where(Documento.tipo == tipo)
     if etiqueta:
-        query = query.where(Documento.etiquetas.contains([etiqueta]))
+        # Compatible con SQLite y Postgres (aunque la columna sea JSON en vez de JSONB)
+        patron = f'%"{etiqueta}"%'
+        query = query.where(cast(Documento.etiquetas, String).like(patron))
 
     if not order_by_clauses:
         order_by_clauses.append(Documento.fecha_subida.desc())

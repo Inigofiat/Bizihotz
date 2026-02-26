@@ -41,11 +41,24 @@
     template: document.getElementById("docCardTemplate"),
     feedback: document.getElementById("feedback"),
     count: document.getElementById("docCount"),
+    searchQ: document.getElementById("docSearchQ"),
+    searchEtiqueta: document.getElementById("docSearchEtiqueta"),
+    searchBtn: document.getElementById("docSearchBtn"),
+    clearBtn: document.getElementById("docClearBtn"),
+    pageInfo: document.getElementById("docPageInfo"),
+    pagePrev: document.getElementById("docPrevPage"),
+    pageNext: document.getElementById("docNextPage"),
     viewer: document.getElementById("docViewer"),
     viewerFrame: document.getElementById("docViewerFrame"),
     viewerTitle: document.getElementById("docViewerTitle"),
     viewerClose: document.getElementById("closeDocViewer"),
     viewerLoading: document.getElementById("docViewerLoading"),
+  };
+
+  const state = {
+    page: 1,
+    pageSize: 200, // mostrar todos como antes
+    lastPage: false,
   };
 
   let viewerFallbackTimer = null;
@@ -184,12 +197,37 @@
     throw lastError || new Error("No se pudo contactar con el servicio documental.");
   };
 
+  const buildQueryString = (page = 1) => {
+    const params = new URLSearchParams();
+    const q = selectors.searchQ?.value.trim();
+    const etiqueta = selectors.searchEtiqueta?.value.trim();
+
+    if (q) params.set("q", q);
+    if (etiqueta) params.set("etiqueta", etiqueta);
+
+    params.set("limit", String(state.pageSize));
+    params.set("skip", String((page - 1) * state.pageSize));
+
+    return `?${params.toString()}`;
+  };
+
+  const updatePaginationControls = () => {
+    if (selectors.pagePrev) selectors.pagePrev.disabled = state.page <= 1;
+    if (selectors.pageNext) selectors.pageNext.disabled = state.lastPage;
+    if (selectors.pageInfo) selectors.pageInfo.textContent = `Página ${state.page}`;
+  };
+
   const loadDocs = async () => {
     setFeedback("Cargando documentos...");
     try {
-      const data = await fetchWithFallback("/documentos?limit=200");
+      const query = buildQueryString(state.page);
+      const data = await fetchWithFallback(`/documentos${query}`);
+      state.lastPage = Array.isArray(data) ? data.length < state.pageSize : true;
+      updatePaginationControls();
       renderDocs(data || []);
     } catch (error) {
+      state.lastPage = true;
+      updatePaginationControls();
       renderDocs([]);
       setFeedback(
         error?.message || "No pudimos cargar documentos. Verifica que el microservicio documental esta en marcha.",
@@ -339,6 +377,57 @@
         });
       });
     }
+
+    if (selectors.searchBtn) {
+      selectors.searchBtn.addEventListener("click", () => {
+        state.page = 1;
+        loadDocs();
+      });
+    }
+
+    if (selectors.clearBtn) {
+      selectors.clearBtn.addEventListener("click", () => {
+        if (selectors.searchQ) selectors.searchQ.value = "";
+        if (selectors.searchFuente) selectors.searchFuente.value = "";
+        if (selectors.searchTipo) selectors.searchTipo.value = "";
+        if (selectors.searchEtiqueta) selectors.searchEtiqueta.value = "";
+        state.page = 1;
+        loadDocs();
+      });
+    }
+
+    const handleEnterToSearch = (input) => {
+      input?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          state.page = 1;
+          loadDocs();
+        }
+      });
+    };
+
+    handleEnterToSearch(selectors.searchQ);
+    handleEnterToSearch(selectors.searchEtiqueta);
+
+    if (selectors.pagePrev) {
+      selectors.pagePrev.addEventListener("click", () => {
+        if (state.page > 1) {
+          state.page -= 1;
+          loadDocs();
+        }
+      });
+    }
+
+    if (selectors.pageNext) {
+      selectors.pageNext.addEventListener("click", () => {
+        if (!state.lastPage) {
+          state.page += 1;
+          loadDocs();
+        }
+      });
+    }
+
+    updatePaginationControls();
   };
 
   document.addEventListener("DOMContentLoaded", initDocumentos);

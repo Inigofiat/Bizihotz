@@ -23,7 +23,30 @@
     </header>
 
     <main class="content">
+      <section class="filters" aria-label="Filtros de documentos">
+        <div class="filter-group">
+          <label for="docSearchQ">Buscar texto</label>
+          <input type="search" id="docSearchQ" placeholder="Título o descripción" />
+        </div>
+        <div class="filter-group">
+          <label for="docSearchEtiqueta">Etiqueta</label>
+          <input type="text" id="docSearchEtiqueta" placeholder="Etiqueta (ej. diabetes, pdf)" />
+        </div>
+        <div class="filter-actions">
+          <button type="button" id="docSearchBtn" class="btn primary">Buscar</button>
+          <button type="button" id="docClearBtn" class="btn ghost">Limpiar</button>
+        </div>
+      </section>
+
       <section id="feedback" class="feedback" hidden></section>
+
+      <section class="pagination" aria-label="Paginación de documentos">
+        <div class="pagination__controls">
+          <button type="button" id="docPrevPage" class="btn ghost" disabled>Anterior</button>
+          <span id="docPageInfo" class="page-info">Página 1</span>
+          <button type="button" id="docNextPage" class="btn ghost">Siguiente</button>
+        </div>
+      </section>
 
       <section id="documentList" class="doc-grid"></section>
     </main>
