@@ -21,7 +21,8 @@ const usuarioSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     activo: { type: Boolean, default: true },
     debeActualizarPassword: { type: Boolean, default: false },
-    ultimoCambioPassword: { type: Date, default: null }
+    ultimoCambioPassword: { type: Date, default: null },
+    ultimoAcceso: { type: Date, default: null }
   },
   { timestamps: true }
 );

@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gestion de Calendarios y Citas</title>
+  <title>GestiÃ³n de Calendarios y Citas</title>
   <link rel="stylesheet" href="../css/agenda.css" />
   <link rel="stylesheet" href="../css/chatbot.css" />
 </head>
@@ -12,7 +12,7 @@
     <header class="header">
       <div class="brand">
         <a class="logo" href="principal.html"></a>
-        <h1>Gestion de Calendarios y Citas</h1>
+        <h1>Gestión de Calendarios y Citas</h1>
       </div>
 
       <div class="toolbar">
@@ -27,9 +27,9 @@
 
         <div class="group month-group">
           <button id="prevBtn" class="btn icon" type="button" aria-label="Mes anterior">&#x25C0;</button>
-          <button id="monthLabel" class="btn primary month-button" type="button" title="Elegir mes y año">Mes</button>
+          <button id="monthLabel" class="btn primary month-button" type="button" title="Elegir mes y aÃ±o">Mes</button>
           <button id="nextBtn" class="btn icon" type="button" aria-label="Mes siguiente">&#x25B6;</button>
-          <input id="monthJump" type="month" class="visually-hidden" aria-label="Elegir mes y año" />
+          <input id="monthJump" type="month" class="visually-hidden" aria-label="Elegir mes y aÃ±o" />
         </div>
 
         <input
@@ -40,7 +40,7 @@
           aria-label="Filtrar citas del día (paciente, motivo o notas)"
         />
       </div>
-    </header>
+          </header>
 
     <main class="layout">
       <section class="card calendar" aria-label="Calendario">
@@ -78,27 +78,26 @@
       <div class="month-picker__header">
         <div>
           <p class="month-picker__eyebrow">Calendario</p>
-          <h3 id="monthPickerTitle">Elige un año</h3>
+          <h3 id="monthPickerTitle">Elige un aÃ±o</h3>
         </div>
         <button id="closeMonthPicker" class="month-picker__close" type="button" aria-label="Cerrar selector de mes">&times;</button>
       </div>
       <div class="month-picker__years-nav" id="yearNav">
-        <button id="yearPrev" type="button" aria-label="Años anteriores">&#x25C0;</button>
+        <button id="yearPrev" type="button" aria-label="AÃ±os anteriores">&#x25C0;</button>
         <span id="yearRangeLabel"></span>
-        <button id="yearNext" type="button" aria-label="Años siguientes">&#x25B6;</button>
+        <button id="yearNext" type="button" aria-label="AÃ±os siguientes">&#x25B6;</button>
       </div>
       <div class="month-picker__body">
         <div id="yearGrid" class="month-picker__grid"></div>
         <div id="monthGrid" class="month-picker__grid month-grid" hidden></div>
       </div>
       <div class="month-picker__footer" id="monthPickerFooter" hidden>
-        <button id="backToYears" type="button">Elegir otro año</button>
+        <button id="backToYears" type="button">Elegir otro aÃ±o</button>
       </div>
     </div>
   </div>
 
   <script src="../js/live-refresh.js"></script>
-  <script src="../js/perfil-modal.js"></script>
   <script src="../js/agenda.js"></script>
   <script src="../js/chatbot.js"></script>
 
@@ -172,11 +171,11 @@
     </div>
   </div>
 
-  <!-- Modal de confirmación para borrar cita -->
+  <!-- Modal de confirmaciÃ³n para borrar cita -->
   <div class="modal-overlay" id="confirmDeleteModal" hidden>
     <div class="modal-content modal-confirm">
       <h3>Eliminar cita</h3>
-      <p>¿Seguro que quieres borrar esta cita? Esta acción no se puede deshacer.</p>
+      <p>Â¿Seguro que quieres borrar esta cita? Esta acciÃ³n no se puede deshacer.</p>
       <div class="form-actions">
         <button type="button" class="btn" id="confirmDeleteNo">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmDeleteYes">Borrar definitivamente</button>
@@ -185,3 +184,7 @@
   </div>
 </body>
 </html>
+
+
+
+

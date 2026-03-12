@@ -14,9 +14,31 @@ const router = express.Router();
 
 const escapeRegExp = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const buildSearchFilter = (term) => {
+const buildSearchFilter = (
+  term,
+  { includeInactive = false, estado = "", rol = "", rolSistema = "" } = {}
+) => {
+  const baseFilter = {};
+
+  if (!includeInactive) {
+    baseFilter.activo = true;
+  }
+
+  const estadoNorm = estado.toString().toLowerCase();
+  if (estadoNorm === "activo") {
+    baseFilter.activo = true;
+  } else if (estadoNorm === "inactivo") {
+    baseFilter.activo = false;
+  }
+
+  if (rol) {
+    baseFilter.rol = new RegExp(`^${escapeRegExp(rol.trim())}$`, "i");
+  }
+  if (rolSistema) {
+    baseFilter.rolSistema = new RegExp(`^${escapeRegExp(rolSistema.trim())}$`, "i");
+  }
   if (!term) {
-    return { activo: true };
+    return baseFilter;
   }
 
   const normalized = term.trim().replace(/\s+/g, " ");
@@ -41,7 +63,7 @@ const buildSearchFilter = (term) => {
   ].filter(Boolean);
 
   return {
-    activo: true,
+    ...baseFilter,
     ...(conditions.length > 0 ? { $or: conditions } : {})
   };
 };
@@ -58,9 +80,10 @@ const isSelfOrAdmin = (req, targetId) => {
 
 router.get("/", permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res, next) => {
   try {
-    const { q = "", limit = "12" } = req.query;
+    const { q = "", limit = "12", estado = "", rol = "", rolSistema = "" } = req.query;
     const search = String(q || "").trim();
     const hasSearch = search.length >= 2;
+    const adminRequest = isAdminRequest(req);
 
     if (search && !hasSearch) {
       return res.status(400).json({
@@ -68,37 +91,53 @@ router.get("/", permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONIST
       });
     }
 
-    const baseLimit = hasSearch ? Number(limit) || 12 : Number(limit) || 24;
-    const maxLimit = Math.min(baseLimit, 50);
-    const filter = buildSearchFilter(hasSearch ? search : "");
+    const baseLimit = hasSearch ? Number(limit) || 12 : Number(limit) || (adminRequest ? 200 : 24);
+    const maxLimit = Math.min(baseLimit, adminRequest ? 500 : 50);
+    const filter = buildSearchFilter(hasSearch ? search : "", {
+      includeInactive: adminRequest,
+      estado,
+      rol,
+      rolSistema
+    });
 
     const usuarios = await Usuario.find(filter)
       .sort({ nombre: 1, apellidos: 1, nombreUsuario: 1 })
       .limit(maxLimit)
-      .select("nombre apellidos nombreUsuario email telefono rol rolSistema foto");
+      .select("nombre apellidos nombreUsuario email telefono rol rolSistema foto activo ultimoAcceso updatedAt");
 
     const data = usuarios
       .filter((usuario) => {
         const rol = (usuario.rolSistema || usuario.rol || "").toLowerCase();
-        return rol !== "administrador" && rol !== "admin" && rol !== "recepcionista";
+        const esAdmin = rol === "administrador" || rol === "admin";
+        const esRecep = rol === "recepcionista";
+
+        // Los administradores nunca se listan.
+        if (esAdmin) return false;
+        // Si no es petición de admin, ocultamos recepcionistas.
+        if (!adminRequest && esRecep) return false;
+        return true;
       })
       .map((usuario) => {
         const nombre = usuario.nombre?.trim() || "";
         const apellidos = usuario.apellidos?.trim() || "";
         const nombreCompleto = `${nombre} ${apellidos}`.trim() || usuario.nombreUsuario;
+        const activo = usuario.activo !== false;
+        const ultimoAcceso = usuario.ultimoAcceso || usuario.updatedAt || null;
 
-      return {
-        idUsuario: usuario._id.toString(),
-        nombre,
-        apellidos,
-        nombreCompleto,
-        nombreUsuario: usuario.nombreUsuario,
-        email: usuario.email,
-        telefono: usuario.telefono ?? "",
-        rol: usuario.rol,
-        rolSistema: usuario.rolSistema || "",
-        foto: usuario.foto ?? ""
-      };
+        return {
+          idUsuario: usuario._id.toString(),
+          nombre,
+          apellidos,
+          nombreCompleto,
+          nombreUsuario: usuario.nombreUsuario,
+          email: usuario.email,
+          telefono: usuario.telefono ?? "",
+          rol: usuario.rol,
+          rolSistema: usuario.rolSistema || "",
+          foto: usuario.foto ?? "",
+          activo,
+          ultimoAcceso
+        };
       });
 
     return res.json({ data });
@@ -133,7 +172,8 @@ const buildUserResponse = (usuario) => {
     telefono: plain.telefono ?? "",
     foto: plain.foto ?? "",
     debeActualizarPassword: plain.debeActualizarPassword ?? false,
-    ultimoCambioPassword: plain.ultimoCambioPassword ?? null
+    ultimoCambioPassword: plain.ultimoCambioPassword ?? null,
+    ultimoAcceso: plain.ultimoAcceso ?? null
   };
 };
 
@@ -289,6 +329,37 @@ router.patch("/:id/estado", permitirRoles(ROLES.ADMIN), async (req, res, next) =
       mensaje: activo ? "Usuario activado." : "Usuario desactivado.",
       usuario: buildUserResponse(usuario)
     });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// Resetear password (solo admin).
+router.patch("/:id/password", permitirRoles(ROLES.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { nuevaPassword } = req.body ?? {};
+
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
+    }
+
+    if (!nuevaPassword || String(nuevaPassword).length < 8) {
+      return res.status(400).json({ mensaje: "La nueva contrasena debe tener al menos 8 caracteres." });
+    }
+
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    }
+
+    usuario.passwordHash = await bcrypt.hash(String(nuevaPassword), 12);
+    usuario.debeActualizarPassword = true;
+    usuario.ultimoCambioPassword = new Date();
+
+    await usuario.save();
+
+    return res.json({ mensaje: "Contrasena reseteada. El usuario debera actualizarla al iniciar sesion." });
   } catch (error) {
     return next(error);
   }

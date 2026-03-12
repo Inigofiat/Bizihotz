@@ -359,7 +359,6 @@ const getStoredUser = () => {
 };
 
 
-
 const generarSlotsParaBloque = (bloque) => {
 
   const slots = [];
@@ -4058,7 +4057,15 @@ const initAgenda = async () => {
 
   const rolLower = (user.rolSistema || "").toLowerCase();
   agendaState.isRecepcionista = rolLower === "recepcionista";
-  agendaState.professionalId = agendaState.isRecepcionista ? null : user.idUsuario || null;
+  // Permitir forzar profesional vía querystring ?profesionalId=...
+  const qs = new URLSearchParams(window.location.search);
+  const profesionalFromQuery = qs.get("profesionalId") || qs.get("idUsuario") || null;
+
+  if (profesionalFromQuery) {
+    agendaState.professionalId = profesionalFromQuery;
+  } else {
+    agendaState.professionalId = agendaState.isRecepcionista ? null : user.idUsuario || null;
+  }
 
   agendaState.selectedDate = normalizeDate(new Date());
 

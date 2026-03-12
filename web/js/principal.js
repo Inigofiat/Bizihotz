@@ -90,6 +90,31 @@ const estadoToSlug = (estado) => {
   return match ? match.slug : normalized.replace(/\s+/g, "-");
 };
 
+const obtenerNombreProfesionalDesdeCita = (cita = {}) => {
+  if (!cita) return "";
+  const directo =
+    cita.profesionalNombre ||
+    cita.profesional ||
+    cita.nombreProfesional ||
+    cita.professionalName;
+  if (directo && typeof directo === "string") return directo;
+
+  const ref =
+    cita.idUsuario ||
+    cita.usuario ||
+    cita.professional ||
+    cita.profesionalDatos ||
+    cita.professionalData;
+
+  if (ref && typeof ref === "object") {
+    const nombreCompleto =
+      `${ref.nombre || ""} ${ref.apellidos || ""}`.replace(/\s+/g, " ").trim();
+    if (nombreCompleto) return nombreCompleto;
+    return ref.nombreUsuario || ref.email || "";
+  }
+  return "";
+};
+
 const resolveCitaId = (cita) => {
   if (!cita) {
     return "";
@@ -859,6 +884,166 @@ const cargarUsuario = () => {
   return user;
 };
 
+const renderCitasTabla = (citas, esRecepcionista) => {
+  const tbody = document.querySelector("#appointmentsTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  if (!Array.isArray(citas) || citas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay citas disponibles</td></tr>`;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  if (esRecepcionista) {
+    // Agrupar por hora para recepcionistas
+    const grupos = new Map();
+    citas.forEach((cita) => {
+      const hora = cita.hora ? String(cita.hora) : "--:--";
+      if (!grupos.has(hora)) grupos.set(hora, []);
+      grupos.get(hora).push(cita);
+    });
+
+    Array.from(grupos.keys())
+      .sort((a, b) => a.localeCompare(b))
+      .forEach((hora) => {
+        const lista = grupos.get(hora) || [];
+        if (!lista.length) {
+          return;
+        }
+        const headRow = document.createElement("tr");
+        headRow.className = "hour-group-row";
+        const headCell = document.createElement("td");
+        headCell.colSpan = 4;
+        headCell.innerHTML = `<div class="hour-group"><span class="hour-label">${hora}</span><span class="hour-count">${lista.length} cita${lista.length === 1 ? "" : "s"}</span></div>`;
+        headRow.appendChild(headCell);
+        fragment.appendChild(headRow);
+
+        lista.forEach((cita) => {
+          const fila = document.createElement("tr");
+          fila.className = "hour-group-item";
+          const citaId = resolveCitaId(cita);
+          const pacienteId = resolvePacienteId(cita);
+          if (citaId) fila.dataset.citaId = citaId;
+
+          const horaCell = document.createElement("td");
+          horaCell.textContent = "•";
+          horaCell.title = `Hora ${hora}`;
+          horaCell.className = "hour-dot";
+          fila.appendChild(horaCell);
+
+          const pacienteCell = document.createElement("td");
+          const nombrePaciente = cita.paciente ? String(cita.paciente) : "Paciente sin nombre";
+          // En modo recepcionista no hay navegación al paciente: texto plano.
+          pacienteCell.textContent = nombrePaciente;
+          const profesionalNombre = obtenerNombreProfesionalDesdeCita(cita);
+          const profesionalId = resolverProfesionalId(cita);
+          const proMeta = document.createElement("div");
+          proMeta.className = "patient-prof";
+          if (profesionalNombre) {
+            if (profesionalId) {
+              const profLink = document.createElement("span");
+              profLink.className = "professional-link";
+              profLink.dataset.profesionalId = profesionalId;
+              profLink.textContent = `Profesional: ${profesionalNombre}`;
+              proMeta.appendChild(profLink);
+            } else {
+              proMeta.textContent = `Profesional: ${profesionalNombre}`;
+            }
+          } else {
+            proMeta.textContent = "Profesional no asignado";
+          }
+          pacienteCell.appendChild(proMeta);
+          fila.appendChild(pacienteCell);
+
+        const motivoCell = document.createElement("td");
+        motivoCell.textContent = cita.motivo ? String(cita.motivo) : "Sin motivo";
+        fila.appendChild(motivoCell);
+
+          const estadoCell = document.createElement("td");
+          estadoCell.className = "status-cell";
+          const estadoChip = buildStatusChip(citaId, cita.estado || "Pendiente");
+          estadoCell.appendChild(estadoChip);
+          fila.appendChild(estadoCell);
+
+          fragment.appendChild(fila);
+        });
+      });
+  } else {
+    // Vista profesional: filas planas con hora en cada fila
+    citas.forEach((cita) => {
+      const fila = document.createElement("tr");
+      const citaId = resolveCitaId(cita);
+      const pacienteId = resolvePacienteId(cita);
+      if (citaId) fila.dataset.citaId = citaId;
+
+      const horaCell = document.createElement("td");
+      horaCell.textContent = cita.hora ? String(cita.hora) : "--:--";
+      fila.appendChild(horaCell);
+
+      const pacienteCell = document.createElement("td");
+      const nombrePaciente = cita.paciente ? String(cita.paciente) : "Sin nombre";
+      if (pacienteId) {
+        const pacienteLink = document.createElement("button");
+        pacienteLink.type = "button";
+        pacienteLink.className = "patient-link";
+        pacienteLink.dataset.pacienteId = pacienteId;
+        pacienteLink.textContent = nombrePaciente;
+        pacienteCell.appendChild(pacienteLink);
+      } else {
+        pacienteCell.textContent = nombrePaciente;
+      }
+      const profesionalNombre = obtenerNombreProfesionalDesdeCita(cita);
+      if (profesionalNombre) {
+        const proMeta = document.createElement("div");
+        proMeta.className = "patient-prof";
+        proMeta.textContent = `Profesional: ${profesionalNombre}`;
+        pacienteCell.appendChild(proMeta);
+      }
+      fila.appendChild(pacienteCell);
+
+      const motivoCell = document.createElement("td");
+      motivoCell.textContent = cita.motivo ? String(cita.motivo) : "Sin motivo";
+      fila.appendChild(motivoCell);
+
+      const estadoCell = document.createElement("td");
+      estadoCell.className = "status-cell";
+      const estadoChip = buildStatusChip(citaId, cita.estado || "Pendiente");
+      estadoCell.appendChild(estadoChip);
+      fila.appendChild(estadoCell);
+
+      fragment.appendChild(fila);
+    });
+  }
+
+  tbody.appendChild(fragment);
+  if (!appointmentsClickHandlerBound) {
+    tbody.addEventListener("click", (event) => {
+      const link = event.target.closest(".patient-link");
+      if (link && tbody.contains(link)) {
+        const pacienteId = link.dataset.pacienteId;
+        if (pacienteId) {
+          window.location.href = `pacienteDetalle.html?id=${encodeURIComponent(pacienteId)}`;
+        }
+        return;
+      }
+      const proLink = event.target.closest(".professional-link");
+      if (proLink && tbody.contains(proLink)) {
+        const profesionalId = proLink.dataset.profesionalId;
+        if (profesionalId) {
+          const query = new URLSearchParams({
+            profesionalId: profesionalId,
+            idUsuario: profesionalId
+          });
+          window.location.href = `agenda.html?${query.toString()}`;
+        }
+      }
+    });
+    appointmentsClickHandlerBound = true;
+  }
+};
+
 const cargarCitas = async () => {
   const tbody = document.querySelector("#appointmentsTable tbody");
 
@@ -873,12 +1058,32 @@ const cargarCitas = async () => {
     return;
   }
 
+  const rolLower = (usuarioActual.rolSistema || usuarioActual.rol || "").toLowerCase();
+  const esRecepcionista = rolLower === "recepcionista";
+  const tableSection = document.querySelector(".table-section");
+  if (tableSection) {
+    tableSection.classList.toggle("recep-mode", esRecepcionista);
+  }
+
+  const titleNode = document.getElementById("dashboardTitle");
+  const subtitleNode = document.getElementById("dashboardSubtitle");
+  if (titleNode) {
+    titleNode.textContent = esRecepcionista ? "Agenda del día" : "Mis citas de hoy";
+  }
+  if (subtitleNode) {
+    subtitleNode.textContent = esRecepcionista
+      ? "Citas de todos los profesionales (hoy)"
+      : "Citas de hoy para tu agenda";
+  }
+
   const { inicio, fin } = obtenerRangoDiaUTC(new Date());
   const params = new URLSearchParams({
-    idUsuario: usuarioActual.idUsuario,
     fechaDesde: inicio,
     fechaHasta: fin
   });
+  if (!esRecepcionista) {
+    params.set("idUsuario", usuarioActual.idUsuario);
+  }
   const primaryUrl = `${API_URL}/citas?${params.toString()}`;
   const fallbackUrl = API_FALLBACK ? `${API_FALLBACK}/citas?${params.toString()}` : null;
   const requestInit = { headers: buildAuthHeaders() };
@@ -903,7 +1108,7 @@ const cargarCitas = async () => {
       citas = [];
     }
 
-    if (!citas.length && usuarioActual) {
+    if (!citas.length && usuarioActual && !esRecepcionista) {
       const slugBuscado = obtenerSlugUsuarioActual();
       if (slugBuscado) {
           const paramsSinId = new URLSearchParams({
@@ -949,61 +1154,7 @@ const cargarCitas = async () => {
 
     tbody.innerHTML = "";
 
-    if (!Array.isArray(citas) || citas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay citas disponibles</td></tr>`;
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    citas.forEach((cita) => {
-      const fila = document.createElement("tr");
-      const citaId = resolveCitaId(cita);
-      const pacienteId = resolvePacienteId(cita);
-      if (citaId) {
-        fila.dataset.citaId = citaId;
-      }
-
-      const horaCell = document.createElement("td");
-      horaCell.textContent = cita.hora ? String(cita.hora) : "--:--";
-      fila.appendChild(horaCell);
-
-      const pacienteCell = document.createElement("td");
-      const nombrePaciente = cita.paciente ? String(cita.paciente) : "Sin nombre";
-      if (pacienteId) {
-        const pacienteLink = document.createElement("button");
-        pacienteLink.type = "button";
-        pacienteLink.className = "patient-link";
-        pacienteLink.dataset.pacienteId = pacienteId;
-        pacienteLink.textContent = nombrePaciente;
-        pacienteCell.appendChild(pacienteLink);
-      } else {
-        pacienteCell.textContent = nombrePaciente;
-      }
-      fila.appendChild(pacienteCell);
-
-      const motivoCell = document.createElement("td");
-      motivoCell.textContent = cita.motivo ? String(cita.motivo) : "Sin motivo";
-      fila.appendChild(motivoCell);
-
-      const estadoCell = document.createElement("td");
-      estadoCell.className = "status-cell";
-      const estadoChip = buildStatusChip(citaId, cita.estado || "Pendiente");
-      estadoCell.appendChild(estadoChip);
-      fila.appendChild(estadoCell);
-
-      fragment.appendChild(fila);
-    });
-    tbody.appendChild(fragment);
-    if (!appointmentsClickHandlerBound) {
-      tbody.addEventListener("click", (event) => {
-        const link = event.target.closest(".patient-link");
-        if (!link || !tbody.contains(link)) return;
-        const pacienteId = link.dataset.pacienteId;
-        if (!pacienteId) return;
-        window.location.href = `pacienteDetalle.html?id=${encodeURIComponent(pacienteId)}`;
-      });
-      appointmentsClickHandlerBound = true;
-    }
+    renderCitasTabla(citas, esRecepcionista);
   } catch (error) {
     console.warn("No se pudieron cargar las citas:", error);
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Error al cargar citas</td></tr>`;
@@ -1143,6 +1294,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!["agenda.html", "nuevoPaciente.html", "principal.html", ""].includes(currentPage)) {
       window.location.href = "agenda.html";
       return;
+    }
+    const navEl = document.querySelector(".nav");
+    if (navEl) {
+      navEl.classList.add("recep-mode");
+    }
+    const notif = document.querySelector(".notification-center");
+    if (notif) {
+      notif.style.display = "none";
     }
   }
 

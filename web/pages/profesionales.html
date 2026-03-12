@@ -8,23 +8,33 @@
   <style>
     body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: #effff4; }
     header { background: #12814c; color: #fff; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-    .container { max-width: 1180px; margin: 24px auto 32px; padding: 0 18px; }
-    .card { background: #fff; border-radius: 10px; box-shadow: 0 12px 28px rgba(0,0,0,0.08); padding: 18px 20px; margin-bottom: 18px; border: 1px solid #e3eee8; }
-    .card h2 { margin: 0 0 12px; color: #0f6a3f; }
-    .table-wrapper { max-height: 520px; overflow-y: auto; border: 1px solid #e3eee8; border-radius: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid #e3eee8; text-align: left; }
+    .container { max-width: 1300px; margin: 24px auto 32px; padding: 0 18px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.08); padding: 20px 22px; margin-bottom: 18px; border: 1px solid #e3eee8; }
+    .card h2 { margin: 0; color: #0f6a3f; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .muted { color: #4b5563; font-size: 13px; }
+    .table-wrapper { max-height: 520px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e3eee8; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #e3eee8; text-align: left; vertical-align: middle; }
     th { background: #e7f4ec; color: #0f5132; position: sticky; top: 0; z-index: 1; }
     tr:nth-child(even) td { background: #f7fbf8; }
     tr:nth-child(odd) td { background: #eef7f1; }
-    .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-weight: 600; }
+    tbody tr:hover td { background: #e9f7ee; }
+    th:nth-child(1) { width: 130px; }
+    th:nth-child(2) { width: 220px; }
+    th:nth-child(3) { width: 140px; }
+    th:nth-child(4) { width: 170px; }
+    th:nth-child(5) { width: 170px; }
+    th:nth-child(6) { width: 90px; }
+    th:nth-child(7) { width: 340px; }
+    .btn { padding: 6px 10px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-weight: 600; font-size: 13px; }
     .btn-primary { background: #12814c; color: #fff; border-color: #0f6a3f; }
     .btn-primary:hover { background: #0f6a3f; }
     .btn-outline { background: #fff; color: #0f172a; border-color: #cbd5e1; }
     .btn-outline:hover { background: #e2f3e8; }
     .btn-danger { background: #d92d20; color: #fff; border-color: #b42318; }
     .btn-danger:hover { background: #b42318; }
-    .actions button { margin-right: 6px; }
+    .actions button { margin-right: 0; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     .badge-admin { background: #0f6a3f; color: #fff; }
     .badge-recep { background: #d97706; color: #fff; }
@@ -36,12 +46,37 @@
     .toolbar { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); align-items: center; }
     .toolbar .full { grid-column: 1 / -1; max-width: 280px; }
     .pill { background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; padding: 6px 12px; }
+    .filter-bar { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 10px; margin-bottom: 12px; align-items: center; }
+    .search-box input { width: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 13px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); }
+    .filters select { width: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 13px; background: #fff; }
+    .filter-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; background: #e7f4ec; color: #0f5132; padding: 6px 10px; border-radius: 999px; font-size: 12px; }
+    /* Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: 0.25s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.25s; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+    .switch input:checked + .slider { background-color: #12814c; }
+    .switch input:checked + .slider:before { transform: translateX(20px); }
+    .switch.inactive input:not(:checked) + .slider { background-color: #d92d20; }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; white-space: nowrap; justify-content: flex-start; }
+    .actions .btn { padding: 7px 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+    .actions .btn-outline { min-width: 170px; }
+    .actions .switch { flex: 0 0 auto; }
+    .btn-ghost { background: #f1f5f9; color: #0f172a; border-color: #e2e8f0; }
+    .btn-ghost:hover { background: #e2f3e8; }
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-card { background: #fff; border-radius: 14px; padding: 20px; width: min(520px, 90vw); box-shadow: 0 30px 60px rgba(0,0,0,0.18); }
+    .modal-card h3 { margin-top: 0; margin-bottom: 12px; color: #0f6a3f; }
+    .modal-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; }
+    .modal-actions { margin-top: 14px; display: flex; gap: 10px; justify-content: flex-end; }
     /* Confirm modal */
     .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; }
-    .confirm-card { background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 30px 60px rgba(0,0,0,0.18); max-width: 420px; width: 90%; }
-    .confirm-card p { margin: 0 0 18px; font-size: 18px; color: #111827; }
-    .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
-    .confirm-actions .btn { min-width: 140px; font-size: 15px; }
+    .confirm-card { background: #fff; border-radius: 16px; padding: 26px; box-shadow: 0 30px 60px rgba(0,0,0,0.18); max-width: 520px; width: 92%; text-align: center; }
+    .confirm-card p { margin: 0 0 20px; font-size: 20px; color: #111827; line-height: 1.35; }
+    .confirm-actions { display: flex; gap: 14px; justify-content: center; }
+    .confirm-actions .btn { min-width: 160px; font-size: 16px; }
     .btn-neutral { background: #d1d5db; color: #111827; border-color: #cbd5e1; }
     .btn-neutral:hover { background: #c5c9d1; }
     [hidden] { display: none !important; }
@@ -74,8 +109,39 @@
     </div>
 
     <div class="card">
-      <h2>Profesionales</h2>
+      <div class="card-head">
+        <h2>Profesionales</h2>
+        <div id="totalCount" class="muted"></div>
+      </div>
       <div id="listFeedback" class="feedback"></div>
+      <div class="filter-bar">
+        <div class="search-box">
+          <input id="searchInput" type="search" placeholder="Buscar por nombre o email (mín. 2 caracteres)" />
+        </div>
+        <div class="filters">
+          <select id="estadoFilter">
+            <option value="">Estado: todos</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="filters">
+          <select id="rolFilter">
+            <option value="">Rol: todos</option>
+          </select>
+        </div>
+        <div class="filters">
+          <select id="rolSistemaFilter">
+            <option value="">Perfil sistema: todos</option>
+            <option value="Profesional del centro">Profesional</option>
+            <option value="Recepcionista">Recepcionista</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button id="refreshBtn" class="btn btn-outline">Actualizar</button>
+        </div>
+      </div>
       <div class="table-wrapper">
         <table>
           <thead>
@@ -84,6 +150,7 @@
               <th>Email</th>
               <th>Rol sistema</th>
               <th>Rol</th>
+              <th>Último acceso</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -91,6 +158,30 @@
           <tbody id="usersTable"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- Edit dialog -->
+  <div id="editOverlay" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <h3>Editar profesional</h3>
+      <form id="editForm">
+        <div class="modal-grid">
+          <input id="editNombreUsuario" placeholder="Usuario" required />
+          <input id="editEmail" type="email" placeholder="Email" required />
+          <input id="editRol" placeholder="Rol descriptivo" />
+          <select id="editRolSistema">
+            <option value="Profesional del centro">Profesional del centro</option>
+            <option value="Recepcionista">Recepcionista</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+        </div>
+        <div id="editFeedback" class="feedback"></div>
+        <div class="modal-actions">
+          <button type="button" id="editCancel" class="btn btn-neutral">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
     </div>
   </div>
 

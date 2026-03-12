@@ -11,6 +11,31 @@
   const confirmMessage = document.getElementById("confirmMessage");
   const confirmAccept = document.getElementById("confirmAccept");
   const confirmCancel = document.getElementById("confirmCancel");
+  const searchInput = document.getElementById("searchInput");
+  const estadoFilter = document.getElementById("estadoFilter");
+  const rolFilter = document.getElementById("rolFilter");
+  const rolSistemaFilter = document.getElementById("rolSistemaFilter");
+  const totalCount = document.getElementById("totalCount");
+  const refreshBtn = document.getElementById("refreshBtn");
+
+  // Edit modal
+  const editOverlay = document.getElementById("editOverlay");
+  const editForm = document.getElementById("editForm");
+  const editCancel = document.getElementById("editCancel");
+  const editFeedback = document.getElementById("editFeedback");
+  const editNombreUsuario = document.getElementById("editNombreUsuario");
+  const editEmail = document.getElementById("editEmail");
+  const editRol = document.getElementById("editRol");
+  const editRolSistema = document.getElementById("editRolSistema");
+
+  let allUsers = [];
+  let editingUserId = null;
+  const state = {
+    search: "",
+    estado: "",
+    rol: "",
+    rolSistema: ""
+  };
 
   const hideConfirm = () => {
     if (confirmOverlay) {
@@ -87,6 +112,45 @@
     node.style.color = isError ? "#dc2626" : "#16a34a";
   };
 
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  const setTotal = (count) => {
+    if (!totalCount) return;
+    totalCount.textContent = `Total: ${count}`;
+  };
+
+  const populateRolFilter = (users = []) => {
+    if (!rolFilter) return;
+    const roles = Array.from(
+      new Set(users.map((u) => (u.rol || "").trim()).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+    const current = rolFilter.value;
+    rolFilter.innerHTML = `<option value="">Rol: todos</option>` +
+      roles.map((r) => `<option value="${r}">${r}</option>`).join("");
+    if (roles.includes(current)) {
+      rolFilter.value = current;
+    }
+  };
+
+  const debounce = (fn, delay = 300) => {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), delay);
+    };
+  };
+
   const badgeFor = (rolSistema = "") => {
     const val = rolSistema.toLowerCase();
     if (val === "administrador") return `<span class="badge badge-admin">Administrador</span>`;
@@ -104,65 +168,268 @@
     usersTable.innerHTML = sorted
       .map((u) => {
         const activo = u.activo !== false;
-        const btnClass = activo ? "btn btn-outline btn-danger" : "btn btn-primary";
-        const btnLabel = activo ? "Desactivar" : "Activar";
+        const rolSistema = u.rolSistema || "";
         return `<tr>
           <td>${u.nombreUsuario || ""}</td>
           <td>${u.email || ""}</td>
-          <td>${badgeFor(u.rolSistema)}</td>
+          <td>${badgeFor(rolSistema)}</td>
           <td>${u.rol || ""}</td>
-          <td>${activo ? "Activo" : "Baja"}</td>
+          <td>${formatDate(u.ultimoAcceso)}</td>
+          <td>${activo ? "Activo" : "Inactivo"}</td>
           <td class="actions">
-            <button class="${btnClass}" data-id="${u.idUsuario}" data-action="toggle">${btnLabel}</button>
+            <label class="switch ${activo ? "" : "inactive"}" title="${activo ? "Activo" : "Inactivo"}">
+              <input type="checkbox" data-id="${u.idUsuario}" data-action="toggle" aria-label="Cambiar estado de ${u.nombreUsuario || u.email || "profesional"}" ${activo ? "checked" : ""}>
+              <span class="slider"></span>
+            </label>
+            <button class="btn btn-ghost" data-id="${u.idUsuario}" data-action="edit">Editar</button>
+            <button class="btn btn-outline" data-id="${u.idUsuario}" data-action="reset">Resetear contraseña</button>
           </td>
         </tr>`;
       })
       .join("");
+    setTotal(users.length);
   };
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/usuarios?limit=50`, {
+      const params = new URLSearchParams();
+      params.set("limit", "500");
+      const trimmed = state.search.trim();
+      if (trimmed.length >= 2) params.set("q", trimmed);
+      if (state.estado) params.set("estado", state.estado);
+      if (state.rol) params.set("rol", state.rol);
+      if (state.rolSistema) params.set("rolSistema", state.rolSistema);
+
+      const res = await fetch(`${API_BASE}/usuarios?${params.toString()}`, {
         headers: { Authorization: `Bearer ${currentUser.token}` }
       });
       const data = await res.json();
-      renderUsers(data.data || data || []);
+      const list = data.data || data || [];
+      allUsers = Array.isArray(list) ? list : [];
+      populateRolFilter(allUsers);
+      renderUsers(allUsers);
       setFeedback(listFeedback, "");
     } catch (err) {
       setFeedback(listFeedback, err.message || "No se pudieron cargar los profesionales");
     }
   };
 
-  const toggleUser = async (id, currentLabel) => {
-    const activar = currentLabel === "Activar";
-    const confirmed = await showConfirm(
-      `¿Estas seguro de que deseas ${activar ? "activar" : "desactivar"} este usuario?`,
-      activar ? "Sí, activar" : "Sí, desactivar"
-    );
-    if (!confirmed) return;
-    await fetch(`${API_BASE}/usuarios/${id}/estado`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentUser.token}`
-      },
-      body: JSON.stringify({ activo: activar })
-    });
-    fetchUsers();
+  const toggleUser = async (id, activo, controlEl, { skipConfirm = false } = {}) => {
+    if (!id) return;
+    if (!skipConfirm && !activo) {
+      const confirmed = await showConfirm("¿Seguro que deseas desactivar este profesional?", "Sí, desactivar");
+      if (!confirmed) {
+        if (controlEl) controlEl.checked = !activo;
+        return;
+      }
+    }
+    try {
+      await fetch(`${API_BASE}/usuarios/${id}/estado`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ activo })
+      });
+      fetchUsers();
+    } catch (err) {
+      if (controlEl) controlEl.checked = !activo;
+      setFeedback(listFeedback, err.message || "Error actualizando estado");
+    }
   };
 
+  const findUser = (id) => allUsers.find((u) => String(u.idUsuario) === String(id));
+
+  const openEdit = (user) => {
+    if (!user || !editOverlay) return;
+    editingUserId = user.idUsuario;
+    editNombreUsuario.value = user.nombreUsuario || '';
+    editEmail.value = user.email || '';
+    editRol.value = user.rol || '';
+    editRolSistema.value = user.rolSistema || 'Profesional del centro';
+    setFeedback(editFeedback, '');
+    editOverlay.hidden = false;
+    editOverlay.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeEdit = () => {
+    editingUserId = null;
+    if (editOverlay) {
+      editOverlay.hidden = true;
+      editOverlay.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  const resetPassword = async (id) => {
+    const nuevaPassword = window.prompt("Introduce la nueva contraseña (mín. 8 caracteres):");
+    if (!nuevaPassword) return;
+    if (nuevaPassword.length < 8) {
+      setFeedback(listFeedback, "La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/${id}/password`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ nuevaPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFeedback(listFeedback, data?.mensaje || "No se pudo resetear la contraseña");
+        return;
+      }
+      setFeedback(listFeedback, data?.mensaje || "Contraseña reseteada.", false);
+    } catch (err) {
+      setFeedback(listFeedback, err.message || "No se pudo resetear la contraseña");
+    }
+  };
+
+
   if (usersTable) {
+    usersTable.addEventListener("change", (e) => {
+      const toggle = e.target.closest("input[data-action='toggle']");
+      if (!toggle) return;
+      const { id } = toggle.dataset;
+      const nuevoActivo = toggle.checked;
+      const user = findUser(id);
+      if (!user) {
+        fetchUsers();
+        return;
+      }
+      const switchEl = toggle.closest(".switch");
+
+      // Si se va a desactivar, pedimos confirmación antes de pintar en rojo.
+      if (!nuevoActivo) {
+        toggle.checked = true; // revertimos visualmente hasta confirmar
+        showConfirm("¿Seguro que deseas desactivar este profesional?", "Sí, desactivar")
+          .then((confirmed) => {
+            if (!confirmed) return;
+            toggle.checked = false;
+            if (switchEl) switchEl.classList.add("inactive");
+            toggleUser(id, false, toggle, { skipConfirm: true });
+          });
+        return;
+      }
+
+      // Activar: aplicamos verde y quitamos rojo.
+      if (switchEl) switchEl.classList.remove("inactive");
+      toggleUser(id, true, toggle, { skipConfirm: true });
+    });
+
     usersTable.addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
       const { id, action } = btn.dataset;
-      if (action === "toggle") {
-        toggleUser(id, btn.textContent.trim()).catch((err) =>
-          setFeedback(listFeedback, err.message || "Error actualizando estado")
-        );
+      if (action === "edit") {
+        const user = findUser(id);
+        if (user) {
+          openEdit(user);
+        } else {
+          fetchUsers();
+        }
+      } else if (action === "reset") {
+        resetPassword(id);
       }
     });
   }
+
+
+  const applyFilters = () => fetchUsers();
+
+  if (searchInput) {
+    const handleSearch = debounce(() => {
+      state.search = searchInput.value || '';
+      fetchUsers();
+    }, 350);
+    searchInput.addEventListener('input', handleSearch);
+  }
+
+  if (estadoFilter) {
+    estadoFilter.addEventListener('change', () => {
+      state.estado = estadoFilter.value;
+      applyFilters();
+    });
+  }
+
+  if (rolFilter) {
+    rolFilter.addEventListener('change', () => {
+      state.rol = rolFilter.value;
+      applyFilters();
+    });
+  }
+
+  if (rolSistemaFilter) {
+    rolSistemaFilter.addEventListener('change', () => {
+      state.rolSistema = rolSistemaFilter.value;
+      applyFilters();
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => fetchUsers());
+  }
+
+  if (editCancel) {
+    editCancel.addEventListener('click', closeEdit);
+  }
+
+  if (editOverlay) {
+    editOverlay.addEventListener('click', (e) => {
+      if (e.target === editOverlay) {
+        closeEdit();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideConfirm();
+      closeEdit();
+    }
+  });
+
+  if (editForm) {
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!editingUserId) return;
+      setFeedback(editFeedback, '');
+      const payload = {
+        nombreUsuario: editNombreUsuario.value.trim(),
+        email: editEmail.value.trim().toLowerCase(),
+        rol: editRol.value.trim(),
+        rolSistema: editRolSistema.value.trim()
+      };
+      if (!payload.nombreUsuario || !payload.email) {
+        setFeedback(editFeedback, 'Usuario y email son obligatorios.');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/usuarios/${editingUserId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setFeedback(editFeedback, data?.mensaje || 'No se pudo actualizar.');
+          return;
+        }
+        closeEdit();
+        setFeedback(listFeedback, 'Profesional actualizado.', false);
+        fetchUsers();
+      } catch (err) {
+        setFeedback(editFeedback, err.message || 'No se pudo actualizar.');
+      }
+    });
+  }
+
 
   if (form) {
     form.addEventListener("submit", async (e) => {

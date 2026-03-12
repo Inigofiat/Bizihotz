@@ -42,6 +42,11 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ mensaje: "Credenciales invalidas." });
     }
 
+    const ahora = new Date();
+    // Persistimos el último acceso de forma explícita para evitar que se pierda.
+    await Usuario.updateOne({ _id: usuario._id }, { $set: { ultimoAcceso: ahora } }).catch(() => {});
+    usuario.ultimoAcceso = ahora;
+
     const usuarioPlano = usuario.toJSON();
     const authPayload = {
       idUsuario: usuarioPlano.idUsuario,
@@ -62,7 +67,8 @@ router.post("/login", async (req, res, next) => {
         telefono: usuarioPlano.telefono ?? "",
         foto: usuarioPlano.foto ?? "",
         debeActualizarPassword: usuarioPlano.debeActualizarPassword ?? false,
-        ultimoCambioPassword: usuarioPlano.ultimoCambioPassword ?? null
+        ultimoCambioPassword: usuarioPlano.ultimoCambioPassword ?? null,
+        ultimoAcceso: usuarioPlano.ultimoAcceso ?? null
       }
     });
   } catch (error) {
