@@ -2536,3 +2536,14 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
     });
   });
 })();
+"use strict";
+
+// Guard: recepcionista solo puede Agenda y Nuevo paciente.
+try {
+  const _u = JSON.parse(localStorage.getItem("bizihotzUsuario") || "null");
+  if ((_u?.rolSistema || "").toLowerCase() === "recepcionista") {
+    window.location.href = "agenda.html";
+  }
+} catch (_e) {
+  window.location.href = "login.html";
+}

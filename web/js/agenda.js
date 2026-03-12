@@ -60,6 +60,8 @@ const agendaState = {
 
   monthPickerMode: "years",
 
+  isRecepcionista: false,
+
   professionalId: null,
 
   citas: [],
@@ -82,11 +84,17 @@ const agendaState = {
 
   profesionales: new Map(),
 
+  profesionalesCargados: false,
+
   lastError: null,
 
   pendingDeleteId: null
 
 };
+
+
+
+const profesionalesCatalogo = new Map();
 
 
 
@@ -194,7 +202,9 @@ const agendaElements = {
 
   confirmYesBtn: null,
 
-  confirmNoBtn: null
+  confirmNoBtn: null,
+
+  addAppointmentBtn: null
 
 };
 
@@ -218,6 +228,22 @@ const updateBodyModalState = () => {
 
 };
 
+const esNoProfesional = (persona = {}) => {
+  const norm = (texto = "") =>
+    texto
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const rol = norm(persona.rolSistema || persona.rol || "");
+  if (rol.includes("admin") || rol.includes("recepcion")) return true;
+
+  const nombre = norm(persona.nombre || persona.nombreCompleto || "");
+  if (nombre.includes("recepcion")) return true;
+
+  return false;
+};
 
 
 const capitalizar = (texto = "") => {
@@ -383,6 +409,95 @@ const SLOT_TIMES_SET = new Set(
   SLOT_GROUPS.flatMap((grupo) => grupo.slots.map((slot) => slot.hora))
 
 );
+
+
+const obtenerSlotSugerido = () => {
+
+  const slots = SLOT_GROUPS.flatMap((grupo) => grupo.slots);
+
+  const hoy = normalizeDate(new Date());
+
+  const diaSeleccionado = agendaState.selectedDate ? normalizeDate(agendaState.selectedDate) : hoy;
+
+  if (isSameDay(diaSeleccionado, hoy)) {
+
+    const minutosActuales = new Date().getHours() * 60 + new Date().getMinutes();
+
+    const siguiente = slots.find((slot) => slot.minutos >= minutosActuales);
+
+    if (siguiente) {
+
+      return siguiente;
+
+    }
+
+  }
+
+  return slots[0] || { hora: "09:00", minutos: 9 * 60 };
+
+};
+
+const listarProfesionalesParaSlots = () => {
+  const soloProfesionales = (lista) => lista.filter((p) => !esNoProfesional(p));
+
+  const catalogo = soloProfesionales(Array.from(profesionalesCatalogo.values()));
+  const delEstado = soloProfesionales(Array.from(agendaState.profesionales.values()));
+  const dedup = (lista) => {
+    const mapa = new Map();
+    lista.forEach((p) => {
+      if (!p) return;
+      const id = p.id || p.idUsuario || p._id;
+      if (id && !mapa.has(id)) {
+        mapa.set(id, { id, nombre: p.nombre || p.nombreCompleto || obtenerNombreProfesional(p) || "Profesional" });
+      }
+    });
+    return Array.from(mapa.values());
+  };
+
+  if (agendaState.isRecepcionista) {
+    const prefer = dedup(catalogo.length ? catalogo : delEstado);
+    if (prefer.length) return prefer;
+  }
+
+  if (agendaState.professionalId && agendaState.profesionales.has(agendaState.professionalId)) {
+    return [agendaState.profesionales.get(agendaState.professionalId)];
+  }
+
+  if (delEstado.length) {
+    return dedup(delEstado);
+  }
+
+  if (agendaState.professionalId) {
+    return [
+      {
+        id: agendaState.professionalId,
+        nombre: obtenerNombreProfesional(usuarioActual) || "Profesional"
+      }
+    ];
+  }
+
+  if (usuarioActual) {
+    return [
+      {
+        id: usuarioActual.idUsuario || usuarioActual._id || usuarioActual.id || null,
+        nombre: obtenerNombreProfesional(usuarioActual) || "Profesional"
+      }
+    ];
+  }
+
+  return [];
+};
+
+const getProfesionalSeleccionado = () => {
+  const id = agendaState.professionalId || null;
+  if (!id) return null;
+  const nombre =
+    profesionalesCatalogo.get(id)?.nombre ||
+    agendaState.profesionales.get(id)?.nombre ||
+    obtenerNombreProfesional(usuarioActual) ||
+    "Profesional";
+  return { id, nombre };
+};
 
 
 
@@ -609,6 +724,60 @@ const fetchJson = async (path, options = {}) => {
 };
 
 
+const cargarProfesionalesActivos = async () => {
+  try {
+    profesionalesCatalogo.clear();
+    agendaState.profesionales.forEach((_, key) => {
+      const info = agendaState.profesionales.get(key);
+      const rol = (info?.rolSistema || info?.rol || "").toLowerCase();
+      if (rol === "admin" || rol === "recepcionista") {
+        agendaState.profesionales.delete(key);
+      }
+    });
+
+    const respuesta = await fetchJson("/usuarios?limit=200");
+    const lista = Array.isArray(respuesta?.data) ? respuesta.data : [];
+
+    lista.forEach((profesional) => {
+      const rol = (profesional.rolSistema || profesional.rol || "").toLowerCase();
+      if (rol === "admin" || rol === "recepcionista") {
+        return;
+      }
+      const id =
+        profesional.idUsuario ||
+        profesional._id ||
+        profesional.id ||
+        (profesional.usuario &&
+          (profesional.usuario.idUsuario || profesional.usuario._id)) ||
+        null;
+
+      if (!id) {
+        return;
+      }
+
+      const nombre =
+        profesional.nombreCompleto ||
+        obtenerNombreProfesional(profesional) ||
+        obtenerNombreProfesional(profesional.usuario || {});
+
+      const info = {
+        id,
+        nombre: nombre && nombre.trim ? nombre.trim() : nombre || "Profesional",
+        rolSistema: profesional.rolSistema || profesional.rol || ""
+      };
+
+      profesionalesCatalogo.set(id, info);
+
+      agendaState.profesionales.set(id, info);
+    });
+
+    agendaState.profesionalesCargados = true;
+  } catch (error) {
+    console.warn("No se pudieron cargar los profesionales:", error);
+  }
+};
+
+
 
 const cacheAgendaElements = () => {
 
@@ -667,6 +836,8 @@ const cacheAgendaElements = () => {
   agendaElements.closePanelBtn = document.getElementById("closePanel");
 
   agendaElements.panelBackdrop = document.getElementById("panelBackdrop");
+
+  agendaElements.addAppointmentBtn = document.getElementById("addAppointmentBtn");
 
   agendaElements.addModal = document.getElementById("addAppointmentModal");
 
@@ -780,11 +951,19 @@ const setLoading = (isLoading) => {
 
 const resolverProfesionalDesdeCita = (cita = {}) => {
 
-  const referencia = cita.idUsuario;
+  const referencia = cita.idUsuario || cita.raw?.idUsuario;
 
   let idProfesional = null;
 
-  let nombreProfesional = cita.profesional || "";
+  let nombreProfesional = (cita.profesional || "").toString().trim();
+
+  const esNombreValido = (valor) => (valor && valor.trim().length >= 3);
+
+  const intentarAsignarNombre = (valor) => {
+    if (!esNombreValido(nombreProfesional) && esNombreValido(valor)) {
+      nombreProfesional = valor.trim();
+    }
+  };
 
 
 
@@ -796,19 +975,31 @@ const resolverProfesionalDesdeCita = (cita = {}) => {
 
     idProfesional = referencia.idUsuario || referencia._id || referencia.id || null;
 
-    if (!nombreProfesional) {
-
-      nombreProfesional = obtenerNombreProfesional(referencia);
-
-    }
+    intentarAsignarNombre(obtenerNombreProfesional(referencia));
 
   }
 
 
 
-  if (!nombreProfesional && usuarioActual && idProfesional === usuarioActual.idUsuario) {
+  if (idProfesional && agendaState.profesionales.has(idProfesional)) {
 
-    nombreProfesional = obtenerNombreProfesional(usuarioActual);
+    intentarAsignarNombre(agendaState.profesionales.get(idProfesional).nombre);
+
+  }
+
+
+
+  if (idProfesional && profesionalesCatalogo.has(idProfesional)) {
+
+    intentarAsignarNombre(profesionalesCatalogo.get(idProfesional).nombre);
+
+  }
+
+
+
+  if (usuarioActual && idProfesional === usuarioActual.idUsuario) {
+
+    intentarAsignarNombre(obtenerNombreProfesional(usuarioActual));
 
   }
 
@@ -1400,6 +1591,12 @@ const handlePacienteSearchFocus = (event) => {
 
 const getActiveProfessionalId = () => {
 
+  if (agendaState.slotSeleccionado?.professionalId) {
+
+    return agendaState.slotSeleccionado.professionalId;
+
+  }
+
   if (agendaState.professionalId) {
 
     return agendaState.professionalId;
@@ -1490,7 +1687,7 @@ const resetAddAppointmentForm = () => {
 
 };
 
-const openAddAppointmentModal = (slot) => {
+const openAddAppointmentModal = (slot, profesional = null) => {
 
   if (!agendaElements.addModal) {
 
@@ -1502,11 +1699,17 @@ const openAddAppointmentModal = (slot) => {
 
   const fechaSeleccionada = getSelectedDateForSlot();
 
+  const slotElegido = slot || obtenerSlotSugerido();
+
   agendaState.slotSeleccionado = {
 
     fecha: fechaSeleccionada,
 
-    hora: slot?.hora || ""
+    hora: slotElegido?.hora || "",
+
+    professionalId: profesional?.id || null,
+
+    professionalNombre: profesional?.nombre || null
 
   };
 
@@ -1518,7 +1721,7 @@ const openAddAppointmentModal = (slot) => {
 
   if (agendaElements.horaInput) {
 
-    agendaElements.horaInput.value = slot?.hora || "";
+    agendaElements.horaInput.value = slotElegido?.hora || "";
 
   }
 
@@ -1908,6 +2111,24 @@ const buildAppointmentNode = (cita, slot) => {
 
 
 
+  // Si es recepcionista, mostrar el profesional asignado.
+  const profesional = resolverProfesionalDesdeCita(cita);
+  const profesionalNombre = profesional?.nombre || cita.profesionalNombre || "";
+  const profesionalId = profesional?.id || null;
+  if (agendaState.isRecepcionista && profesionalNombre) {
+    const profesionalLine = document.createElement("p");
+    profesionalLine.className = "meta meta-prof";
+    profesionalLine.textContent = `Profesional: ${profesionalNombre}`;
+    if (profesionalId) {
+      profesionalLine.classList.add("is-clickable");
+      profesionalLine.title = "Ver calendario de este profesional";
+      profesionalLine.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        aplicarFiltroProfesional(profesionalId, profesionalNombre);
+      });
+    }
+    content.appendChild(profesionalLine);
+  }
   item.appendChild(content);
 
   const triggerEdit = () => openEditModal(cita);
@@ -1944,6 +2165,150 @@ const buildAppointmentNode = (cita, slot) => {
 
 };
 
+const buildHourAccordion = (slot, citas) => {
+  const card = document.createElement("div");
+  card.className = "hour-accordion-card";
+
+  const isFiltroProfesional = Boolean(agendaState.professionalId);
+  const isVistaRecepcionGeneral = agendaState.isRecepcionista && !isFiltroProfesional;
+  card.classList.add(isVistaRecepcionGeneral ? "is-recepcion-general" : "is-filtrado");
+  // Dejamos altura automática; CSS se encarga de mínimos.
+
+  // Determinar estado dominante del bloque para colorear
+  const prioridadEstado = (estado = "") => {
+    const e = estado.toLowerCase();
+    if (e.includes("cancel")) return 3;
+    if (e.includes("pend")) return 2;
+    if (e.includes("aten")) return 1;
+    return 0; // libre u otros
+  };
+  let slotEstado = "libre";
+  let maxPrio = -1;
+  citas.forEach((cita) => {
+    const est = (cita.estado || "").toLowerCase();
+    const pr = prioridadEstado(est);
+    if (pr > maxPrio) {
+      maxPrio = pr;
+      slotEstado = est || "libre";
+    }
+  });
+  if (citas.length === 0) slotEstado = "libre";
+  const estadoClass =
+    slotEstado.includes("cancel") ? "cancelada" :
+    slotEstado.includes("pend") ? "pendiente" :
+    slotEstado.includes("aten") ? "atendida" :
+    "libre";
+  if (isFiltroProfesional) {
+    card.classList.add(`slot-status-${estadoClass}`);
+  }
+
+  const header = document.createElement("div");
+  header.className = "hour-accordion__header";
+  if (isFiltroProfesional) {
+    header.classList.add(`slot-status-${estadoClass}`);
+    const headerBg = {
+      libre: "#eaf7ee",
+      pendiente: "#fff4d9",
+      atendida: "#e8f1ff",
+      cancelada: "#f3f3f3"
+    };
+    const headerBorder = {
+      libre: "#c8e6d0",
+      pendiente: "#f2d9a6",
+      atendida: "#c5dcff",
+      cancelada: "#d9d9d9"
+    };
+    header.style.backgroundColor = headerBg[estadoClass] || "#edf4ef";
+    header.style.borderColor = headerBorder[estadoClass] || "#d8e5db";
+  }
+
+  const timeLabel = document.createElement("span");
+  timeLabel.className = "hour-accordion__time";
+  timeLabel.textContent = slot.horaLabel || slot.hora || "Hora";
+  header.appendChild(timeLabel);
+
+  const count = document.createElement("span");
+  count.className = "hour-accordion__count";
+  let libres = [];
+  let totalLibres = 0;
+
+  if (!isFiltroProfesional) {
+    const profesionalesLista = listarProfesionalesParaSlots();
+    const ocupados = new Set(
+      citas
+        .map((cita) => cita.profesionalId)
+        .filter((id) => id !== null && id !== undefined)
+    );
+    libres = profesionalesLista.filter((prof) => prof.id && !ocupados.has(prof.id));
+    totalLibres = Math.max(profesionalesLista.length - ocupados.size, 0);
+  } else {
+    const profId = agendaState.professionalId;
+    const profNombre =
+      profesionalesCatalogo.get(profId)?.nombre ||
+      agendaState.profesionales.get(profId)?.nombre ||
+      obtenerNombreProfesional(usuarioActual);
+    const tieneCita = citas.some((c) => c.profesionalId === profId);
+    if (!tieneCita && profId) {
+      libres = [{ id: profId, nombre: profNombre || "Libre" }];
+      totalLibres = 1;
+    }
+  }
+
+  if (isFiltroProfesional) {
+    count.textContent = "";
+    count.style.display = "none";
+  } else {
+    count.textContent = `${citas.length} cita${citas.length === 1 ? "" : "s"}${
+      totalLibres > 0 ? ` · ${totalLibres} libre${totalLibres === 1 ? "" : "s"}` : ""
+    }`;
+    count.style.display = "";
+  }
+  header.appendChild(count);
+
+  const body = document.createElement("div");
+  body.className = "hour-accordion__body";
+
+  citas.forEach((cita) => {
+    const nodo = buildAppointmentNode(cita, slot);
+    body.appendChild(nodo);
+  });
+
+  // añadir huecos libres según profesionales disponibles
+  libres.forEach((prof) => {
+    body.appendChild(buildFreeSlotNode(slot, prof));
+  });
+
+  const setOpenState = (abierto) => {
+    body.hidden = !abierto;
+    header.classList.toggle("is-open", abierto);
+    header.setAttribute("aria-expanded", abierto ? "true" : "false");
+  };
+
+  if (isVistaRecepcionGeneral) {
+    header.classList.add("is-toggleable");
+    header.setAttribute("role", "button");
+    header.tabIndex = 0;
+    body.style.maxHeight = "280px";
+    body.style.overflowY = "auto";
+    setOpenState(false); // recepcionista: los acordeones empiezan cerrados
+    const toggle = () => setOpenState(body.hidden);
+    header.addEventListener("click", toggle);
+    header.addEventListener("keydown", (event) => {
+      if (!isActivationKey(event)) {
+        return;
+      }
+      event.preventDefault();
+      toggle();
+    });
+  } else {
+    header.classList.add("is-static");
+    setOpenState(true);
+  }
+
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
+};
 
 
 const openEditModal = (cita) => {
@@ -2066,13 +2431,15 @@ const handleEditFormSubmit = async (ev) => {
 
 
 
-const buildFreeSlotNode = (slot) => {
+const buildFreeSlotNode = (slot, profesional = null) => {
 
   const item = document.createElement("div");
 
   item.className = "apt free";
 
-  item.title = "Añadir cita";
+  const nombreProf = profesional?.nombre || null;
+
+  item.title = nombreProf ? `Añadir cita (${nombreProf})` : "Añadir cita";
 
   item.setAttribute("aria-label", "Añadir cita");
 
@@ -2081,6 +2448,10 @@ const buildFreeSlotNode = (slot) => {
   item.tabIndex = 0;
 
   item.dataset.slotHora = slot.hora;
+
+  if (profesional?.id) {
+    item.dataset.professionalId = profesional.id;
+  }
 
 
 
@@ -2108,7 +2479,7 @@ const buildFreeSlotNode = (slot) => {
 
   const title = document.createElement("h3");
 
-  title.textContent = "Espacio libre";
+  title.textContent = nombreProf ? `Libre · ${nombreProf}` : "Espacio libre";
 
   header.appendChild(title);
 
@@ -2132,7 +2503,7 @@ const buildFreeSlotNode = (slot) => {
 
   meta.className = "meta";
 
-  meta.textContent = "Disponible para nueva cita.";
+  meta.textContent = nombreProf ? `Disponible para ${nombreProf}` : "Disponible para nueva cita.";
 
   content.appendChild(meta);
 
@@ -2140,7 +2511,7 @@ const buildFreeSlotNode = (slot) => {
 
   item.appendChild(content);
 
-  const triggerCreate = () => openAddAppointmentModal(slot);
+  const triggerCreate = () => openAddAppointmentModal(slot, profesional);
 
   item.addEventListener("click", (event) => {
 
@@ -2238,6 +2609,8 @@ const citasPorHora = new Map();
   const wrapper = document.createElement("div");
 
   wrapper.className = "slot-columns";
+  const isRecepGeneral = agendaState.isRecepcionista && !agendaState.professionalId;
+  wrapper.style.gridAutoRows = isRecepGeneral ? "auto" : "var(--slot-row-height, 200px)";
 
 
 
@@ -2267,33 +2640,24 @@ const citasPorHora = new Map();
 
       const lista = citasPorHora.get(slot.hora) || [];
 
-      if (lista.length === 0) {
-
-        if (terminoNormalizado) {
-
-          return;
-
-        }
-
-        const libre = buildFreeSlotNode(slot);
-
-        columna.appendChild(libre);
-
+      if (agendaState.professionalId) {
+        // Con profesional filtrado: siempre mostramos la hora, con cita o libre
+        const fila = buildHourAccordion(slot, lista);
+        columna.appendChild(fila);
         elementosEnColumna += 1;
+        return;
+      }
+
+      if (lista.length === 0 && terminoNormalizado) {
 
         return;
 
       }
 
-      lista.forEach((cita) => {
-
-        const nodo = buildAppointmentNode(cita, slot);
-
-        columna.appendChild(nodo);
-
-        elementosEnColumna += 1;
-
-      });
+      // Un solo acordeón por hora para evitar repetir la hora muchas veces.
+      const acordeon = buildHourAccordion(slot, lista);
+      columna.appendChild(acordeon);
+      elementosEnColumna += 1;
 
     });
 
@@ -2727,36 +3091,74 @@ const poblarProfesionalesSelect = () => {
 
 
 
-  const profesionales = new Map(agendaState.profesionales);
+  // Preferimos el catálogo completo; si está vacío, usamos los presentes en las citas
+  const baseProfesionales =
+    profesionalesCatalogo.size > 0 ? profesionalesCatalogo : agendaState.profesionales;
+
+  const profesionales = new Map();
+  baseProfesionales.forEach((p, id) => {
+    if (!id || esNoProfesional(p)) return;
+    profesionales.set(id, p);
+  });
 
 
 
-  if (usuarioActual?.idUsuario && !profesionales.has(usuarioActual.idUsuario)) {
+  const rolUsuarioActual = (usuarioActual?.rolSistema || usuarioActual?.rol || "").toLowerCase();
+  const usuarioEsAdmin = rolUsuarioActual === "admin";
+  const usuarioEsRecep = rolUsuarioActual === "recepcionista";
+  const usuarioEsProfesionalSolo = !usuarioEsAdmin && !usuarioEsRecep;
 
-    profesionales.set(usuarioActual.idUsuario, {
+  // Vista de profesional: sólo su propia agenda, sin desplegable.
+  if (usuarioEsProfesionalSolo) {
+    const idPropio = usuarioActual?.idUsuario || usuarioActual?._id || usuarioActual?.id || null;
+    select.innerHTML = "";
+    const option = document.createElement("option");
+    option.value = idPropio || "";
+    option.textContent = obtenerNombreProfesional(usuarioActual) || "Profesional";
+    option.selected = true;
+    select.appendChild(option);
 
-      id: usuarioActual.idUsuario,
+    agendaState.professionalId = idPropio || null;
 
-      nombre: obtenerNombreProfesional(usuarioActual)
+    if (agendaElements.professionalBadge) {
+      agendaElements.professionalBadge.textContent = option.textContent || "Profesional";
+      agendaElements.professionalBadge.hidden = false;
+    }
 
-    });
+    select.classList.add("visually-hidden");
+    select.hidden = true;
+    select.disabled = true;
 
+    if (agendaElements.changeProfessionalBtn) {
+      agendaElements.changeProfessionalBtn.hidden = true;
+    }
+
+    return;
   }
 
+  let datosOrdenados = [];
 
+  if (usuarioActual?.idUsuario && !usuarioEsAdmin && !usuarioEsRecep && !profesionales.has(usuarioActual.idUsuario)) {
+    profesionales.set(usuarioActual.idUsuario, {
+      id: usuarioActual.idUsuario,
+      nombre: obtenerNombreProfesional(usuarioActual)
+    });
+  }
 
-  const datosOrdenados = Array.from(profesionales.values()).sort((a, b) =>
-
+  datosOrdenados = Array.from(profesionales.values()).sort((a, b) =>
     (a.nombre || "").localeCompare(b.nombre || "", "es", { sensitivity: "base" })
-
   );
 
-
-
-  const valorPrevio = agendaState.professionalId || usuarioActual?.idUsuario || "";
+  const valorPrevio =
+    agendaState.professionalId === null
+      ? ""
+      : agendaState.professionalId !== undefined
+        ? agendaState.professionalId
+        : usuarioEsRecep
+          ? ""
+          : usuarioActual?.idUsuario || "";
 
   select.innerHTML = "";
-
 
 
   if (datosOrdenados.length > 1) {
@@ -2777,15 +3179,15 @@ const poblarProfesionalesSelect = () => {
 
     const opcion = document.createElement("option");
 
-    opcion.value = usuarioActual?.idUsuario || "";
+    opcion.value = "";
 
-    opcion.textContent = obtenerNombreProfesional(usuarioActual) || "Profesional";
+    opcion.textContent = "Todos los profesionales";
 
     opcion.selected = true;
 
     select.appendChild(opcion);
 
-    agendaState.professionalId = opcion.value || null;
+    agendaState.professionalId = null;
 
     return;
 
@@ -2818,10 +3220,7 @@ const poblarProfesionalesSelect = () => {
     select.value = valorPrevio;
 
   }
-
-
-
-  agendaState.professionalId = select.value || null;
+  agendaState.professionalId = usuarioEsRecep && select.value === "" ? null : select.value || null;
 
   const selectedOption = select.options[select.selectedIndex] || null;
 
@@ -2833,7 +3232,7 @@ const poblarProfesionalesSelect = () => {
 
     agendaElements.professionalBadge.textContent = selectedName || "Profesional";
 
-    agendaElements.professionalBadge.hidden = hasMultiple;
+    agendaElements.professionalBadge.hidden = hasMultiple && !agendaState.isRecepcionista;
 
   }
 
@@ -2843,7 +3242,7 @@ const poblarProfesionalesSelect = () => {
 
   }
 
-  if (hasMultiple) {
+  if (hasMultiple || agendaState.isRecepcionista) {
 
     select.classList.remove("visually-hidden");
 
@@ -2860,8 +3259,31 @@ const poblarProfesionalesSelect = () => {
 };
 
 
+const aplicarFiltroProfesional = async (id, nombreFallback = "") => {
+  const select = agendaElements.professionalSelect;
+  agendaState.professionalId = id || null;
 
-const procesarCitas = (citas) => {
+  if (select) {
+    let option = Array.from(select.options).find((opt) => opt.value === (id || ""));
+    if (!option && id) {
+      option = document.createElement("option");
+      option.value = id;
+      option.textContent = nombreFallback || "Profesional";
+      select.appendChild(option);
+    }
+    select.value = id || "";
+  }
+
+  if (agendaElements.professionalBadge) {
+    agendaElements.professionalBadge.textContent = nombreFallback || select?.selectedOptions[0]?.textContent || "Profesional";
+  }
+
+  await cargarCitasMensuales(agendaState.panelOpen);
+};
+
+
+
+const procesarCitas = async (citas) => {
 
   const normalizadas = Array.isArray(citas)
 
@@ -2875,9 +3297,23 @@ const procesarCitas = (citas) => {
 
 
 
-  agendaState.citas = normalizadas;
+  const filtroProfesionalId = agendaState.professionalId || null;
+  const filtradas = filtroProfesionalId
+    ? normalizadas.filter((cita) => cita.profesionalId === filtroProfesionalId)
+    : normalizadas;
 
-  agendaState.citasPorDia = agruparCitasPorDia(normalizadas);
+  agendaState.citas = filtradas;
+
+  agendaState.citasPorDia = agruparCitasPorDia(filtradas);
+
+  if (!agendaState.profesionalesCargados) {
+    await cargarProfesionalesActivos();
+  }
+
+  const nombresPrevios = new Map([
+    ...profesionalesCatalogo,
+    ...agendaState.profesionales
+  ]);
 
   agendaState.profesionales.clear();
 
@@ -2885,16 +3321,45 @@ const procesarCitas = (citas) => {
 
   normalizadas.forEach((cita) => {
 
-    if (cita.profesionalId) {
+    if (!cita?.profesionalId) {
 
-      agendaState.profesionales.set(cita.profesionalId, {
+      return;
 
-        id: cita.profesionalId,
+    }
 
-        nombre: cita.profesionalNombre || "Profesional"
+    const nombreResuelto =
 
-      });
+      cita.profesionalNombre ||
 
+      nombresPrevios.get(cita.profesionalId)?.nombre ||
+
+      obtenerNombreProfesional(cita.raw?.idUsuario) ||
+
+      "";
+
+
+
+    if (!cita.profesionalNombre && nombreResuelto) {
+
+      cita.profesionalNombre = nombreResuelto;
+
+    }
+
+
+
+    const info = {
+
+      id: cita.profesionalId,
+
+      nombre: nombreResuelto || "Profesional",
+
+      rolSistema: cita.raw?.rolSistema || cita.raw?.rol || ""
+
+    };
+
+    if (!esNoProfesional(info)) {
+      agendaState.profesionales.set(cita.profesionalId, info);
+      profesionalesCatalogo.set(cita.profesionalId, info);
     }
 
   });
@@ -2982,9 +3447,9 @@ const cargarCitasMensuales = async (options) => {
 
 
   if (agendaState.professionalId) {
-
     params.set("idUsuario", agendaState.professionalId);
-
+  } else {
+    params.delete("idUsuario");
   }
 
 
@@ -3009,7 +3474,7 @@ const cargarCitasMensuales = async (options) => {
 
     console.log("Citas recibidas:", citas.length);
 
-    procesarCitas(Array.isArray(citas) ? citas : []);
+    await procesarCitas(Array.isArray(citas) ? citas : []);
 
     renderCalendar();
 
@@ -3331,15 +3796,15 @@ const attachEventListeners = () => {
 
       const value = event.target.value;
 
-      agendaState.professionalId = value || null;
+      const text = (event.target.selectedOptions[0]?.textContent || "").trim();
 
-      if (agendaState.professionalId) {
+      if (value) {
 
-        actualizarUsuarioLocal({ idUsuario: agendaState.professionalId });
+        actualizarUsuarioLocal({ idUsuario: value });
 
       }
 
-      cargarCitasMensuales(agendaState.panelOpen);
+      aplicarFiltroProfesional(value || null, text);
 
     });
 
@@ -3350,6 +3815,14 @@ const attachEventListeners = () => {
   if (agendaElements.searchInput) {
 
     agendaElements.searchInput.addEventListener("input", handleSearchInput);
+
+  }
+
+
+
+  if (agendaElements.addAppointmentBtn) {
+
+    agendaElements.addAppointmentBtn.addEventListener("click", () => openAddAppointmentModal(obtenerSlotSugerido()));
 
   }
 
@@ -3561,7 +4034,7 @@ const attachEventListeners = () => {
 
 
 
-const initAgenda = () => {
+const initAgenda = async () => {
 
   cacheAgendaElements();
 
@@ -3583,7 +4056,9 @@ const initAgenda = () => {
 
   usuarioActual = user;
 
-  agendaState.professionalId = user.idUsuario || null;
+  const rolLower = (user.rolSistema || "").toLowerCase();
+  agendaState.isRecepcionista = rolLower === "recepcionista";
+  agendaState.professionalId = agendaState.isRecepcionista ? null : user.idUsuario || null;
 
   agendaState.selectedDate = normalizeDate(new Date());
 
@@ -3601,27 +4076,13 @@ const initAgenda = () => {
 
   attachEventListeners();
 
+  await cargarProfesionalesActivos();
+
   poblarProfesionalesSelect();
 
   renderCalendar();
 
-  cargarCitasMensuales(false);
-
-  if (window.LiveRefresh?.start) {
-
-    LiveRefresh.start(() => cargarCitasMensuales(agendaState.panelOpen), {
-
-      intervalMs: 12000,
-
-      immediate: false,
-
-      label: "agenda-citas",
-
-      shouldRun: () => !document.querySelector(".modal-overlay:not([hidden])")
-
-    });
-
-  }
+  await cargarCitasMensuales(false);
 
 };
 

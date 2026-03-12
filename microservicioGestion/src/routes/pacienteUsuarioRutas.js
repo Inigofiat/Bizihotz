@@ -2,6 +2,7 @@ const express = require('express');
 const PacienteUsuario = require('../models/pacienteUsuarioModelo');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
+const { permitirRoles, ROLES } = require('../middlewares/authorize');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const handleError = (res, error, defaultMessage) => {
   return res.status(status).json({ mensaje });
 };
 
-router.get('/', async (req, res) => {
+router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { idPaciente, idUsuario } = req.query;
     const filtro = {};
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'relación paciente-usuario');
@@ -52,7 +53,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { idPaciente, idUsuario } = req.body;
     ensureValidObjectId(idPaciente, 'paciente');
@@ -66,7 +67,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'relación paciente-usuario');

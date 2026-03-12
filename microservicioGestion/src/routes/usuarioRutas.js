@@ -4,9 +4,11 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const bcrypt = require("bcryptjs");
 const { Types } = require("mongoose");
 
 const Usuario = require("../models/usuarioModel");
+const { permitirRoles, ROLES } = require("../middlewares/authorize");
 
 const router = express.Router();
 
@@ -44,7 +46,17 @@ const buildSearchFilter = (term) => {
   };
 };
 
-router.get("/", async (req, res, next) => {
+const isAdminRequest = (req) => {
+  const rolSistema = req?.user?.rolSistema || "";
+  return rolSistema.toLowerCase() === ROLES.ADMIN.toLowerCase();
+};
+
+const isSelfOrAdmin = (req, targetId) => {
+  const isSelf = req.user && String(req.user.idUsuario || req.user.id) === String(targetId);
+  return isSelf || isAdminRequest(req);
+};
+
+router.get("/", permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res, next) => {
   try {
     const { q = "", limit = "12" } = req.query;
     const search = String(q || "").trim();
@@ -63,12 +75,17 @@ router.get("/", async (req, res, next) => {
     const usuarios = await Usuario.find(filter)
       .sort({ nombre: 1, apellidos: 1, nombreUsuario: 1 })
       .limit(maxLimit)
-      .select("nombre apellidos nombreUsuario email telefono rol foto");
+      .select("nombre apellidos nombreUsuario email telefono rol rolSistema foto");
 
-    const data = usuarios.map((usuario) => {
-      const nombre = usuario.nombre?.trim() || "";
-      const apellidos = usuario.apellidos?.trim() || "";
-      const nombreCompleto = `${nombre} ${apellidos}`.trim() || usuario.nombreUsuario;
+    const data = usuarios
+      .filter((usuario) => {
+        const rol = (usuario.rolSistema || usuario.rol || "").toLowerCase();
+        return rol !== "administrador" && rol !== "admin" && rol !== "recepcionista";
+      })
+      .map((usuario) => {
+        const nombre = usuario.nombre?.trim() || "";
+        const apellidos = usuario.apellidos?.trim() || "";
+        const nombreCompleto = `${nombre} ${apellidos}`.trim() || usuario.nombreUsuario;
 
       return {
         idUsuario: usuario._id.toString(),
@@ -79,9 +96,10 @@ router.get("/", async (req, res, next) => {
         email: usuario.email,
         telefono: usuario.telefono ?? "",
         rol: usuario.rol,
+        rolSistema: usuario.rolSistema || "",
         foto: usuario.foto ?? ""
       };
-    });
+      });
 
     return res.json({ data });
   } catch (error) {
@@ -109,6 +127,7 @@ const buildUserResponse = (usuario) => {
     nombreUsuario: plain.nombreUsuario,
     email: plain.email,
     rol: plain.rol,
+    rolSistema: plain.rolSistema || ROLES.PROFESIONAL,
     nombre: plain.nombre ?? "",
     apellidos: plain.apellidos ?? "",
     telefono: plain.telefono ?? "",
@@ -118,6 +137,68 @@ const buildUserResponse = (usuario) => {
   };
 };
 
+// Crear profesional (solo admin).
+router.post(
+  "/",
+  permitirRoles(ROLES.ADMIN),
+  async (req, res, next) => {
+    try {
+      const {
+        nombre,
+        apellidos,
+        telefono,
+        email,
+        nombreUsuario,
+        password,
+        rol,
+        rolSistema,
+        foto,
+        activo
+      } = req.body ?? {};
+
+      if (!email || !nombreUsuario || !password) {
+        return res.status(400).json({
+          mensaje: "Nombre de usuario, email y contraseña son obligatorios."
+        });
+      }
+
+      if (String(password).length < 8) {
+        return res.status(400).json({
+          mensaje: "La contraseña debe tener al menos 8 caracteres."
+        });
+      }
+
+      const existing = await Usuario.findOne({ email: email.toLowerCase().trim() });
+      if (existing) {
+        return res.status(409).json({ mensaje: "Ya existe un usuario con ese email." });
+      }
+
+      const passwordHash = await bcrypt.hash(String(password), 12);
+      const usuario = new Usuario({
+        nombre,
+        apellidos,
+        telefono,
+        email: email.toLowerCase().trim(),
+        nombreUsuario: nombreUsuario.trim(),
+        passwordHash,
+        rol: rol || "Nutricionista",
+        rolSistema: rolSistema || ROLES.PROFESIONAL,
+        foto: foto || "",
+        activo: typeof activo === "boolean" ? activo : true,
+        debeActualizarPassword: false
+      });
+
+      const creado = await usuario.save();
+      return res.status(201).json({
+        mensaje: "Usuario creado correctamente.",
+        usuario: buildUserResponse(creado)
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
 router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -126,12 +207,24 @@ router.put("/:id", async (req, res, next) => {
       return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
     }
 
-    if (!req.user || String(req.user.idUsuario) !== String(id)) {
-      return res.status(403).json({ mensaje: "No puedes modificar otro usuario." });
+    const admin = isAdminRequest(req);
+    const isSelf = req.user && String(req.user.idUsuario || req.user.id) === String(id);
+
+    if (!req.user || (!isSelf && !admin)) {
+      return res.status(403).json({ mensaje: "No puedes modificar este usuario." });
     }
 
     // El rol no se puede modificar desde la edicion de perfil.
-    const { nombre, apellidos, telefono, email, nombreUsuario } = req.body ?? {};
+    const {
+      nombre,
+      apellidos,
+      telefono,
+      email,
+      nombreUsuario,
+      rol,
+      rolSistema,
+      activo
+    } = req.body ?? {};
 
     const usuario = await Usuario.findById(id);
     if (!usuario) {
@@ -150,10 +243,50 @@ router.put("/:id", async (req, res, next) => {
     applyIfPresent("email", email, (val) => val.toLowerCase().trim());
     applyIfPresent("nombreUsuario", nombreUsuario);
 
+    if (admin) {
+      applyIfPresent("rol", rol);
+      if (typeof rolSistema === "string" && rolSistema.trim().length > 0) {
+        usuario.rolSistema = rolSistema.trim();
+      }
+      if (typeof activo === "boolean") {
+        usuario.activo = activo;
+      }
+    }
+
     await usuario.save();
 
     return res.json({
       mensaje: "Perfil actualizado correctamente.",
+      usuario: buildUserResponse(usuario)
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// Activar/desactivar profesional (solo admin).
+router.patch("/:id/estado", permitirRoles(ROLES.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { activo } = req.body ?? {};
+
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
+    }
+    if (typeof activo !== "boolean") {
+      return res.status(400).json({ mensaje: "El campo 'activo' debe ser booleano." });
+    }
+
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    }
+
+    usuario.activo = activo;
+    await usuario.save();
+
+    return res.json({
+      mensaje: activo ? "Usuario activado." : "Usuario desactivado.",
       usuario: buildUserResponse(usuario)
     });
   } catch (error) {
@@ -226,6 +359,11 @@ router.post("/:id/avatar", upload.single("avatar"), async (req, res, next) => {
       return res.status(400).json({ mensaje: "No se recibio ninguna imagen." });
     }
 
+    if (!isSelfOrAdmin(req, id)) {
+      await deleteFileIfExists(req.file.path);
+      return res.status(403).json({ mensaje: "No puedes modificar el avatar de otro usuario." });
+    }
+
     const usuario = await Usuario.findById(id);
 
     if (!usuario) {
@@ -267,6 +405,10 @@ router.delete("/:id/avatar", async (req, res, next) => {
 
     if (!Types.ObjectId.isValid(id)) {
       return res.status(400).json({ mensaje: "Identificador de usuario no valido." });
+    }
+
+    if (!isSelfOrAdmin(req, id)) {
+      return res.status(403).json({ mensaje: "No puedes eliminar el avatar de otro usuario." });
     }
 
     const usuario = await Usuario.findById(id);

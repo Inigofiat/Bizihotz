@@ -1130,6 +1130,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Limitamos el menú para recepcionistas: solo Agenda y Nuevo paciente.
+  if ((usuarioActual?.rolSistema || "").toLowerCase() === "recepcionista") {
+    const allowed = new Set(["agenda", "nuevo-paciente"]);
+    document.querySelectorAll(".nav-button").forEach((btn) => {
+      const nav = btn.dataset.nav;
+      if (!allowed.has(nav)) {
+        btn.style.display = "none";
+      }
+    });
+    const currentPage = window.location.pathname.split("/").pop();
+    if (!["agenda.html", "nuevoPaciente.html", "principal.html", ""].includes(currentPage)) {
+      window.location.href = "agenda.html";
+      return;
+    }
+  }
+
 
   PerfilModal.prepararModalPerfil(handleLogout, {
     getUsuarioActual: () => usuarioActual,
@@ -1139,8 +1155,6 @@ document.addEventListener("DOMContentLoaded", () => {
     apiFallback: API_FALLBACK
   });
 
-  if (user?.debeActualizarPassword) {
-    window.location.href = "perfil.html?force=1";
-    return;
-  }
+  // Antes se forzaba abrir perfil si debeActualizarPassword=true; lo desactivamos para no interrumpir el flujo inicial.
+  // El usuario podrá actualizarla desde su perfil cuando lo decida.
 });

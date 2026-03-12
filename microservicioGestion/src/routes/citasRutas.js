@@ -3,6 +3,7 @@ const Cita = require('../models/citaModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 const { ensureEstadoValido, deriveEstadoDesdeAtendida } = require('../utils/estadoCita');
+const { permitirRoles, ROLES } = require('../middlewares/authorize');
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ const buildCitaPayload = (payload = {}) => {
   return prepared;
 };
 
-router.get('/', async (req, res) => {
+router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { idPaciente, idUsuario, fechaDesde, fechaHasta, atendida } = req.query;
     const filtro = {};
@@ -81,11 +82,16 @@ router.get('/', async (req, res) => {
 
     const citas = await Cita.find(filtro)
       .populate({ path: "idPaciente", select: "nombrePaciente apellidos" })
-      .populate({ path: "idUsuario", select: "nombre nombreUsuario apellidos" })
+      .populate({ path: "idUsuario", select: "nombre nombreUsuario apellidos rolSistema" })
       .sort({ fechaCita: 1, hora: 1 })
       .lean({ virtuals: true });
 
-    const transformadas = citas.map((cita) => {
+    const soloProfesionales = citas.filter((cita) => {
+      const rol = (cita.idUsuario?.rolSistema || "").toLowerCase();
+      return rol !== ROLES.ADMIN.toLowerCase() && rol !== ROLES.RECEPCIONISTA.toLowerCase();
+    });
+
+    const transformadas = soloProfesionales.map((cita) => {
       const pacienteRef = cita.idPaciente;
       const usuarioRef = cita.idUsuario;
 
@@ -118,7 +124,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'cita');
@@ -134,7 +140,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { idPaciente, idUsuario } = req.body;
     ensureValidObjectId(idPaciente, 'paciente');
@@ -149,7 +155,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     // Verificar que la petición venga del Gateway en ambientes de producción.
     // Permitir accesos directos solo si la variable ALLOW_DIRECT está establecida a 'true' (desarrollo).
@@ -190,7 +196,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'cita');
@@ -227,7 +233,7 @@ router.patch('/:id', async (req, res) => {
     return handleError(res, error, 'Error al actualizar la cita');
   }
 });
-router.patch('/:id/atendida', async (req, res) => {
+router.patch('/:id/atendida', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     const { atendida } = req.body;
@@ -257,7 +263,7 @@ router.patch('/:id/atendida', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'cita');

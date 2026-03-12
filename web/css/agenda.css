@@ -1,4 +1,4 @@
-:root {
+﻿:root {
 
   --bg: hsl(108, 100%, 98%);          
 
@@ -25,6 +25,8 @@
   --radius: 12px;
 
   --shadow: 0 4px 20px rgba(0,0,0,.25);
+  --slot-row-height: 180px;
+  --slot-card-height: 120px;
 
 }
 
@@ -806,6 +808,26 @@ body.modal-open {
 
 }
 
+.side-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+}
+
+#addAppointmentBtn {
+
+  padding: 8px 12px;
+
+  font-weight: 700;
+
+  font-size: 13px;
+
+}
+
 .side-header > div:first-child {
 
   display: flex;
@@ -887,25 +909,20 @@ body.modal-open {
   overflow-x: hidden;
 
   min-height: 0;
+  flex: 1;
+  max-height: none;
 
   padding-right: 0;
 
 }
 
 .slot-columns {
-
   display: grid;
-
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 12px 16px;
-
+  gap: 10px 14px;
   align-items: start;
-
   width: 100%;
-
   box-sizing: border-box;
-
 }
 
 .slot-column {
@@ -914,7 +931,7 @@ body.modal-open {
 
   flex-direction: column;
 
-  gap: 12px;
+  gap: 10px;
 
   min-width: 0;
 
@@ -922,7 +939,7 @@ body.modal-open {
 
 .slot-section-title {
 
-  font-size: 15px;
+  font-size: 14px;
 
   font-weight: 800;
 
@@ -932,7 +949,7 @@ body.modal-open {
 
   color: #335346;
 
-  padding: 4px 0;
+  padding: 2px 0;
 
   margin: 0;
 
@@ -990,15 +1007,15 @@ body.modal-open {
 
 .apt:hover { cursor: pointer; }
 
-.apt {
+ .apt {
 
   display: grid;
 
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 52px 1fr;
 
-  gap: 10px;
+  gap: 4px;
 
-  padding: 10px 12px;
+  padding: 6px 8px;
 
   background: rgba(244, 250, 246, 0.96);
 
@@ -1006,15 +1023,16 @@ body.modal-open {
 
   border-radius: 12px;
 
-  box-shadow: 0 6px 18px rgba(24, 58, 32, 0.10);
+  box-shadow: 0 2px 8px rgba(24, 58, 32, 0.05);
 
-  min-height: 96px;
+  min-height: 64px;
 
-  max-height: 96px;
+  max-height: none;
 
-  overflow: hidden;
+  overflow: auto;
 
-  align-items: center;
+  align-items: flex-start;
+  height: 100%;
 
 }
 
@@ -1024,7 +1042,7 @@ body.modal-open {
 
   color: #4c6157;
 
-  font-size: 14px;
+  font-size: 13px;
 
   display: flex;
 
@@ -1040,23 +1058,23 @@ body.modal-open {
 
   flex-direction: column;
 
-  gap: 6px;
+  gap: 2px;
 
-  overflow: hidden;
+  overflow: visible;
 
-  justify-content: center;
+  justify-content: flex-start;
 
 }
 
 .apt h3 {
 
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 
   color: #203429;
 
-  font-size: 14px;
+  font-size: 13px;
 
-  line-height: 1.1;
+  line-height: 1.12;
 
 }
 
@@ -1064,9 +1082,9 @@ body.modal-open {
 
   color: #203429;
 
-  font-size: 13px;
+  font-size: 12.5px;
 
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 
   overflow: hidden;
 
@@ -1088,7 +1106,7 @@ body.modal-open {
 
   align-items: center;
 
-  gap: 10px;
+  gap: 8px;
 
 }
 
@@ -1096,7 +1114,7 @@ body.modal-open {
 
   margin-left: auto;
 
-  font-size: 12px;
+  font-size: 11.5px;
 
   padding: 4px 8px;
 
@@ -1656,11 +1674,11 @@ body.modal-open {
 
 
 
-/* ======= AÑADIDOS MÍNIMOS ======= */
+/* ======= AÃ‘ADIDOS MÃNIMOS ======= */
 
 
 
-/* botón rojo para borrar cita */
+/* botÃ³n rojo para borrar cita */
 
 .btn-danger {
 
@@ -1678,7 +1696,7 @@ body.modal-open {
 
 
 
-/* modal de confirmación algo más compacto (mismo look) */
+/* modal de confirmaciÃ³n algo mÃ¡s compacto (mismo look) */
 
 .modal-confirm { max-width: 420px; width: min(420px, 100%); }
 
@@ -1842,3 +1860,52 @@ body.modal-open {
 .month-picker--months #monthPickerFooter {
   display: flex !important;
 }
+
+/* Accordion por hora para recepcionista */
+.hour-accordion { padding: 0; border: none; box-shadow: none; background: transparent; }
+.hour-accordion-card { width: 100%; display: flex; flex-direction: column; height: auto; min-height: 64px; }
+.hour-accordion-card.is-filtrado { height: auto; min-height: 110px; }
+.hour-accordion-card.is-recepcion-general { height: auto; min-height: 64px; }
+.hour-accordion__header { width: 100%; text-align: left; padding: 8px 10px; background: #edf4ef; border: 1px solid #d8e5db; border-radius: 10px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; cursor: default; flex-shrink: 0; }
+.hour-accordion__header.is-open { background: #d8e5db; }
+ .hour-accordion__count { font-weight: 600; color: #0f6a3f; }
+ .hour-accordion__body { margin-top: 8px; display: grid; gap: 6px; flex: 1; overflow: visible; align-content: stretch; grid-auto-rows: var(--slot-card-height, 180px); }
+.hour-accordion .apt { border: 1px solid #d8e5db; }
+
+/* Colores por estado en vista profesional */
+.slot-status-libre .hour-accordion__header,
+.slot-status-libre.hour-accordion__header { background: #eaf7ee; border-color: #c8e6d0; }
+.slot-status-pendiente .hour-accordion__header,
+.slot-status-pendiente.hour-accordion__header { background: #fff4d9; border-color: #f2d9a6; }
+.slot-status-atendida .hour-accordion__header,
+.slot-status-atendida.hour-accordion__header { background: #e8f1ff; border-color: #c5dcff; }
+.slot-status-cancelada .hour-accordion__header,
+.slot-status-cancelada.hour-accordion__header { background: #f3f3f3; border-color: #d9d9d9; }
+
+
+
+/* Acordeón de horas (recepcionista) */
+.hour-accordion { padding: 0; border: none; background: transparent; box-shadow: none; }
+.hour-accordion__header { width: 100%; text-align: left; padding: 7px 10px; border-radius: 12px; border: 1px solid #d8e5db; background: linear-gradient(180deg, #f6fbf7 0%, #e9f3ec 100%); font-weight: 700; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease; color: #0b4331; flex-shrink: 0; }
+.hour-accordion__header.is-open { background: #d8e5db; border-color: #c0d6c6; }
+.hour-accordion__header::after { display: none; }
+.hour-accordion__header.is-open::after { transform: none; }
+.hour-accordion__count { font-weight: 600; color: #0f6a3f; margin-left: auto; }
+.hour-accordion__body { margin-top: 6px; display: grid; gap: 4px; flex: 1; overflow: visible; align-content: stretch; grid-auto-rows: auto; }
+.hour-accordion-card.is-recepcion-general .hour-accordion__body { grid-auto-rows: auto; }
+.hour-accordion-card.is-filtrado .hour-accordion__body { grid-auto-rows: minmax(var(--slot-card-height, 120px), 1fr); align-items: stretch; }
+.hour-accordion__body > * { height: auto; overflow: visible; }
+.hour-accordion-card.is-recepcion-general .hour-accordion__body > * { height: auto; overflow: visible; }
+.hour-accordion-card.is-filtrado .hour-accordion__body > * { height: 100%; }
+.hour-accordion__body[hidden] { display: none !important; }
+.hour-accordion__header.is-static { cursor: default; }
+.hour-accordion__header.is-toggleable { cursor: pointer; }
+.hour-accordion__header.is-toggleable::after { display: inline-block; content: "\25be"; margin-left: 8px; font-size: 12px; transition: transform 0.2s ease; }
+.hour-accordion__header.is-open.is-toggleable::after { transform: rotate(180deg); }
+.hour-accordion .apt { border: 1px solid #d8e5db; }
+
+
+
+.apt .meta.meta-prof { font-size: 12px; color: #1c4733; font-weight: 600; }
+.apt .meta.meta-prof.is-clickable { text-decoration: underline; cursor: pointer; }
+

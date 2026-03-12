@@ -1,5 +1,13 @@
 "use strict";
 
+try {
+  const _u = JSON.parse(localStorage.getItem("bizihotzUsuario") || "null");
+  if ((_u?.rolSistema || "").toLowerCase() === "recepcionista") {
+    window.location.href = "agenda.html";
+  }
+} catch (_e) {
+  window.location.href = "login.html";
+}
 const buildGestionBases = () => {
   const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
   const hostname = (window.location.hostname || "localhost").toLowerCase();
@@ -3195,4 +3203,5 @@ const loadPacienteDietas = async (paciente) => {
     setHistorialDietaState(false);
   }
 };
+
 

@@ -47,7 +47,8 @@ router.post("/login", async (req, res, next) => {
       idUsuario: usuarioPlano.idUsuario,
       nombreUsuario: usuarioPlano.nombreUsuario,
       email: usuarioPlano.email,
-      rol: usuarioPlano.rol
+      rol: usuarioPlano.rol,
+      rolSistema: usuarioPlano.rolSistema || "Profesional del centro"
     };
     const token = signToken(authPayload);
 

@@ -48,6 +48,7 @@ const buildUsuarioDocs = (seedUsuarios, passwordHash) => {
       email,
       telefono: profesional.telefono ?? "",
       rol: profesional.rol ?? "Nutricionista",
+      rolSistema: profesional.rolSistema ?? "Profesional del centro",
       foto: profesional.foto ?? "",
       passwordHash: profesional.passwordHash ?? passwordHash,
       activo: profesional.activo ?? true,
@@ -67,6 +68,22 @@ const ensureDefaultUsers = async () => {
   const profesionalesSeed = JSON.parse(contenidoSeed);
   const hashComun = await bcrypt.hash(DEFAULT_PASSWORD, 12);
   const usuariosDocuments = buildUsuarioDocs(profesionalesSeed, hashComun);
+
+  // Administrador inicial para poder gestionar profesionales desde el panel.
+  usuariosDocuments.push({
+    nombreUsuario: "admin",
+    nombre: "Administrador",
+    apellidos: "Bizihotz",
+    email: "admin@bizihotz.com",
+    telefono: "",
+    rol: "Administrador",
+    rolSistema: "Administrador",
+    foto: "",
+    passwordHash: hashComun,
+    activo: true,
+    debeActualizarPassword: true,
+    ultimoCambioPassword: null
+  });
 
   await Usuario.insertMany(usuariosDocuments);
   return true;

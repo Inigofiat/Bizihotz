@@ -10,6 +10,13 @@ const usuarioSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     telefono: { type: String, default: "", trim: true },
     rol: { type: String, required: true, default: "Nutricionista", trim: true },
+    // Perfil de acceso (RBAC). Separado del rol profesional/área.
+    rolSistema: {
+      type: String,
+      enum: ["Profesional del centro", "Administrador", "Recepcionista"],
+      default: "Profesional del centro",
+      trim: true
+    },
     foto: { type: String, default: "" },
     passwordHash: { type: String, required: true },
     activo: { type: Boolean, default: true },
@@ -26,6 +33,10 @@ usuarioSchema.set("toJSON", {
     ret.idUsuario = ret._id;
     delete ret._id;
     delete ret.passwordHash;
+    // Aseguramos que los documentos antiguos sin rolSistema sigan funcionando como "Profesional del centro".
+    if (!ret.rolSistema) {
+      ret.rolSistema = "Profesional del centro";
+    }
   }
 });
 

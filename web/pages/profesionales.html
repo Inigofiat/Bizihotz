@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de profesionales</title>
+  <link rel="stylesheet" href="../css/principal.css" />
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: #effff4; }
+    header { background: #12814c; color: #fff; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+    .container { max-width: 1180px; margin: 24px auto 32px; padding: 0 18px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 12px 28px rgba(0,0,0,0.08); padding: 18px 20px; margin-bottom: 18px; border: 1px solid #e3eee8; }
+    .card h2 { margin: 0 0 12px; color: #0f6a3f; }
+    .table-wrapper { max-height: 520px; overflow-y: auto; border: 1px solid #e3eee8; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e3eee8; text-align: left; }
+    th { background: #e7f4ec; color: #0f5132; position: sticky; top: 0; z-index: 1; }
+    tr:nth-child(even) td { background: #f7fbf8; }
+    tr:nth-child(odd) td { background: #eef7f1; }
+    .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #12814c; color: #fff; border-color: #0f6a3f; }
+    .btn-primary:hover { background: #0f6a3f; }
+    .btn-outline { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+    .btn-outline:hover { background: #e2f3e8; }
+    .btn-danger { background: #d92d20; color: #fff; border-color: #b42318; }
+    .btn-danger:hover { background: #b42318; }
+    .actions button { margin-right: 6px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .badge-admin { background: #0f6a3f; color: #fff; }
+    .badge-recep { background: #d97706; color: #fff; }
+    .badge-prof { background: #0ea86a; color: #fff; }
+    form input, form select { width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+    form button { margin-top: 4px; padding: 11px 16px; background: #12814c; color: #fff; border: none; border-radius: 8px; cursor: pointer; min-width: 110px; }
+    form button:hover { background: #0f6a3f; }
+    .feedback { margin-top: 8px; color: #dc2626; }
+    .toolbar { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); align-items: center; }
+    .toolbar .full { grid-column: 1 / -1; max-width: 280px; }
+    .pill { background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; padding: 6px 12px; }
+    /* Confirm modal */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; }
+    .confirm-card { background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 30px 60px rgba(0,0,0,0.18); max-width: 420px; width: 90%; }
+    .confirm-card p { margin: 0 0 18px; font-size: 18px; color: #111827; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .confirm-actions .btn { min-width: 140px; font-size: 15px; }
+    .btn-neutral { background: #d1d5db; color: #111827; border-color: #cbd5e1; }
+    .btn-neutral:hover { background: #c5c9d1; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>Gestión de profesionales</div>
+    <button id="logoutBtn" class="btn btn-primary">Cerrar sesión</button>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Alta rápida</h2>
+      <form id="createForm">
+        <div class="toolbar">
+          <input id="nombreUsuario" placeholder="Usuario" required />
+          <input id="email" type="email" placeholder="Email" required />
+          <input id="password" type="password" placeholder="Contraseña" required />
+          <select id="rolSistema">
+            <option>Profesional del centro</option>
+            <option>Administrador</option>
+            <option>Recepcionista</option>
+          </select>
+          <input id="rol" placeholder="Rol descriptivo" value="Nutricionista" />
+          <button type="submit">Crear</button>
+        </div>
+        <div id="formFeedback" class="feedback"></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Profesionales</h2>
+      <div id="listFeedback" class="feedback"></div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol sistema</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div id="confirmOverlay" class="confirm-overlay" hidden>
+    <div class="confirm-card">
+      <p id="confirmMessage">¿Seguro?</p>
+      <div class="confirm-actions">
+        <button id="confirmAccept" class="btn btn-primary">Aceptar</button>
+        <button id="confirmCancel" class="btn btn-neutral">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/profesionales.js"></script>
+</body>
+</html>

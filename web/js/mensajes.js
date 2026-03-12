@@ -1,5 +1,14 @@
 "use strict";
 
+// Guard recepcionista: solo agenda y nuevo paciente.
+try {
+  const _u = JSON.parse(localStorage.getItem("bizihotzUsuario") || "null");
+  if ((_u?.rolSistema || "").toLowerCase() === "recepcionista") {
+    window.location.href = "agenda.html";
+  }
+} catch (_e) {
+  window.location.href = "login.html";
+}
 // Refresca solo al reentrar (volver a la pestaña o bfcache), no cada X segundos.
 (() => {
   let shouldReload = false;
@@ -2166,3 +2175,4 @@ const attemptReconnect = (delay = 5000) => {
 
   document.addEventListener("DOMContentLoaded", boot);
 })();
+

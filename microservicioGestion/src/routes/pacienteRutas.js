@@ -6,6 +6,7 @@ const HistorialPaciente = require('../models/historialPacienteModel');
 const RegistroAntropometrico = require('../models/registroAntropometricoModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
+const { permitirRoles, ROLES } = require('../middlewares/authorize');
 
 const router = express.Router();
 
@@ -82,7 +83,7 @@ const buildSortCriteria = (value) => {
   return { [field]: direction === 'asc' ? 1 : -1 };
 };
 
-router.get('/', async (req, res) => {
+router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { buscar, page, limit, sort, estado } = req.query;
     const pageNumber = parsePositiveInt(page, null);
@@ -238,7 +239,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id/resumen', async (req, res) => {
+router.get('/:id/resumen', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');
@@ -384,7 +385,7 @@ router.get('/:id/resumen', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');
@@ -400,7 +401,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const payload = sanitizePacientePayload(req.body);
     const paciente = new Paciente(payload);
@@ -411,7 +412,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');
@@ -433,9 +434,9 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.post('/:id/baja', setPacienteStandby);
+router.post('/:id/baja', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), setPacienteStandby);
 // Alias más semántico para pasar a standby sin eliminar.
-router.post('/:id/standby', setPacienteStandby);
+router.post('/:id/standby', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), setPacienteStandby);
 
 // Helper compartido para poner a un paciente en standby (sin eliminarlo).
 async function setPacienteStandby(req, res) {
@@ -473,7 +474,7 @@ async function setPacienteStandby(req, res) {
   }
 }
 
-router.post('/:id/reactivar', async (req, res) => {
+router.post('/:id/reactivar', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');
@@ -505,7 +506,7 @@ router.post('/:id/reactivar', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
   try {
     const { id } = req.params;
     ensureValidObjectId(id, 'paciente');

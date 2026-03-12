@@ -121,8 +121,13 @@
           }
         }
 
+        const rolSistema = (data?.usuario?.rolSistema || "").toLowerCase();
         showMessage("Bienvenido, redirigiendo...", false);
-        window.location.href = "principal.html";
+        if (rolSistema === "administrador") {
+          window.location.href = "profesionales.html";
+        } else {
+          window.location.href = "principal.html";
+        }
         return;
       } catch (error) {
         lastNetworkError = error;

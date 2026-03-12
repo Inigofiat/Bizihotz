@@ -435,3 +435,13 @@ const init = () => {
 
 document.addEventListener("DOMContentLoaded", init);
 
+"use strict";
+
+try {
+  const _u = JSON.parse(localStorage.getItem("bizihotzUsuario") || "null");
+  if ((_u?.rolSistema || "").toLowerCase() === "recepcionista") {
+    window.location.href = "agenda.html";
+  }
+} catch (_e) {
+  window.location.href = "login.html";
+}
