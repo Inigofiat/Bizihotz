@@ -1,6 +1,6 @@
 # Microservicio de Comunicación Interna (M3)
 
-Microservicio Node.js + Express encargado de la mensajería entre profesionales de Bizihotz. Expone una API REST y un canal WebSocket (Socket.IO) para obtener notificaciones en tiempo real (eventos `message:new`, `message:read`, `conversation:read`).
+Microservicio Node.js + Express encargado de la mensajería entre profesionales de Bizihotz. Expone una API REST y un canal WebSocket (Socket.IO) para notificaciones en tiempo real (`message:new`, `message:read`, `conversation:read`).
 
 ## Requisitos
 
@@ -12,7 +12,7 @@ Microservicio Node.js + Express encargado de la mensajería entre profesionales 
 ```bash
 cd microservicioComunicacion
 cp .env.example .env           # revisa los valores
-npm install                    # ya ejecutado si vienes del repo
+npm install
 npm run dev                    # nodemon en puerto 4100
 ```
 
@@ -33,7 +33,7 @@ Scripts npm:
 ## Endpoints principales
 
 - `GET /health`: estado del servicio.
-- `POST /api/messages`: envía mensaje (crea conversación si no existe).
+- `POST /api/messages`: envía un mensaje (crea la conversación si no existe).
 - `PATCH /api/messages/:messageId/read`: marca un mensaje como leído.
 - `GET /api/conversations?userId=...`: conversaciones del usuario ordenadas por actividad.
 - `GET /api/conversations/:conversationId/messages`: mensajes paginados (`page`, `limit`).

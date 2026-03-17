@@ -22,7 +22,7 @@ npm run dev
 
 Variables de entorno:
 
-- `PORT` (por defecto 4700)
+- `PORT` (por defecto 4701, alineado con el `docker-compose` y el gateway)
 - `MONGO_URI` (por defecto `mongodb://127.0.0.1:27017/chatbot`)
 - `SERVICE_NAME` (por defecto `Bizihotz Chatbot`)
 - `ALLOWED_ORIGINS` (coma-separado, `*` para todos)

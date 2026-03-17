@@ -4,7 +4,7 @@ const messageSchema = new Schema(
   {
     sesionId: {
       type: Schema.Types.ObjectId,
-      ref: 'ChatbotSession',
+      ref: 'SesionesChatbot',
       required: true,
       index: true,
     },
@@ -53,6 +53,6 @@ messageSchema.methods.toPublicJSON = function toPublicJSON() {
   };
 };
 
-const Message = model('ChatbotMessage', messageSchema, 'mensajes');
+const Message = model('MensajesChatbot', messageSchema, 'MensajesChatbot');
 
 module.exports = Message;

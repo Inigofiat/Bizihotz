@@ -1,6 +1,6 @@
 # Microservicio Documental (FastAPI)
 
-Repositorio de documentos nutricionales. Expone endpoints REST para listar y buscar documentos almacenados; no consume APIs externas.
+Repositorio de documentos nutricionales. Expone endpoints REST para listar, filtrar y consultar documentos almacenados; no consume APIs externas.
 
 ## Requisitos
 
@@ -8,9 +8,9 @@ Repositorio de documentos nutricionales. Expone endpoints REST para listar y bus
 - PostgreSQL 16+ (local o en contenedor)
 - Dependencias de `requirements.txt`
 
-## ConfiguraciÇün y base de datos
+## Configuración y base de datos
 
-El archivo `.env.example` estÇ­ preparado para el stack Bizihotz principal y apunta al Postgres compartido del `docker-compose` raÇðz:
+El archivo `.env.example` está preparado para el stack Bizihotz principal y apunta al Postgres compartido del `docker-compose` raíz:
 
 ```
 DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/nutricion  # expuesto en localhost:5435
@@ -18,7 +18,7 @@ DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/nutricion  # e
 
 Si quieres ejecutar este servicio de forma aislada, cambia `DATABASE_URL` a tu instancia local (por ejemplo `postgresql+psycopg://postgres:postgres@localhost:5440/documental`) o usa el `docker-compose.yml` de esta carpeta que ya levanta su propio Postgres en `5440`.
 
-## Puesta en marcha rÇ­pida (local)
+## Puesta en marcha rápida (local)
 
 ```bash
 cd microservicioDocumental
@@ -32,17 +32,17 @@ uvicorn app:app --reload --port 5100
 
 ## Usarlo dentro del stack Bizihotz
 
-El `docker-compose.yml` raÇðz ya incluye este servicio como `documental`, apuntando al Postgres compartido. Suele bastar con:
+El `docker-compose.yml` raíz ya incluye este servicio como `documental`, apuntando al Postgres compartido. Suele bastar con:
 
 ```bash
 docker compose up -d --build documental
 ```
 
-Si prefieres una base separada, ajusta `DATABASE_URL` en la definiciÇün del servicio y crea la base la primera vez.
+Si prefieres una base separada, ajusta `DATABASE_URL` en la definición del servicio y crea la base la primera vez.
 
 ### Sembrar documentos de ejemplo
 
-Hay un script de apoyo en `scripts/seed_documents.py` que inserta dos documentos pÇ§blicos. Ejecuta:
+Hay un script de apoyo en `scripts/seed_documents.py` que inserta dos documentos públicos. Ejecuta:
 
 ```bash
 cd microservicioDocumental
@@ -63,7 +63,7 @@ Esto levanta PostgreSQL en `localhost:5440` y el servicio en `http://localhost:5
 ## Endpoints relevantes
 
 - `GET /health`: estado del servicio.
-- `GET /api/documentos`: listado con filtros `q`, `fuente`, `tipo`, `etiqueta`, paginaciÇün `skip/limit`.
+- `GET /api/documentos`: listado con filtros `q`, `fuente`, `tipo`, `etiqueta`, paginación `skip/limit`.
 - `GET /api/documentos/{id}`: detalle.
 - `GET /api/documentos/{id}/contenido`: proxy seguro para visualizar/descargar el binario del documento.
 
@@ -74,12 +74,12 @@ Swagger disponible en `/docs`.
 Tabla `documentos` con:
 
 - `titulo`, `descripcion`, `etiquetas` (JSON array), `tipo`, `fuente`, `external_id`, `url_descarga`, `metadata` (json), `fecha_subida`, `last_synced_at`, `estado`, `idioma`.
-- RestricciÇün Ç§nica por `fuente + external_id` para evitar duplicados.
+- Restricción única por `fuente + external_id` para evitar duplicados.
 
-## BÇ§squeda
+## Búsqueda
 
 - En PostgreSQL, `q` usa `plainto_tsquery` con diccionario `spanish` sobre `titulo + descripcion` y ordena por relevancia (`ts_rank`). En otras bases, hace `ILIKE`.
-- Recomendado aÇñadir un Çðndice FTS:
+- Recomendado añadir un índice FTS:
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_documento_fts
@@ -90,4 +90,4 @@ USING GIN (to_tsvector('spanish', coalesce(titulo,'') || ' ' || coalesce(descrip
 ## Notas
 
 - El servicio no guarda binarios; almacena la URL de descarga o la ruta externa.
-- Ç?ndices bÇ­sicos por `fuente` y `tipo`. Para bÇ§squedas mÇ­s ricas, puedes aÇñadir FTS con `pg_trgm`.
+- Índices básicos por `fuente` y `tipo`. Para búsquedas más ricas, puedes añadir FTS con `pg_trgm`.

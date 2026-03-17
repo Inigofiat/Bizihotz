@@ -4,7 +4,7 @@ Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hac
 
 ## Funciones
 
-- Proxy transparente (`/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, ...).
+- Proxy transparente (`/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ...).
 - Documentacion unificada en `/docs` y `/openapi.json`.
 - Endpoint `/health` para verificar disponibilidad de los servicios registrados.
 - Carga dinamica de OpenAPI remotos para combinarlos en el esquema del gateway.
@@ -28,6 +28,8 @@ COMUNICACION_SERVICE_URL=http://localhost:4100
 COMUNICACION_OPENAPI_URL=http://localhost:4100/docs/swagger.json
 DOCUMENTOS_SERVICE_URL=http://localhost:5100
 DOCUMENTOS_OPENAPI_URL=http://localhost:5100/openapi.json
+CHATBOT_SERVICE_URL=http://localhost:4701
+CHATBOT_OPENAPI_URL=http://localhost:4701/docs/swagger.json
 ```
 
 Agrega tantas parejas `*_SERVICE_URL` / `*_OPENAPI_URL` como microservicios quieras publicar.
@@ -57,4 +59,4 @@ docker compose up api-gateway --build
 - `GET /health`
 - `GET /docs`
 - `GET /openapi.json`
-- `/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, ... -> proxys hacia cada servicio configurado.
+- `/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ... -> proxys hacia cada servicio configurado.

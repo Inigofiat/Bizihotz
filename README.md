@@ -12,9 +12,10 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 | PostgreSQL            | Postgres 16            | `5435 -> 5432`     | `docker-compose.yml` (`postgres`) |
 | microservicioNutricion| FastAPI + SQLAlchemy   | `5002`             | `microservicioNutricion/` |
 | microservicioDocumental| FastAPI + SQLAlchemy  | `5100`             | `microservicioDocumental/` |
+| microservicioChatbot  | Node.js 18 + Express   | `4701`             | `microservicioChatbot/` |
 | API Gateway           | FastAPI                | `5000`             | `api-gateway/` |
 | Frontend              | HTML/CSS/JS estatico   | `8080`             | `web/` |
-| Nginx (frontend)      | Nginx Alpine           | `8080 -> 80`       | `frontend` (usa `nginx/frontend.conf`) |
+| Nginx (frontend)      | Nginx Alpine           | `8080 -> 80`       | Servicio `frontend` (usa `./nginx/frontend.conf`) |
 
 ## Tecnologias por servicio
 
@@ -23,6 +24,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
 - **microservicioComunicacion (`microservicioComunicacion/`)**: Node.js 18, Express 5, Socket.IO para tiempo real, MongoDB con Mongoose, middleware de seguridad (helmet) y validacion con `express-validator`.
 - **microservicioNutricion (`microservicioNutricion/`)**: FastAPI, SQLAlchemy 2, PostgreSQL 16, Pydantic v2, Uvicorn y utilidades HTTP (`requests`/`httpx`) y generacion de PDF (`fpdf2`).
 - **microservicioDocumental (`microservicioDocumental/`)**: FastAPI, SQLAlchemy 2 + Alembic, PostgreSQL 16 y `httpx` para llamadas salientes si se requieren integraciones.
+- **microservicioChatbot (`microservicioChatbot/`)**: Node.js 18, Express 4, MongoDB con Mongoose, validaciones con `express-validator` y middlewares de seguridad (`helmet`, `cors`).
 - **Frontend (`web/`)**: HTML, CSS y JS plano (estatico); consume el gateway via llamadas fetch.
 
 ## Requisitos base
@@ -48,6 +50,7 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    - Microservicio de comunicacion: http://localhost:4103 (contenedor en 4100, publicado en 4103)
    - Microservicio de nutricion: http://localhost:5002
    - Microservicio documental: http://localhost:5100
+   - Microservicio chatbot: http://localhost:4701
    - MongoDB: `mongodb://localhost:27018`
    - PostgreSQL: `postgresql://postgres:postgres@localhost:5435/nutricion`
 4. Registra los logs cuando lo necesites:
@@ -55,6 +58,9 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
    docker compose logs -f api-gateway
    docker compose logs -f gestion
    docker compose logs -f comunicacion
+   docker compose logs -f nutricion
+   docker compose logs -f documental
+   docker compose logs -f chatbot
    ```
 5. Para detener y limpiar:
    ```bash
@@ -82,7 +88,8 @@ Actualiza `microservicioGestion/.env` con la cadena correcta (`MONGO_URI`).
 
 ```bash
 cd microservicioGestion
-cp .env.example .env 
+# El repo ya trae un `.env` minimo con MONGO_URI; copialo si quieres mantener tus cambios aparte.
+cp .env .env.local  # opcional
 npm install
 MONGO_URI=mongodb://localhost:27017/gestion npm run dev
 ```
@@ -154,7 +161,19 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-Verifica que las variables `GESTION_*`, `NUTRICION_*`, `COMUNICACION_*` y `DOCUMENTOS_*` apunten a las URLs locales que arrancaste previamente.
+Verifica que las variables `GESTION_*`, `NUTRICION_*`, `COMUNICACION_*`, `DOCUMENTOS_*` y `CHATBOT_*` apunten a las URLs locales que arrancaste previamente.
+
+### microservicioChatbot (Node.js)
+
+```bash
+cd microservicioChatbot
+cp .env.example .env  # si no existe, crea uno con MONGO_URI y PORT=4701
+npm install
+npm run dev           # o npm start
+```
+
+- API local en `http://localhost:4701`
+- Rutas bajo `/api`: `/sessions`, `/sessions/:id/messages`, `/sessions/:id/ai-reply`, `/health`.
 
 ### Frontend web
 
