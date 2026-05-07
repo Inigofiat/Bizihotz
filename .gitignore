@@ -6,12 +6,19 @@ node_modules/
 dist/
 build/
 coverage/
+coverage-temp/
+coverage-temp2/
+htmlcov/
 .nyc_output/
+.coverage
+.coverage.*
 *.tsbuildinfo
 
 # Local env and tooling
 .env
 .env.*
+!.env.example
+!**/.env.example
 .vscode/
 .idea/
 *.log
@@ -27,6 +34,7 @@ __pycache__/
 *.pyo
 .pytest_cache/
 .venv/
+.ruff_cache/
 
 # App uploads
 microservicioGestion/uploads/
@@ -34,5 +42,5 @@ microservicioGestion/uploads/
 tmp/
 *.tmp
 *.lock
-**/.tmp_pytest/
+**/.tmp_pytest*/
 **/pytest-cache-files-*/

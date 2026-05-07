@@ -36,6 +36,31 @@ Plataforma Bizihotz compuesta por varios microservicios (gestion clinica, nutric
   - Acceso a MongoDB 6+ y PostgreSQL 16+ (locales o en contenedor).
   - Alguna utilidad para servir archivos estaticos (`npx serve`, `python -m http.server`, etc.).
 
+## Comandos unificados desde la raiz
+
+Para ejecucion rapida (especialmente util en memoria/defensa del TFG):
+
+```bash
+./scripts/run-tests.sh
+./scripts/run-coverage.sh
+./scripts/run-stack.sh up
+```
+
+En PowerShell (Windows) tienes equivalentes directos:
+
+```powershell
+.\scripts\run-tests.ps1
+.\scripts\run-coverage.ps1
+.\scripts\run-stack.ps1 up
+```
+
+Comandos disponibles:
+
+- `./scripts/run-tests.sh`: ejecuta tests de Node (`gestion`, `comunicacion`, `chatbot`) y Python/FastAPI (`api-gateway`, `nutricion`, `documental`).
+- `./scripts/run-tests.sh --e2e`: ademas lanza el e2e con Docker Compose (`tests/e2e/test_compose_stack.py`).
+- `./scripts/run-coverage.sh`: ejecuta cobertura de todos los microservicios y genera reportes HTML por servicio.
+- `./scripts/run-stack.sh up|down|restart|ps|logs [servicio]`: atajo para `docker compose` en la raiz.
+
 ## Camino 1: arranque rapido con Docker Compose
 
 1. Copia y personaliza las variables necesarias en el archivo `.env` de la raiz si quieres cambiar puertos o URLs del gateway.

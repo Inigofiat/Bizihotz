@@ -2,6 +2,24 @@
 
 ## 1) Cobertura de tests
 
+## Atajos recomendados desde la raiz
+
+En lugar de entrar a cada microservicio, puedes ejecutar todo desde raiz:
+
+```bash
+./scripts/run-tests.sh
+./scripts/run-coverage.sh
+./scripts/run-stack.sh up
+```
+
+En PowerShell:
+
+```powershell
+.\scripts\run-tests.ps1
+.\scripts\run-coverage.ps1
+.\scripts\run-stack.ps1 up
+```
+
 ### Node.js (gestion, comunicacion, chatbot)
 - Se han anadido scripts:
   - `npm test`
