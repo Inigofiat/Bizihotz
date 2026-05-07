@@ -1,10 +1,10 @@
 # Bizihotz FastAPI Gateway
 
-Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hacia `gestion`, `nutricion`, `comunicacion`, `documentos` y futuros servicios, agrega los documentos OpenAPI y expone endpoints de salud.
+Punto de entrada comun para los microservicios Bizihotz. Reenvia solicitudes hacia `gestion`, `nutricion`, `comunicacion`, `documentos`, `chatbot` y futuros servicios, agrega los documentos OpenAPI y expone endpoints de salud.
 
 ## Funciones
 
-- Proxy transparente (`/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ...).
+- Proxy transparente para los servicios configurados (`/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ...).
 - Documentacion unificada en `/docs` y `/openapi.json`.
 - Endpoint `/health` para verificar disponibilidad de los servicios registrados.
 - Carga dinamica de OpenAPI remotos para combinarlos en el esquema del gateway.
@@ -39,12 +39,13 @@ Agrega tantas parejas `*_SERVICE_URL` / `*_OPENAPI_URL` como microservicios quie
 ```bash
 cd api-gateway
 python -m venv .venv
-source .venv/bin/activate    # Windows: .venv\Scripts\activate
+.\.venv\Scripts\activate     # Windows
+# source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-El gateway intentara descargar los documentos OpenAPI configurados. Asegurate de que los microservicios esten arriba (o usa el stack de Docker compose en la raiz) para evitar errores al iniciar.
+El gateway intentara descargar los documentos OpenAPI configurados. Si algun microservicio no esta disponible, el gateway arranca igualmente: `/health` puede responder `degraded` y `/openapi.json` se genera con la informacion disponible.
 
 ## Ejecucion dentro del stack Docker
 
@@ -56,7 +57,8 @@ docker compose up api-gateway --build
 
 ## Rutas relevantes
 
+- `GET /` -> redireccion a `/docs`
 - `GET /health`
 - `GET /docs`
 - `GET /openapi.json`
-- `/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ... -> proxys hacia cada servicio configurado.
+- `/gestion/*`, `/nutricion/*`, `/comunicacion/*`, `/documentos/*`, `/chatbot/*`, ... -> proxys hacia cada servicio configurado por variables `*_SERVICE_URL`.

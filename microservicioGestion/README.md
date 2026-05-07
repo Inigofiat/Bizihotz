@@ -25,13 +25,13 @@ npm install
 npm run dev         # o: npm start
 ```
 
-API disponible en `http://localhost:4001` (o el puerto configurado). Documentacion Swagger en `http://localhost:4001/docs` y JSON en `/docs/swagger.json`. Endpoint de salud: `GET /status`.
+API disponible en `http://localhost:4001` (o el puerto configurado). Documentacion Swagger en `http://localhost:4001/docs` y JSON en `/docs/swagger.json`. Endpoints de salud: `GET /status` y `GET /health`.
 
 Al primer arranque, si no hay usuarios, se crean desde `src/models/profesionales.seed.json` con la contrasena `DEFAULT_USER_PASSWORD`. Cambia esa contrasena despues del despliegue.
 
 ## Scripts utiles
 
-- `npm test`: ejecuta las pruebas (`node --test`).
+- `npm test`: ejecuta la bateria de pruebas definida en `package.json`.
 - `npm run dev`: arranque con recarga (nodemon).
 - `npm start`: arranque en modo produccion.
 - `npm run seed`: carga datos de ejemplo (pacientes, citas, historiales, usuarios).
@@ -52,10 +52,11 @@ Asegurate de que `MONGO_URI` apunta al contenedor de Mongo expuesto (por defecto
 ## Rutas principales
 
 - `GET /status`: salud (incluye estado de la conexion a Mongo).
+- `GET /health`: alias de salud.
 - `POST /api/auth/login`: login JWT (email o nombreUsuario + password).
 - `POST /api/auth/cambiar-password`, `/confirmar-password`, `/logout`.
 - `PUT /api/usuarios/:id`: actualizar tu propio perfil (nombre, apellidos, telefono, email, nombreUsuario, rol).
 - CRUD protegido para `pacientes`, `citas`, `historiales`, `registros`, `pacientes-usuarios`, `usuarios` bajo `/api/...`.
 - `GET /docs`: Swagger UI (requiere `docs/openapi.json` presente).
 
-> Todas las rutas (salvo `/status` y `/api/auth/*`) requieren header `Authorization: Bearer <token>`.
+> Todas las rutas (salvo `/status`, `/health` y `/api/auth/*`) requieren header `Authorization: Bearer <token>`.

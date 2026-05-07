@@ -1,6 +1,6 @@
 # Microservicio Documental (FastAPI)
 
-Repositorio de documentos nutricionales. Expone endpoints REST para listar, filtrar y consultar documentos almacenados; no consume APIs externas.
+Repositorio de documentos nutricionales. Expone endpoints REST para listar, filtrar y consultar documentos almacenados; ademas puede hacer proxy de descarga para URLs externas de documentos.
 
 ## Requisitos
 
@@ -65,7 +65,7 @@ Esto levanta PostgreSQL en `localhost:5440` y el servicio en `http://localhost:5
 - `GET /health`: estado del servicio.
 - `GET /api/documentos`: listado con filtros `q`, `fuente`, `tipo`, `etiqueta`, paginación `skip/limit`.
 - `GET /api/documentos/{id}`: detalle.
-- `GET /api/documentos/{id}/contenido`: proxy seguro para visualizar/descargar el binario del documento.
+- `GET /api/documentos/{id}/contenido`: proxy seguro para visualizar/descargar el binario del documento (local o remoto).
 
 Swagger disponible en `/docs`.
 

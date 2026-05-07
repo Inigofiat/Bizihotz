@@ -91,7 +91,10 @@ cd microservicioGestion
 # El repo ya trae un `.env` minimo con MONGO_URI; copialo si quieres mantener tus cambios aparte.
 cp .env .env.local  # opcional
 npm install
-MONGO_URI=mongodb://localhost:27017/gestion npm run dev
+# PowerShell (Windows)
+$env:MONGO_URI='mongodb://localhost:27017/gestion'; npm run dev
+# Bash (Linux/Mac)
+# MONGO_URI=mongodb://localhost:27017/gestion npm run dev
 ```
 
 - API local en `http://localhost:4001`
@@ -127,7 +130,8 @@ Guarda la URL en `microservicioNutricion/.env` (variable `DATABASE_URL`).
 cd microservicioNutricion
 cp .env.example .env
 python -m venv .venv
-source .venv/bin/activate        
+.\.venv\Scripts\activate          # Windows
+# source .venv/bin/activate       # Linux/Mac
 pip install -r requirements.txt
 uvicorn app:app --reload --port 5002
 ```
@@ -142,7 +146,8 @@ uvicorn app:app --reload --port 5002
 cd microservicioDocumental
 cp .env.example .env
 python -m venv .venv
-source .venv/bin/activate        
+.\.venv\Scripts\activate          # Windows
+# source .venv/bin/activate       # Linux/Mac
 pip install -r requirements.txt
 uvicorn app:app --reload --port 5100
 ```
@@ -156,7 +161,8 @@ uvicorn app:app --reload --port 5100
 cd api-gateway
 cp .env.example .env
 python -m venv .venv
-source .venv/bin/activate
+.\.venv\Scripts\activate          # Windows
+# source .venv/bin/activate       # Linux/Mac
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 ```
@@ -173,7 +179,8 @@ npm run dev           # o npm start
 ```
 
 - API local en `http://localhost:4701`
-- Rutas bajo `/api`: `/sessions`, `/sessions/:id/messages`, `/sessions/:id/ai-reply`, `/health`.
+- Endpoint de salud: `/health`.
+- Rutas bajo `/api`: `/sessions`, `/sessions/:id/messages`, `/sessions/:id/ai-reply`.
 
 ### Frontend web
 

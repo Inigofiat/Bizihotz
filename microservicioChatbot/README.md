@@ -2,14 +2,17 @@
 
 API Node.js + Express + MongoDB para gestionar sesiones y mensajes del chatbot de nutricion clinica. Pensado para exponer endpoints REST sencillos que el gateway pueda orquestar.
 
-## Endpoints principales (base `/api`)
+## Endpoints principales
 
 - `GET /health`: estado del servicio.
+Base `/api`:
 - `POST /sessions`: crea sesion de chatbot para un usuario (`usuarioId`, `titulo?`).
 - `GET /sessions?usuarioId=...`: lista sesiones de ese usuario.
+- `GET /sessions/:sessionId`: devuelve una sesion concreta.
 - `GET /sessions/:sessionId/messages`: mensajes paginados de una sesion.
 - `POST /sessions/:sessionId/messages`: agrega mensaje (`remitenteId`, `contenido`).
 - `DELETE /sessions/:sessionId`: elimina la sesion y sus mensajes.
+- `PATCH /sessions/:sessionId`: actualiza el titulo de la sesion.
 - `POST /sessions/:sessionId/ai-reply`: genera y almacena respuesta del asistente (usa proveedor externo si `AI_API_URL` esta configurado, si no aplica heuristica local).
 
 ## Ejecutar en local
