@@ -17,6 +17,13 @@ const citasRouter = require('../src/routes/citasRutas');
 const buildTestApp = () => {
   const app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    req.user = {
+      idUsuario: '507f1f77bcf86cd799439012',
+      rolSistema: 'Administrador'
+    };
+    next();
+  });
   app.use('/api/pacientes', pacientesRouter);
   app.use('/api/pacientes-usuarios', pacienteUsuarioRouter);
   app.use('/api/citas', citasRouter);
@@ -47,13 +54,26 @@ const createPaciente = async (index = 1) => {
   return res;
 };
 
+const isMongoBinaryIssue = (error) =>
+  /couldnt find an version from system binary output/i.test(String(error?.message || error));
+
 test('flujo funcional: alta paciente, vinculación, listado mine/all, standby/reactivar, cita completa', async (t) => {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
 
-  const mongod = await MongoMemoryServer.create();
-  const uri = mongod.getUri();
+  const externalMongoUri = process.env.TEST_MONGO_URI || process.env.MONGO_URI;
+  let mongod;
+  try {
+    mongod = externalMongoUri ? null : await MongoMemoryServer.create();
+  } catch (error) {
+    if (!process.env.TEST_MONGO_URI && isMongoBinaryIssue(error)) {
+      t.skip('MongoMemoryServer no disponible en este entorno; define TEST_MONGO_URI para ejecutar este test.');
+      return;
+    }
+    throw error;
+  }
+  const uri = externalMongoUri || mongod.getUri();
   await mongoose.connect(uri);
 
   const request = buildTestApp();
@@ -61,7 +81,9 @@ test('flujo funcional: alta paciente, vinculación, listado mine/all, standby/re
   t.after(async () => {
     await mongoose.connection.dropDatabase();
     await mongoose.disconnect();
-    await mongod.stop();
+    if (mongod) {
+      await mongod.stop();
+    }
   });
 
   // Alta profesional y paciente

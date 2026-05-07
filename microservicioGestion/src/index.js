@@ -47,23 +47,30 @@ try {
 }
 
 const healthCheck = async (_req, res) => {
+  const serviceInfo = {
+    service: 'microservicio-gestion',
+    timestamp: new Date().toISOString(),
+  };
+
   if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({ status: 'degraded', db: 'disconnected' });
+    return res.status(503).json({ status: 'degraded', db: 'disconnected', ...serviceInfo });
   }
 
   try {
     await mongoose.connection.db.admin().command({ ping: 1 });
-    return res.json({ status: 'ok', db: 'connected' });
+    return res.json({ status: 'ok', db: 'connected', ...serviceInfo });
   } catch (error) {
     return res.status(503).json({
       status: 'degraded',
       db: 'error',
-      detalle: error.message
+      detalle: error.message,
+      ...serviceInfo,
     });
   }
 };
 
 app.get('/status', healthCheck);
+app.get('/health', healthCheck);
 
 app.use('/api/auth', authRoutes);
 app.use(requireAuth);

@@ -9,6 +9,13 @@ const router = require('../src/routes/citasRutas');
 const createApp = () => {
   const app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    req.user = {
+      idUsuario: '507f1f77bcf86cd799439012',
+      rolSistema: 'Administrador'
+    };
+    next();
+  });
   app.use('/api/citas', router);
   return app;
 };

@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Forzamos SQLite en tests para evitar dependencia de Postgres local.
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["BEDCA_AUTO_SYNC"] = "false"
 
 from app import app
 from app.database import Base, get_session

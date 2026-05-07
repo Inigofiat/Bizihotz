@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urljoin
 
 import httpx
 from fastapi import FastAPI, Request
@@ -59,22 +60,51 @@ async def root() -> RedirectResponse:
 
 @app.get("/health")
 async def health() -> JSONResponse:
+    client: httpx.AsyncClient = app.state.http_client
+    service_checks = []
+    all_services_ok = True
+
+    for service in settings.services:
+        health_url = urljoin(f"{service.target.rstrip('/')}/", "health")
+        try:
+            response = await client.get(health_url, timeout=settings.request_timeout)
+            payload = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            service_status = str(payload.get("status", "")).lower()
+            ok = response.status_code == 200 and service_status == "ok"
+        except (httpx.HTTPError, ValueError) as exc:
+            response = None
+            payload = {"detail": str(exc)}
+            ok = False
+
+        if not ok:
+            all_services_ok = False
+
+        service_checks.append(
+            {
+                "name": service.name,
+                "route": service.route,
+                "target": service.target,
+                "healthUrl": health_url,
+                "ok": ok,
+                "statusCode": response.status_code if response else None,
+                "upstreamStatus": payload.get("status"),
+                "upstream": payload,
+                "hasOpenApi": bool(service.openapi_url),
+            }
+        )
+
+    status = "ok" if all_services_ok else "degraded"
+    code = 200 if all_services_ok else 503
+
     return JSONResponse(
-        {
-            "status": "ok",
+        status_code=code,
+        content={
+            "status": status,
             "gateway": {
                 "port": settings.port,
-                "services": [
-                    {
-                        "name": service.name,
-                        "route": service.route,
-                        "target": service.target,
-                        "hasOpenApi": bool(service.openapi_url),
-                    }
-                    for service in settings.services
-                ],
+                "services": service_checks,
             },
-        }
+        },
     )
 
 

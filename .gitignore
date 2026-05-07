@@ -30,3 +30,9 @@ __pycache__/
 
 # App uploads
 microservicioGestion/uploads/
+# Temp files (IMPORTANTE)
+tmp/
+*.tmp
+*.lock
+**/.tmp_pytest/
+**/pytest-cache-files-*/

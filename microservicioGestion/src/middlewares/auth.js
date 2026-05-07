@@ -4,6 +4,7 @@ const { verifyToken } = require("../utils/jwt");
 
 const EXCLUDED_PATHS = [
   { method: "GET", path: "/status" },
+  { method: "GET", path: "/health" },
   { method: "GET", path: "/docs" },
   { method: "GET", path: "/docs/swagger.json" },
   { method: "POST", path: "/api/auth/login" }
