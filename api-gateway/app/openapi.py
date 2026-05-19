@@ -118,6 +118,12 @@ class OpenAPIAggregator:
             aggregated.setdefault("components", {})
             self._merge_objects(aggregated["components"], components)
 
+        # Conserva un requerimiento global de seguridad (p. ej. BearerAuth)
+        # para que Swagger UI envíe Authorization en operaciones protegidas.
+        security = spec.get("security")
+        if security and "security" not in aggregated:
+            aggregated["security"] = deepcopy(security)
+
     def _merge_objects(self, target: Dict[str, Any], source: Dict[str, Any]) -> None:
         for key, value in source.items():
             if value is None:

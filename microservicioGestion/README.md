@@ -13,6 +13,8 @@ Servicio que gestiona pacientes, citas y usuarios. Expone API REST protegida con
 - `PORT` (opcional, por defecto `4001`).
 - `JWT_SECRET` (opcional, **cambialo en produccion**).
 - `JWT_EXPIRATION` (opcional, por defecto `1d`).
+- `ALLOW_ANONYMOUS` (opcional, por defecto `false`): si vale `true`, desactiva la validacion JWT y crea un usuario simulado para pruebas locales.
+- `ALLOW_ANONYMOUS_ROLE` (opcional, por defecto `Administrador`): rol del usuario simulado (`Administrador`, `Recepcionista`, `Profesional del centro`).
 - `DEFAULT_USER_PASSWORD` (opcional, por defecto `Bizihotz2025!`): usada para crear los usuarios iniciales si la coleccion esta vacia.
 - `UPLOADS_DIR` (opcional): ruta donde guardar/servir ficheros; por defecto `./uploads` en el proyecto.
 

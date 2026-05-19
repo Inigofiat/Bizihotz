@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import logging
 from urllib.parse import urljoin
 
@@ -7,7 +8,7 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from .config import ServiceConfig, get_settings
 from .openapi import OpenAPIAggregator
@@ -18,12 +19,47 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 aggregator = OpenAPIAggregator(settings.services)
 
+SWAGGER_HIDE_AUTH_CSS = """
+<style>
+  .swagger-ui .auth-wrapper,
+  .swagger-ui .authorize-wrapper,
+  .swagger-ui .opblock .authorization__btn {
+    display: none !important;
+  }
+  .swagger-ui .scheme-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+</style>
+"""
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    application.state.settings = settings
+    application.state.http_client = httpx.AsyncClient(
+        timeout=settings.request_timeout,
+        follow_redirects=True,
+    )
+    await aggregator.refresh()
+    for service in settings.services:
+        logger.info("Servicio registrado: %s (%s -> %s)", service.name, service.route, service.target)
+    try:
+        yield
+    finally:
+        client: httpx.AsyncClient = application.state.http_client
+        await client.aclose()
+
+
 app = FastAPI(
     title="Bizihotz FastAPI Gateway",
     version="1.0.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -33,25 +69,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def _startup() -> None:
-    app.state.settings = settings
-    app.state.http_client = httpx.AsyncClient(
-        timeout=settings.request_timeout,
-        follow_redirects=True,
-    )
-    await aggregator.refresh()
-    for service in settings.services:
-        logger.info("Servicio registrado: %s (%s -> %s)", service.name, service.route, service.target)
-
-
-@app.on_event("shutdown")
-async def _shutdown() -> None:
-    client: httpx.AsyncClient = app.state.http_client
-    await client.aclose()
-
 
 @app.get("/", include_in_schema=False)
 async def root() -> RedirectResponse:
@@ -110,11 +127,13 @@ async def health() -> JSONResponse:
 
 @app.get("/docs", include_in_schema=False)
 async def custom_docs():
-    return get_swagger_ui_html(
+    docs_response = get_swagger_ui_html(
         openapi_url="/openapi.json",
         title="Bizihotz FastAPI Gateway",
         swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
     )
+    html = docs_response.body.decode("utf-8").replace("</head>", f"{SWAGGER_HIDE_AUTH_CSS}</head>")
+    return HTMLResponse(content=html)
 
 
 @app.get("/openapi.json", include_in_schema=False)

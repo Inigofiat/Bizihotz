@@ -6,10 +6,13 @@ info:
     API basada en FastAPI para gestionar alimentos, recetas y dietas dentro del ecosistema Bizihotz.
 servers:
   - url: http://localhost:5002
+security:
+  - BearerAuth: []
 paths:
   /health:
     get:
       summary: Comprobar el estado del servicio
+      security: []
       responses:
         '200':
           description: Estado del microservicio
@@ -52,3 +55,9 @@ paths:
       responses:
         '201':
           description: Dieta creada
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

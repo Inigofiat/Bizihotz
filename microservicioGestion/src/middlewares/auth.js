@@ -1,6 +1,7 @@
 "use strict";
 
 const { verifyToken } = require("../utils/jwt");
+const { ROLES } = require("../constants/roles");
 
 const EXCLUDED_PATHS = [
   { method: "GET", path: "/status" },
@@ -15,8 +16,42 @@ const isExcluded = (req) =>
     (rule) => rule.method === req.method && req.path.startsWith(rule.path)
   );
 
+const parseBoolean = (value = "") =>
+  ["1", "true", "yes", "on"].includes(value.toString().trim().toLowerCase());
+
+const normalize = (value = "") => value.toString().trim().toLowerCase();
+
+const resolveAnonymousRole = () => {
+  const configured = (process.env.ALLOW_ANONYMOUS_ROLE || "").trim();
+  if (!configured) {
+    return ROLES.ADMIN;
+  }
+
+  const matched = Object.values(ROLES).find(
+    (role) => normalize(role) === normalize(configured)
+  );
+
+  return matched || ROLES.ADMIN;
+};
+
+const buildAnonymousUser = () => {
+  const rolSistema = resolveAnonymousRole();
+  return {
+    idUsuario: "anon-dev",
+    nombreUsuario: "anon-dev",
+    email: "anon@local",
+    rol: rolSistema,
+    rolSistema
+  };
+};
+
 const requireAuth = (req, res, next) => {
   if (isExcluded(req)) {
+    return next();
+  }
+
+  if (parseBoolean(process.env.ALLOW_ANONYMOUS)) {
+    req.user = req.user || buildAnonymousUser();
     return next();
   }
 

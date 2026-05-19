@@ -18,6 +18,8 @@ const { requireAuth } = require('./middlewares/auth');
 
 const PORT = process.env.PORT || 4001;
 const app = express();
+const parseBoolean = (value = '') => ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+const hideSwaggerAuth = parseBoolean(process.env.HIDE_SWAGGER_AUTH) || parseBoolean(process.env.ALLOW_ANONYMOUS);
 
 app.use(cors());
 app.use(express.json());
@@ -106,6 +108,19 @@ app.get('/docs', (_req, res) => {
       <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
       <style>
         body { margin: 0; background-color: #fafafa; }
+        ${hideSwaggerAuth ? `
+        .swagger-ui .auth-wrapper,
+        .swagger-ui .authorize-wrapper,
+        .swagger-ui .opblock .authorization__btn {
+          display: none !important;
+        }
+        .swagger-ui .scheme-container {
+          margin: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          box-shadow: none !important;
+        }
+        ` : ''}
       </style>
     </head>
     <body>

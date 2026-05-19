@@ -11,10 +11,16 @@
       "description": "Desarrollo local"
     }
   ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "paths": {
     "/health": {
       "get": {
         "summary": "Comprobar estado del servicio",
+        "security": [],
         "responses": {
           "200": {
             "description": "Servicio operativo",
@@ -259,6 +265,13 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
     "schemas": {
       "HealthResponse": {
         "type": "object",

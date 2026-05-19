@@ -31,6 +31,11 @@
       "name": "Auth"
     }
   ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "paths": {
     "/api/pacientes": {
       "get": {
@@ -45,7 +50,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Texto para buscar por nombre, apellidos, email o tel\u00c3\u00a9fono"
+            "description": "Texto para buscar por nombre, apellidos, email o teléfono"
           },
           {
             "name": "estado",
@@ -83,7 +88,7 @@
               "type": "integer",
               "minimum": 1
             },
-            "description": "N\u00c3\u00bamero de p\u00c3\u00a1gina (paginaci\u00c3\u00b3n opcional)."
+            "description": "Número de página (paginación opcional)."
           },
           {
             "name": "limit",
@@ -93,7 +98,7 @@
               "minimum": 1,
               "maximum": 200
             },
-            "description": "Tama\u00c3\u00b1o de p\u00c3\u00a1gina (por defecto 20 si se env\u00c3\u00ada page/limit)."
+            "description": "Tamaño de página (por defecto 20 si se envía page/limit)."
           },
           {
             "name": "sort",
@@ -417,7 +422,7 @@
         "tags": [
           "Citas"
         ],
-        "summary": "Actualizar estado de atenci\u00c3\u00b3n",
+        "summary": "Actualizar estado de atención",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -839,7 +844,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Crear relaci\u00c3\u00b3n",
+        "summary": "Crear relación",
         "requestBody": {
           "required": true,
           "content": {
@@ -852,7 +857,7 @@
         },
         "responses": {
           "201": {
-            "description": "Relaci\u00c3\u00b3n creada",
+            "description": "Relación creada",
             "content": {
               "application/json": {
                 "schema": {
@@ -872,7 +877,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Obtener relaci\u00c3\u00b3n",
+        "summary": "Obtener relación",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -880,7 +885,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Relaci\u00c3\u00b3n encontrada",
+            "description": "Relación encontrada",
             "content": {
               "application/json": {
                 "schema": {
@@ -898,7 +903,7 @@
         "tags": [
           "Pacientes-Usuarios"
         ],
-        "summary": "Eliminar relaci\u00c3\u00b3n",
+        "summary": "Eliminar relación",
         "parameters": [
           {
             "$ref": "#/components/parameters/ObjectIdPath"
@@ -906,7 +911,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Relaci\u00c3\u00b3n eliminada"
+            "description": "Relación eliminada"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -917,6 +922,7 @@
     "/status": {
       "get": {
         "summary": "Comprobar el estado del servicio",
+        "security": [],
         "responses": {
           "200": {
             "description": "Servicio operativo",
@@ -940,6 +946,7 @@
     "/api/auth/login": {
       "post": {
         "summary": "Iniciar sesion",
+        "security": [],
         "tags": [
           "Auth"
         ],
@@ -990,6 +997,7 @@
     "/api/auth/logout": {
       "post": {
         "summary": "Cerrar sesion",
+        "security": [],
         "tags": [
           "Auth"
         ],
@@ -1015,6 +1023,7 @@
     "/api/auth/cambiar-password": {
       "post": {
         "summary": "Cambiar la contrasena de un usuario",
+        "security": [],
         "tags": [
           "Auth"
         ],
@@ -1080,6 +1089,7 @@
     "/api/auth/confirmar-password": {
       "post": {
         "summary": "Confirmar la contrasena actual",
+        "security": [],
         "tags": [
           "Auth"
         ],
@@ -1152,6 +1162,13 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
     "schemas": {
       "ErrorResponse": {
         "type": "object",
