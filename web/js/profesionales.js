@@ -27,9 +27,16 @@
   const editEmail = document.getElementById("editEmail");
   const editRol = document.getElementById("editRol");
   const editRolSistema = document.getElementById("editRolSistema");
+  const resetOverlay = document.getElementById("resetOverlay");
+  const resetForm = document.getElementById("resetForm");
+  const resetCancel = document.getElementById("resetCancel");
+  const resetFeedback = document.getElementById("resetFeedback");
+  const resetPasswordInput = document.getElementById("resetPassword");
+  const resetUserLabel = document.getElementById("resetUserLabel");
 
   let allUsers = [];
   let editingUserId = null;
+  let resettingUserId = null;
   const state = {
     search: "",
     estado: "",
@@ -261,12 +268,34 @@
     }
   };
 
-  const resetPassword = async (id) => {
-    const nuevaPassword = window.prompt("Introduce la nueva contraseña (mín. 8 caracteres):");
-    if (!nuevaPassword) return;
-    if (nuevaPassword.length < 8) {
-      setFeedback(listFeedback, "La contraseña debe tener al menos 8 caracteres.");
-      return;
+  const openReset = (user) => {
+    if (!user || !resetOverlay || !resetForm || !resetPasswordInput) return;
+    resettingUserId = user.idUsuario;
+    resetForm.reset();
+    setFeedback(resetFeedback, "");
+    if (resetUserLabel) {
+      resetUserLabel.textContent = user.nombreUsuario || user.email || "";
+    }
+    resetOverlay.hidden = false;
+    resetOverlay.setAttribute("aria-hidden", "false");
+    setTimeout(() => resetPasswordInput.focus(), 0);
+  };
+
+  const closeReset = () => {
+    resettingUserId = null;
+    if (resetForm) resetForm.reset();
+    setFeedback(resetFeedback, "");
+    if (resetOverlay) {
+      resetOverlay.hidden = true;
+      resetOverlay.setAttribute("aria-hidden", "true");
+    }
+  };
+
+  const submitResetPassword = async (id, nuevaPassword) => {
+    if (!id) return false;
+    if (!nuevaPassword || nuevaPassword.length < 8) {
+      setFeedback(resetFeedback || listFeedback, "La contraseña debe tener al menos 8 caracteres.");
+      return false;
     }
     try {
       const res = await fetch(`${API_BASE}/usuarios/${id}/password`, {
@@ -279,15 +308,16 @@
       });
       const data = await res.json();
       if (!res.ok) {
-        setFeedback(listFeedback, data?.mensaje || "No se pudo resetear la contraseña");
-        return;
+        setFeedback(resetFeedback || listFeedback, data?.mensaje || "No se pudo resetear la contraseña");
+        return false;
       }
       setFeedback(listFeedback, data?.mensaje || "Contraseña reseteada.", false);
+      return true;
     } catch (err) {
-      setFeedback(listFeedback, err.message || "No se pudo resetear la contraseña");
+      setFeedback(resetFeedback || listFeedback, err.message || "No se pudo resetear la contraseña");
+      return false;
     }
   };
-
 
   if (usersTable) {
     usersTable.addEventListener("change", (e) => {
@@ -332,7 +362,12 @@
           fetchUsers();
         }
       } else if (action === "reset") {
-        resetPassword(id);
+        const user = findUser(id);
+        if (user) {
+          openReset(user);
+        } else {
+          fetchUsers();
+        }
       }
     });
   }
@@ -377,6 +412,10 @@
     editCancel.addEventListener('click', closeEdit);
   }
 
+  if (resetCancel) {
+    resetCancel.addEventListener("click", closeReset);
+  }
+
   if (editOverlay) {
     editOverlay.addEventListener('click', (e) => {
       if (e.target === editOverlay) {
@@ -385,10 +424,19 @@
     });
   }
 
+  if (resetOverlay) {
+    resetOverlay.addEventListener("click", (e) => {
+      if (e.target === resetOverlay) {
+        closeReset();
+      }
+    });
+  }
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       hideConfirm();
       closeEdit();
+      closeReset();
     }
   });
 
@@ -427,6 +475,18 @@
       } catch (err) {
         setFeedback(editFeedback, err.message || 'No se pudo actualizar.');
       }
+    });
+  }
+
+  if (resetForm) {
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!resettingUserId || !resetPasswordInput) return;
+      setFeedback(resetFeedback, "");
+      const nuevaPassword = resetPasswordInput.value || "";
+      const ok = await submitResetPassword(resettingUserId, nuevaPassword);
+      if (!ok) return;
+      closeReset();
     });
   }
 

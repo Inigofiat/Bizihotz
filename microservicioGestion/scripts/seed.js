@@ -17,6 +17,11 @@ require("dotenv").config({
   path: path.resolve(__dirname, "..", ".env")
 });
 
+const DEFAULT_PROFESIONALES_PASSWORD = process.env.DEFAULT_USER_PASSWORD || "Bizihotz2025!";
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "administradorTFG";
+const DEFAULT_RECEPCIONISTA_PASSWORD =
+  process.env.DEFAULT_RECEPCIONISTA_PASSWORD || "recepcionistaTFG";
+
 const profesionalesSeedPath = path.resolve(__dirname, "..", "src", "models", "profesionales.seed.json");
 const profesionalesSeed = JSON.parse(fs.readFileSync(profesionalesSeedPath, "utf8"));
 
@@ -368,12 +373,44 @@ const seed = async () => {
         telefono: profesional.telefono ?? "",
         rol: profesional.rol ?? "Nutricionista",
         foto: profesional.foto ?? "",
-        passwordHash: bcrypt.hashSync("Bizihotz2025!", 12),
+        passwordHash: bcrypt.hashSync(DEFAULT_PROFESIONALES_PASSWORD, 12),
         activo: profesional.activo ?? true,
+        rolSistema: profesional.rolSistema ?? "Profesional del centro",
         debeActualizarPassword: false,
         ultimoCambioPassword: null
       };
     });
+
+    usuariosSeed.push(
+      {
+        nombreUsuario: "admin",
+        nombre: "Administrador",
+        apellidos: "Bizihotz",
+        email: "admin@bizihotz.com",
+        telefono: "",
+        rol: "Administrador",
+        rolSistema: "Administrador",
+        foto: "",
+        passwordHash: bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 12),
+        activo: true,
+        debeActualizarPassword: false,
+        ultimoCambioPassword: null
+      },
+      {
+        nombreUsuario: "recep",
+        nombre: "Recepcionista",
+        apellidos: "Bizihotz",
+        email: "recepcionista@bizihotz.com",
+        telefono: "",
+        rol: "Recepcionista",
+        rolSistema: "Recepcionista",
+        foto: "",
+        passwordHash: bcrypt.hashSync(DEFAULT_RECEPCIONISTA_PASSWORD, 12),
+        activo: true,
+        debeActualizarPassword: false,
+        ultimoCambioPassword: null
+      }
+    );
 
     const usuariosInsertados = await Usuario.insertMany(usuariosSeed);
     const profesionalIds = usuariosInsertados.map((usuario) => usuario._id);

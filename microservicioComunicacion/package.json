@@ -7,7 +7,7 @@
     "start": "node src/index.js",
     "dev": "nodemon --watch src --ext js,json src/index.js",
     "lint": "echo \"No hay reglas de lint configuradas\"",
-    "test": "node test/unit_core.test.js && node test/unit_upload.test.js && node test/integration.test.js && node test/validation.test.js && node test/health.test.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
     "coverage": "c8 --reporter=text --reporter=html --report-dir coverage --check-coverage --lines 80 npm test"
   },
   "keywords": [

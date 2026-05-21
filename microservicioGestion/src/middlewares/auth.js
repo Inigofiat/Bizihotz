@@ -20,6 +20,7 @@ const parseBoolean = (value = "") =>
   ["1", "true", "yes", "on"].includes(value.toString().trim().toLowerCase());
 
 const normalize = (value = "") => value.toString().trim().toLowerCase();
+const ANONYMOUS_USER_ID = "000000000000000000000000";
 
 const resolveAnonymousRole = () => {
   const configured = (process.env.ALLOW_ANONYMOUS_ROLE || "").trim();
@@ -37,7 +38,8 @@ const resolveAnonymousRole = () => {
 const buildAnonymousUser = () => {
   const rolSistema = resolveAnonymousRole();
   return {
-    idUsuario: "anon-dev",
+    idUsuario: ANONYMOUS_USER_ID,
+    id: ANONYMOUS_USER_ID,
     nombreUsuario: "anon-dev",
     email: "anon@local",
     rol: rolSistema,
@@ -51,6 +53,16 @@ const requireAuth = (req, res, next) => {
   }
 
   if (parseBoolean(process.env.ALLOW_ANONYMOUS)) {
+    const authHeader = req.headers.authorization || "";
+    const [, token] = authHeader.split(" ");
+    if (token) {
+      try {
+        req.user = verifyToken(token);
+        return next();
+      } catch (_error) {
+        // En modo anónimo no bloqueamos por token inválido; degradamos a usuario anónimo.
+      }
+    }
     req.user = req.user || buildAnonymousUser();
     return next();
   }

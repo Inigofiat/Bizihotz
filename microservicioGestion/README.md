@@ -16,6 +16,8 @@ Servicio que gestiona pacientes, citas y usuarios. Expone API REST protegida con
 - `ALLOW_ANONYMOUS` (opcional, por defecto `false`): si vale `true`, desactiva la validacion JWT y crea un usuario simulado para pruebas locales.
 - `ALLOW_ANONYMOUS_ROLE` (opcional, por defecto `Administrador`): rol del usuario simulado (`Administrador`, `Recepcionista`, `Profesional del centro`).
 - `DEFAULT_USER_PASSWORD` (opcional, por defecto `Bizihotz2025!`): usada para crear los usuarios iniciales si la coleccion esta vacia.
+- `DEFAULT_ADMIN_PASSWORD` (opcional, por defecto `administradorTFG`): contrasena del usuario `admin@bizihotz.com`.
+- `DEFAULT_RECEPCIONISTA_PASSWORD` (opcional, por defecto `recepcionistaTFG`): contrasena del usuario `recepcionista@bizihotz.com`.
 - `UPLOADS_DIR` (opcional): ruta donde guardar/servir ficheros; por defecto `./uploads` en el proyecto.
 
 ## Puesta en marcha rapida (local)
@@ -29,7 +31,10 @@ npm run dev         # o: npm start
 
 API disponible en `http://localhost:4001` (o el puerto configurado). Documentacion Swagger en `http://localhost:4001/docs` y JSON en `/docs/swagger.json`. Endpoints de salud: `GET /status` y `GET /health`.
 
-Al primer arranque, si no hay usuarios, se crean desde `src/models/profesionales.seed.json` con la contrasena `DEFAULT_USER_PASSWORD`. Cambia esa contrasena despues del despliegue.
+Al primer arranque, si no hay usuarios, se crean:
+- usuarios profesionales desde `src/models/profesionales.seed.json` con `DEFAULT_USER_PASSWORD`
+- administrador: `admin@bizihotz.com` / `admin` con `DEFAULT_ADMIN_PASSWORD`
+- recepcionista: `recepcionista@bizihotz.com` / `recep` con `DEFAULT_RECEPCIONISTA_PASSWORD`
 
 ## Scripts utiles
 

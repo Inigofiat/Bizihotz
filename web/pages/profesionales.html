@@ -69,6 +69,7 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-card { background: #fff; border-radius: 14px; padding: 20px; width: min(520px, 90vw); box-shadow: 0 30px 60px rgba(0,0,0,0.18); }
     .modal-card h3 { margin-top: 0; margin-bottom: 12px; color: #0f6a3f; }
+    .modal-help { margin: 0 0 12px; color: #374151; font-size: 14px; }
     .modal-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; }
     .modal-actions { margin-top: 14px; display: flex; gap: 10px; justify-content: flex-end; }
     /* Confirm modal */
@@ -180,6 +181,22 @@
         <div class="modal-actions">
           <button type="button" id="editCancel" class="btn btn-neutral">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset password dialog -->
+  <div id="resetOverlay" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <h3>Resetear contraseña</h3>
+      <p class="modal-help">Usuario: <strong id="resetUserLabel"></strong></p>
+      <form id="resetForm">
+        <input id="resetPassword" type="password" placeholder="Nueva contraseña (mín. 8 caracteres)" minlength="8" required />
+        <div id="resetFeedback" class="feedback"></div>
+        <div class="modal-actions">
+          <button type="button" id="resetCancel" class="btn btn-neutral">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar contraseña</button>
         </div>
       </form>
     </div>

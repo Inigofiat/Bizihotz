@@ -7,6 +7,9 @@ const bcrypt = require("bcryptjs");
 const Usuario = require("../models/usuarioModel");
 
 const DEFAULT_PASSWORD = process.env.DEFAULT_USER_PASSWORD || "Bizihotz2025!";
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "administradorTFG";
+const DEFAULT_RECEPCIONISTA_PASSWORD =
+  process.env.DEFAULT_RECEPCIONISTA_PASSWORD || "recepcionistaTFG";
 const PROFESIONALES_SEED = path.resolve(__dirname, "..", "models", "profesionales.seed.json");
 
 const extractNombreApellidos = (profesional = {}) => {
@@ -67,6 +70,8 @@ const ensureDefaultUsers = async () => {
   const contenidoSeed = fs.readFileSync(PROFESIONALES_SEED, "utf8");
   const profesionalesSeed = JSON.parse(contenidoSeed);
   const hashComun = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+  const hashAdmin = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 12);
+  const hashRecepcionista = await bcrypt.hash(DEFAULT_RECEPCIONISTA_PASSWORD, 12);
   const usuariosDocuments = buildUsuarioDocs(profesionalesSeed, hashComun);
 
   // Administrador inicial para poder gestionar profesionales desde el panel.
@@ -79,9 +84,25 @@ const ensureDefaultUsers = async () => {
     rol: "Administrador",
     rolSistema: "Administrador",
     foto: "",
-    passwordHash: hashComun,
+    passwordHash: hashAdmin,
     activo: true,
-    debeActualizarPassword: true,
+    debeActualizarPassword: false,
+    ultimoCambioPassword: null
+  });
+
+  // Recepcionista inicial para la operativa de agenda y registro asistencial.
+  usuariosDocuments.push({
+    nombreUsuario: "recep",
+    nombre: "Recepcionista",
+    apellidos: "Bizihotz",
+    email: "recepcionista@bizihotz.com",
+    telefono: "",
+    rol: "Recepcionista",
+    rolSistema: "Recepcionista",
+    foto: "",
+    passwordHash: hashRecepcionista,
+    activo: true,
+    debeActualizarPassword: false,
     ultimoCambioPassword: null
   });
 

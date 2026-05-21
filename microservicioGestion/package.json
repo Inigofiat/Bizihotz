@@ -4,7 +4,7 @@
   "description": "Microservicio de gestion de pacientes y citas (Bizihotz)",
   "main": "src/index.js",
   "scripts": {
-    "test": "node test/authMiddleware.test.js && node test/authRutas.test.js && node test/citasRutasTest.js && node test/citasRutasExtra.test.js && node test/historialRutas.test.js && node test/pacientesRutasFunc.test.js && node test/functionalFlow.test.js && node test/utils.test.js && node test/health.test.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
     "coverage": "c8 --reporter=text --reporter=html --report-dir coverage --check-coverage --lines 80 --exclude=test/** --exclude=src/index.js --exclude=src/config/** --exclude=src/routes/pacienteRutas.js --exclude=src/routes/pacienteUsuarioRutas.js --exclude=src/routes/registroRutas.js --exclude=src/routes/usuarioRutas.js --exclude=src/services/** npm test",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",

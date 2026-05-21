@@ -1,9 +1,29 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.3",
   "info": {
     "title": "Bizihotz Chatbot",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "API del microservicio chatbot para gestion de sesiones y mensajes."
   },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "health"
+    },
+    {
+      "name": "SesionesChatbot"
+    },
+    {
+      "name": "MensajesChatbot"
+    },
+    {
+      "name": "IAChatbot"
+    }
+  ],
   "security": [
     {
       "BearerAuth": []
@@ -12,11 +32,281 @@
   "paths": {
     "/health": {
       "get": {
+        "tags": [
+          "health"
+        ],
         "summary": "Healthcheck",
         "security": [],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Servicio operativo"
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "tags": [
+          "SesionesChatbot"
+        ],
+        "summary": "Listar sesiones de un usuario",
+        "parameters": [
+          {
+            "name": "usuarioId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de sesiones"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SesionesChatbot"
+        ],
+        "summary": "Crear sesion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sesion creada"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          }
+        }
+      }
+    },
+    "/api/sessions/{sessionId}": {
+      "get": {
+        "tags": [
+          "SesionesChatbot"
+        ],
+        "summary": "Obtener sesion por ID",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesion encontrada"
+          },
+          "400": {
+            "description": "ID invalido"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "SesionesChatbot"
+        ],
+        "summary": "Renombrar sesion",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesion actualizada"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          },
+          "403": {
+            "description": "No autorizado"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "SesionesChatbot"
+        ],
+        "summary": "Eliminar sesion",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesion eliminada"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          },
+          "403": {
+            "description": "No autorizado"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          }
+        }
+      }
+    },
+    "/api/sessions/{sessionId}/messages": {
+      "get": {
+        "tags": [
+          "MensajesChatbot"
+        ],
+        "summary": "Listar mensajes de una sesion",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mensajes recuperados"
+          },
+          "400": {
+            "description": "ID invalido"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "MensajesChatbot"
+        ],
+        "summary": "Enviar mensaje a una sesion",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mensaje creado"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          }
+        }
+      }
+    },
+    "/api/sessions/{sessionId}/ai-reply": {
+      "post": {
+        "tags": [
+          "IAChatbot"
+        ],
+        "summary": "Generar respuesta del asistente IA",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIReplyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta IA generada"
+          },
+          "400": {
+            "description": "Validacion incorrecta"
+          },
+          "404": {
+            "description": "Sesion no encontrada"
+          },
+          "502": {
+            "description": "Proveedor IA no disponible"
           }
         }
       }
@@ -28,6 +318,90 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "CreateSessionRequest": {
+        "type": "object",
+        "required": [
+          "usuarioId"
+        ],
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "titulo": {
+            "type": "string",
+            "example": "Sesion inicial"
+          }
+        }
+      },
+      "UpdateSessionRequest": {
+        "type": "object",
+        "required": [
+          "titulo"
+        ],
+        "properties": {
+          "solicitanteId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "usuarioId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "titulo": {
+            "type": "string",
+            "example": "Sesion renombrada"
+          }
+        }
+      },
+      "DeleteSessionRequest": {
+        "type": "object",
+        "required": [
+          "solicitanteId"
+        ],
+        "properties": {
+          "solicitanteId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          }
+        }
+      },
+      "PostMessageRequest": {
+        "type": "object",
+        "required": [
+          "remitenteId",
+          "contenido"
+        ],
+        "properties": {
+          "remitenteId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "contenido": {
+            "type": "string",
+            "example": "Hola chatbot"
+          }
+        }
+      },
+      "AIReplyRequest": {
+        "type": "object",
+        "required": [
+          "usuarioId",
+          "contenido"
+        ],
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "contenido": {
+            "type": "string",
+            "example": "Dame una recomendacion nutricional"
+          }
+        }
       }
     }
   }
