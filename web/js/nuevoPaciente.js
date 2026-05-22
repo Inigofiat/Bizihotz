@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const buildGestionBases = () => {
   const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
@@ -35,7 +35,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\d{9}$/;
 
 let usuarioActual = null;
+let roleContextReady = true;
 const normalizePhone = (value = "") => value.replace(/\D/g, "");
+const normalizeRole = (value = "") => value.toString().trim().toLowerCase();
+const requiresProfessionalSelection = () => {
+  const role = normalizeRole(usuarioActual?.rolSistema || usuarioActual?.rol);
+  return role === "recepcionista" || role === "administrador" || role === "admin";
+};
 
 const elements = {
   form: null,
@@ -44,6 +50,9 @@ const elements = {
   fechaNac: null,
   email: null,
   telefono: null,
+  profesionalField: null,
+  profesionalSelect: null,
+  helperText: null,
   feedback: null,
   submit: null,
   cancel: null,
@@ -63,15 +72,34 @@ const getStoredUser = () => {
   }
 };
 
+const cleanUiMessage = (message, fallback = "") => {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const cleaned = raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+    .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+};
+
 const setFeedback = (message, isSuccess = false) => {
   if (!elements.feedback) return;
-  elements.feedback.textContent = message || "";
+  elements.feedback.textContent = cleanUiMessage(message, "");
   elements.feedback.classList.toggle("success", Boolean(isSuccess));
+};
+
+const setHelperText = (message) => {
+  if (!elements.helperText) return;
+  elements.helperText.textContent = message || "";
 };
 
 const toggleSubmitting = (isSubmitting) => {
   if (elements.submit) {
-    elements.submit.disabled = isSubmitting;
+    const blockedByRoleContext = requiresProfessionalSelection() && !roleContextReady;
+    elements.submit.disabled = isSubmitting || blockedByRoleContext;
     elements.submit.textContent = isSubmitting ? "Guardando..." : "Guardar paciente";
   }
   if (elements.cancel) {
@@ -90,7 +118,7 @@ const buildHeaders = (baseHeaders = {}) => {
       headers.Authorization = `Bearer ${token}`;
     }
   } catch (error) {
-    console.warn("No se pudo preparar la cabecera de autorización:", error);
+    console.warn("No se pudo preparar la cabecera de autorizacion:", error);
   }
   return headers;
 };
@@ -160,7 +188,77 @@ const requestJson = async (path, options = {}) => {
   if (lastError) {
     throw lastError;
   }
-  throw new Error("No se pudo completar la petición.");
+  throw new Error("No se pudo completar la peticion.");
+};
+
+const fetchProfesionalesActivos = async () => {
+  const response = await requestJson("/usuarios?limit=200");
+  const data = Array.isArray(response?.data) ? response.data : [];
+  return data.filter((usuario) => {
+    const rolSistema = normalizeRole(usuario?.rolSistema || usuario?.rol);
+    const esProfesional = rolSistema === "profesional del centro" || rolSistema === "profesional";
+    return esProfesional && usuario?.activo !== false;
+  });
+};
+
+const getDisplayName = (usuario = {}) => {
+  const fullName = (usuario.nombreCompleto || "").trim();
+  if (fullName) return fullName;
+  const merged = `${usuario.nombre || ""} ${usuario.apellidos || ""}`.replace(/\s+/g, " ").trim();
+  if (merged) return merged;
+  return usuario.nombreUsuario || usuario.email || "Profesional";
+};
+
+const loadProfessionalContext = async () => {
+  const needsSelector = requiresProfessionalSelection();
+  if (!elements.profesionalField || !elements.profesionalSelect) {
+    roleContextReady = !needsSelector;
+    return;
+  }
+
+  if (!needsSelector) {
+    elements.profesionalField.hidden = true;
+    elements.profesionalSelect.required = false;
+    elements.profesionalSelect.disabled = true;
+    setHelperText("Al guardar, el paciente quedara asociado a tu agenda de forma automatica.");
+    roleContextReady = true;
+    return;
+  }
+
+  roleContextReady = false;
+  elements.profesionalField.hidden = false;
+  elements.profesionalSelect.required = true;
+  elements.profesionalSelect.disabled = true;
+  elements.profesionalSelect.innerHTML =
+    '<option value="" selected disabled>Cargando profesionales...</option>';
+  setHelperText(
+    "Al guardar, selecciona el profesional responsable para asociar el paciente a su agenda."
+  );
+  setFeedback("Cargando profesionales activos...", false);
+
+  try {
+    const profesionales = await fetchProfesionalesActivos();
+    if (!profesionales.length) {
+      throw new Error("No hay profesionales activos disponibles para asignacion.");
+    }
+
+    elements.profesionalSelect.innerHTML = [
+      '<option value="" selected disabled>Selecciona un profesional</option>',
+      ...profesionales.map(
+        (usuario) =>
+          `<option value="${usuario.idUsuario}">${getDisplayName(usuario)}</option>`
+      )
+    ].join("");
+
+    elements.profesionalSelect.disabled = false;
+    roleContextReady = true;
+    setFeedback("", false);
+  } catch (error) {
+    roleContextReady = false;
+    elements.profesionalSelect.innerHTML =
+      '<option value="" selected disabled>No disponible</option>';
+    setFeedback(error?.message || "No se pudieron cargar profesionales.", false);
+  }
 };
 
 const serializeForm = () => ({
@@ -183,7 +281,7 @@ const validateForm = (data) => {
   }
   const fecha = new Date(data.fechaNac);
   if (Number.isNaN(fecha.getTime())) {
-    return "La fecha de nacimiento no es válida.";
+    return "La fecha de nacimiento no es valida.";
   }
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
@@ -191,13 +289,20 @@ const validateForm = (data) => {
     return "La fecha de nacimiento no puede ser futura.";
   }
   if (!data.emailPaciente || !EMAIL_REGEX.test(data.emailPaciente)) {
-    return "Introduce un email válido.";
+    return "Introduce un email valido.";
   }
   const telefonoDigits = normalizePhone(data.telefono);
   if (!telefonoDigits || !PHONE_REGEX.test(telefonoDigits)) {
     return "El número de teléfono debe tener exactamente 9 dígitos.";
   }
   return null;
+};
+
+const resolveProfesionalAsignado = () => {
+  if (requiresProfessionalSelection()) {
+    return elements.profesionalSelect?.value?.trim() || "";
+  }
+  return usuarioActual?.idUsuario || "";
 };
 
 const createPaciente = async (payload) =>
@@ -207,16 +312,16 @@ const createPaciente = async (payload) =>
     body: JSON.stringify(payload)
   });
 
-const vincularPacienteConProfesional = async (idPaciente) => {
-  if (!usuarioActual?.idUsuario) {
-    throw new Error("No se pudo determinar el usuario actual.");
+const vincularPacienteConProfesional = async (idPaciente, idUsuarioAsignado) => {
+  if (!idUsuarioAsignado) {
+    throw new Error("Selecciona un profesional para asignar el paciente.");
   }
   return requestJson("/pacientes-usuarios", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       idPaciente,
-      idUsuario: usuarioActual.idUsuario
+      idUsuario: idUsuarioAsignado
     })
   });
 };
@@ -227,11 +332,22 @@ const handleSubmit = async (event) => {
     return;
   }
 
+  if (!roleContextReady) {
+    setFeedback("Espera a que termine la carga de profesionales.", false);
+    return;
+  }
+
   setFeedback("");
   const formData = serializeForm();
   const validationError = validateForm(formData);
   if (validationError) {
     setFeedback(validationError, false);
+    return;
+  }
+
+  const profesionalAsignado = resolveProfesionalAsignado();
+  if (!profesionalAsignado) {
+    setFeedback("Selecciona el profesional asignado para continuar.", false);
     return;
   }
 
@@ -244,17 +360,13 @@ const handleSubmit = async (event) => {
     }
     const pacienteId = paciente.idPaciente || paciente._id;
 
-    try {
-      await vincularPacienteConProfesional(pacienteId);
-    } catch (error) {
-      // si la vinculación falla por duplicado, informamos pero no revertimos el alta
-      if (error?.status !== 409) {
-        throw error;
-      }
-    }
+    await vincularPacienteConProfesional(pacienteId, profesionalAsignado);
 
     setFeedback("Paciente creado y asociado correctamente.", true);
     elements.form.reset();
+    if (elements.profesionalSelect && requiresProfessionalSelection()) {
+      elements.profesionalSelect.selectedIndex = 0;
+    }
 
     setTimeout(() => {
       window.location.href = "principal.html";
@@ -272,13 +384,16 @@ const handleCancel = (event) => {
   window.location.href = "principal.html";
 };
 
-const init = () => {
+const init = async () => {
   elements.form = document.getElementById("newPatientForm");
   elements.nombre = document.getElementById("nombrePaciente");
   elements.apellidos = document.getElementById("apellidosPaciente");
   elements.fechaNac = document.getElementById("fechaNac");
   elements.email = document.getElementById("emailPaciente");
   elements.telefono = document.getElementById("telefonoPaciente");
+  elements.profesionalField = document.getElementById("profesionalAsignadoField");
+  elements.profesionalSelect = document.getElementById("profesionalAsignado");
+  elements.helperText = document.getElementById("asignacionHelperText");
   elements.feedback = document.getElementById("formFeedback");
   elements.submit = document.getElementById("submitPaciente");
   elements.cancel = document.getElementById("cancelarRegistro");
@@ -291,10 +406,16 @@ const init = () => {
   }
   usuarioActual = user;
 
+  await loadProfessionalContext();
+  toggleSubmitting(false);
+
   elements.form?.addEventListener("submit", handleSubmit);
   elements.cancel?.addEventListener("click", handleCancel);
   elements.back?.addEventListener("click", handleCancel);
 };
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+});
+
 

@@ -68,6 +68,18 @@
     passwordForm.hidden = true;
 
     const state = { forced: false };
+    const cleanUiMessage = (message, fallback = "") => {
+      const raw = String(message || "").trim();
+      if (!raw) {
+        return fallback;
+      }
+      const cleaned = raw
+        .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+        .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+        .replace(/\s+/g, " ")
+        .trim();
+      return cleaned || fallback;
+    };
 
     const resetFeedback = () => {
       passwordFeedback.textContent = "";
@@ -231,11 +243,13 @@
         passwordFeedback.classList.add("is-success");
         setTimeout(() => {
           ocultar();
-          alert("Contraseña actualizada correctamente.");
         }, 800);
       } catch (error) {
         console.warn("Error actualizando contraseña:", error);
-        passwordFeedback.textContent = error.message || "No se pudo cambiar la contraseña.";
+        passwordFeedback.textContent = cleanUiMessage(
+          error?.message,
+          "No se pudo cambiar la contraseña."
+        );
         passwordFeedback.classList.add("is-error");
       } finally {
         passwordForm.reset();

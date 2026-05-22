@@ -13,6 +13,19 @@
     statsArticles: document.getElementById("statsArticles")
   };
 
+  const cleanUiMessage = (message, fallback = "No se pudo cargar el centro de ayuda.") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   const formatDate = (isoString) => {
     if (!isoString) return "";
     const date = new Date(isoString);
@@ -204,7 +217,11 @@
       }
     } catch (error) {
       if (refs.categories) {
-        refs.categories.innerHTML = `<div class="help-empty">${error.message}</div>`;
+        refs.categories.innerHTML = "";
+        const empty = document.createElement("div");
+        empty.className = "help-empty";
+        empty.textContent = cleanUiMessage(error?.message);
+        refs.categories.appendChild(empty);
       }
     }
   };

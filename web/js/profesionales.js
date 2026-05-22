@@ -53,11 +53,66 @@
     if (confirmCancel) confirmCancel.onclick = null;
   };
 
+  const showFallbackConfirm = (message, acceptLabel = "Aceptar") =>
+    new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.background = "rgba(0,0,0,0.45)";
+      overlay.style.display = "grid";
+      overlay.style.placeItems = "center";
+      overlay.style.zIndex = "5000";
+
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "12px";
+      box.style.padding = "18px";
+      box.style.width = "min(480px, 92vw)";
+      box.style.boxShadow = "0 20px 45px rgba(0,0,0,0.2)";
+
+      const text = document.createElement("p");
+      text.textContent = message;
+      text.style.margin = "0 0 14px";
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.justifyContent = "flex-end";
+      actions.style.gap = "10px";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Cancelar";
+      cancelBtn.className = "btn btn-ghost";
+
+      const okBtn = document.createElement("button");
+      okBtn.type = "button";
+      okBtn.textContent = acceptLabel;
+      okBtn.className = "btn btn-primary";
+
+      const cleanup = (value) => {
+        overlay.remove();
+        resolve(Boolean(value));
+      };
+
+      cancelBtn.addEventListener("click", () => cleanup(false));
+      okBtn.addEventListener("click", () => cleanup(true));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) cleanup(false);
+      });
+
+      actions.appendChild(cancelBtn);
+      actions.appendChild(okBtn);
+      box.appendChild(text);
+      box.appendChild(actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      okBtn.focus();
+    });
+
   const showConfirm = (message, acceptLabel = "Aceptar") => {
     return new Promise((resolve) => {
       if (!confirmOverlay || !confirmMessage || !confirmAccept || !confirmCancel) {
-        const fallback = window.confirm(message);
-        resolve(fallback);
+        showFallbackConfirm(message, acceptLabel).then(resolve);
         return;
       }
       confirmMessage.textContent = message;
@@ -113,9 +168,22 @@
 
   const API_BASE = `${buildGestionBase()}/api`;
 
+  const cleanUiMessage = (message, fallback = "") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   const setFeedback = (node, msg, isError = true) => {
     if (!node) return;
-    node.textContent = msg || "";
+    node.textContent = cleanUiMessage(msg, "");
     node.style.color = isError ? "#dc2626" : "#16a34a";
   };
 

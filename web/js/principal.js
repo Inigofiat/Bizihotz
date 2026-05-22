@@ -33,6 +33,59 @@ const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
 const DEFAULT_AVATAR_URL = "../images/avatar-default.svg";
 const CONVERSATION_TARGET_KEY = "bizihotzConversationTarget";
+const cleanUiMessage = (message, fallback = "Ha ocurrido un error.") => {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const cleaned = raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+    .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+};
+
+const ensureUiToastContainer = () => {
+  let container = document.getElementById("globalUiToastContainer");
+  if (container) {
+    return container;
+  }
+  container = document.createElement("div");
+  container.id = "globalUiToastContainer";
+  container.style.position = "fixed";
+  container.style.right = "20px";
+  container.style.bottom = "20px";
+  container.style.zIndex = "5000";
+  container.style.display = "grid";
+  container.style.gap = "8px";
+  document.body.appendChild(container);
+  return container;
+};
+
+const showUiToast = (message, durationMs = 3200) => {
+  const safeMessage = cleanUiMessage(message, "");
+  if (!safeMessage) {
+    return;
+  }
+  const container = ensureUiToastContainer();
+  const toast = document.createElement("div");
+  toast.textContent = safeMessage;
+  toast.style.background = "#1f2937";
+  toast.style.color = "#fff";
+  toast.style.padding = "10px 14px";
+  toast.style.borderRadius = "10px";
+  toast.style.boxShadow = "0 8px 20px rgba(0,0,0,0.2)";
+  toast.style.maxWidth = "360px";
+  toast.style.fontSize = "14px";
+  container.appendChild(toast);
+  window.setTimeout(() => {
+    toast.remove();
+    if (!container.childElementCount) {
+      container.remove();
+    }
+  }, durationMs);
+};
 
 const dedupeValues = (items) => {
   const seen = new Set();
@@ -287,7 +340,7 @@ const resolveTokenOrRedirect = () => {
   if (!token) {
     localStorage.removeItem("bizihotzUsuario");
     window.location.href = LOGIN_PAGE;
-    throw new Error("Sesion no valida. Necesitas iniciar sesion.");
+    throw new Error("Sesión no válida. Necesitas iniciar sesión.");
   }
   return token;
 };
@@ -298,7 +351,7 @@ const buildAuthHeaders = (baseHeaders = {}) => {
   try {
     token = resolveTokenOrRedirect();
   } catch (error) {
-    console.warn(error?.message || "Sesion no valida");
+    console.warn(error?.message || "Sesión no válida");
   }
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -590,7 +643,7 @@ const updateAppointmentStatus = async (citaId, nuevoEstado, trigger) => {
   } catch (error) {
     console.error("No se pudo actualizar el estado de la cita:", error);
     applyStatusChipState(trigger, estadoAnterior);
-    alert(error.message || "No se pudo actualizar el estado de la cita.");
+    showUiToast(error?.message || "No se pudo actualizar el estado de la cita.");
   } finally {
     setStatusChipLoading(trigger, false);
     trigger.focus();

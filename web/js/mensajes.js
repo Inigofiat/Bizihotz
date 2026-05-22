@@ -228,11 +228,24 @@ try {
     }
   }
 
+  const cleanUiMessage = (message, fallback = "") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   function showChatFeedback(message, variant = "info", timeout = 3500) {
     if (!refs.chatFeedback) {
       return;
     }
-    refs.chatFeedback.textContent = message;
+    refs.chatFeedback.textContent = cleanUiMessage(message, "");
     refs.chatFeedback.classList.remove("is-success", "is-error", "is-info");
     refs.chatFeedback.classList.add(`is-${variant}`);
     refs.chatFeedback.hidden = false;
@@ -536,7 +549,7 @@ try {
     );
   };
 
-  const rememberContact = (id, alias, avatarSource = null) => {
+  const rememberContact = (id, alias, avatarSource = null, options = {}) => {
     if (!id || !alias) {
       return;
     }
@@ -545,6 +558,11 @@ try {
       return;
     }
     const previous = contacts[id] || {};
+    const forceAlias = Boolean(options.forceAlias);
+    const isCustomAlias = Boolean(options.isCustomAlias);
+    const keepCustomAlias = Boolean(previous.isCustomAlias) && !forceAlias && !isCustomAlias;
+    const nextAlias = keepCustomAlias ? previous.alias || trimmed : trimmed;
+    const nextCustomAlias = keepCustomAlias || isCustomAlias;
     let resolvedAvatar = previous.avatar || null;
     let nextAvatarSource = previous.avatarSource ?? null;
     if (avatarSource !== null) {
@@ -552,14 +570,21 @@ try {
       resolvedAvatar = nextAvatarSource ? resolveMediaUrl(nextAvatarSource) : null;
     }
     const changed =
-      previous.alias !== trimmed || previous.avatar !== resolvedAvatar || previous.avatarSource !== nextAvatarSource;
+      previous.alias !== nextAlias ||
+      previous.avatar !== resolvedAvatar ||
+      previous.avatarSource !== nextAvatarSource ||
+      Boolean(previous.isCustomAlias) !== nextCustomAlias;
 
     contacts[id] = {
-      alias: trimmed,
+      alias: nextAlias,
       avatar: resolvedAvatar,
       avatarSource: nextAvatarSource,
+      isCustomAlias: nextCustomAlias,
       storedAt: new Date().toISOString(),
     };
+    if (!nextCustomAlias) {
+      delete contacts[id].isCustomAlias;
+    }
     if (changed) {
       saveContacts();
     }
@@ -588,6 +613,10 @@ try {
     if (participantId === currentUserId) {
       return "Tú";
     }
+    const localName = contacts[participantId]?.alias || contacts[participantId]?.name || null;
+    if (localName) {
+      return localName;
+    }
     const metaName =
       conversation?.metadata?.aliases?.[participantId] ||
       conversation?.metadata?.participants?.[participantId] ||
@@ -595,7 +624,7 @@ try {
     if (metaName) {
       return metaName;
     }
-    return contacts[participantId]?.alias || contacts[participantId]?.name || participantId;
+    return participantId;
   };
 
   const resolveParticipantAvatar = (participantId, conversation) => {
@@ -950,7 +979,10 @@ try {
       rememberContact(participantId, professional.nombreCompleto, professional.foto || null);
     } catch (error) {
       if (refs.newChatFeedback) {
-        refs.newChatFeedback.textContent = error.message || "No se pudo abrir la conversación.";
+        refs.newChatFeedback.textContent = cleanUiMessage(
+          error?.message,
+          "No se pudo abrir la conversación."
+        );
       }
     } finally {
       isCreatingConversation = false;
@@ -1008,7 +1040,7 @@ try {
       }
     } catch (error) {
       if (refs.newChatHint) {
-        refs.newChatHint.textContent = error.message || "No se pudo cargar la lista.";
+        refs.newChatHint.textContent = cleanUiMessage(error?.message, "No se pudo cargar la lista.");
       }
       renderProfessionalCards([]);
     } finally {
@@ -1832,7 +1864,10 @@ try {
       closeEditMessageDialog();
     } catch (error) {
       if (refs.editMessageFeedback) {
-        refs.editMessageFeedback.textContent = error.message || "No se pudo editar el mensaje.";
+        refs.editMessageFeedback.textContent = cleanUiMessage(
+          error?.message,
+          "No se pudo editar el mensaje."
+        );
       }
     }
   };
@@ -2060,16 +2095,21 @@ const attemptReconnect = (delay = 5000) => {
       return;
     }
     const recipientId = getRecipientFromConversation(conversation);
+    if (!recipientId) {
+      hideModal(refs.renameModal);
+      return;
+    }
     const alias = refs.renameInput.value.trim();
     if (alias) {
-      contacts[recipientId] = {
-        alias,
-        storedAt: new Date().toISOString()
-      };
+      const currentAvatarSource = contacts[recipientId]?.avatarSource ?? null;
+      rememberContact(recipientId, alias, currentAvatarSource, {
+        forceAlias: true,
+        isCustomAlias: true
+      });
     } else {
       delete contacts[recipientId];
+      saveContacts();
     }
-    saveContacts();
     hideModal(refs.renameModal);
     renderConversationList(refs.searchInput.value || "");
     if (activeConversationId) {
@@ -2175,4 +2215,3 @@ const attemptReconnect = (delay = 5000) => {
 
   document.addEventListener("DOMContentLoaded", boot);
 })();
-

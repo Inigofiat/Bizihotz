@@ -43,6 +43,19 @@
     return;
   }
 
+  const cleanUiMessage = (message, fallback = "") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   const resetMessage = () => {
     loginMessage.textContent = "";
     loginMessage.classList.remove("is-error");
@@ -50,7 +63,7 @@
   };
 
   const showMessage = (text, isError = true) => {
-    loginMessage.textContent = text;
+    loginMessage.textContent = cleanUiMessage(text, "");
     loginMessage.classList.toggle("is-error", isError);
     loginMessage.classList.toggle("is-success", !isError);
   };
@@ -62,7 +75,7 @@
     const password = passwordInput.value.trim();
 
     if (!loginValueRaw || !password) {
-      showMessage("Indica email o nombre de usuario y contrasena.", true);
+      showMessage("Indica email o nombre de usuario y contraseña.", true);
       return;
     }
 
@@ -117,7 +130,7 @@
             };
             localStorage.setItem("bizihotzUsuario", JSON.stringify(userToStore));
           } catch (storageError) {
-            console.warn("No se pudo guardar la sesion en localStorage:", storageError);
+            console.warn("No se pudo guardar la sesión en localStorage:", storageError);
           }
         }
 
@@ -132,7 +145,7 @@
       } catch (error) {
         lastNetworkError = error;
         if (isLast) {
-          console.error("Error iniciando sesion:", error);
+          console.error("Error iniciando sesión:", error);
           showMessage(lastMessage, true);
           return;
         }
@@ -140,7 +153,7 @@
     }
 
     if (lastNetworkError) {
-      console.error("Error iniciando sesion:", lastNetworkError);
+      console.error("Error iniciando sesión:", lastNetworkError);
     }
     showMessage(lastMessage, true);
   });

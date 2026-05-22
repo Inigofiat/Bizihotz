@@ -1,5 +1,6 @@
 const express = require('express');
 const PacienteUsuario = require('../models/pacienteUsuarioModelo');
+const Usuario = require('../models/usuarioModel');
 const { ensureValidObjectId } = require('../utils/validators');
 const { createNotFoundError } = require('../utils/httpErrors');
 const { permitirRoles, ROLES } = require('../middlewares/authorize');
@@ -10,10 +11,20 @@ const handleError = (res, error, defaultMessage) => {
   if (error.name === 'ValidationError') {
     return res.status(400).json({ mensaje: error.message });
   }
+  if (error.code === 11000) {
+    return res.status(409).json({ mensaje: 'La relacion paciente-profesional ya existe.' });
+  }
 
   const status = error.status || 500;
   const mensaje = error.message || defaultMessage;
   return res.status(status).json({ mensaje });
+};
+
+const normalize = (value = '') => value.toString().trim().toLowerCase();
+
+const isProfesionalRol = (rolSistema = '') => {
+  const rol = normalize(rolSistema);
+  return rol === normalize(ROLES.PROFESIONAL) || rol === 'profesional';
 };
 
 router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
@@ -53,13 +64,28 @@ router.get('/:id', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, re
   }
 });
 
-router.post('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL), async (req, res) => {
+router.post('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { idPaciente, idUsuario } = req.body;
     ensureValidObjectId(idPaciente, 'paciente');
     ensureValidObjectId(idUsuario, 'usuario');
 
-    const relacion = new PacienteUsuario(req.body);
+    const usuarioAsignado = await Usuario.findById(idUsuario).select('rolSistema activo').lean();
+    if (!usuarioAsignado) {
+      throw createNotFoundError('Usuario', idUsuario);
+    }
+    if (!isProfesionalRol(usuarioAsignado.rolSistema)) {
+      return res.status(400).json({
+        mensaje: 'Solo se pueden asignar pacientes a profesionales del centro.'
+      });
+    }
+    if (usuarioAsignado.activo === false) {
+      return res.status(400).json({
+        mensaje: 'No se puede asignar un paciente a un profesional inactivo.'
+      });
+    }
+
+    const relacion = new PacienteUsuario({ idPaciente, idUsuario });
     const nuevaRelacion = await relacion.save();
     return res.status(201).json(nuevaRelacion);
   } catch (error) {

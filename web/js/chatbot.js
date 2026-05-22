@@ -226,8 +226,8 @@ const DEFAULT_ASSISTANT_GREETING =
 
   const categorizeBmi = (bmi) => {
     if (!bmi || bmi <= 0) return { label: "IMC no calculado", risk: "sin datos" };
-    if (bmi < 17) return { label: "IMC muy bajo", risk: "alto riesgo de desnutricion" };
-    if (bmi < 18.5) return { label: "IMC bajo", risk: "riesgo de desnutricion" };
+    if (bmi < 17) return { label: "IMC muy bajo", risk: "alto riesgo de desnutrición" };
+    if (bmi < 18.5) return { label: "IMC bajo", risk: "riesgo de desnutrición" };
     if (bmi < 25) return { label: "IMC saludable", risk: "riesgo basal" };
     if (bmi < 30) return { label: "Sobrepeso", risk: "riesgo cardiometabolico moderado" };
     if (bmi < 35) return { label: "Obesidad grado I", risk: "riesgo cardiometabolico" };
@@ -317,15 +317,15 @@ const DEFAULT_ASSISTANT_GREETING =
     const recommendation = [];
     if (energy) {
       recommendation.push(
-        `Energia objetivo: ${energy.kcalMin}-${energy.kcalMax} kcal/dia (${energy.kcalPerKg[0]}-${energy.kcalPerKg[1]} kcal/kg ajustado a actividad).`
+        `Energía objetivo: ${energy.kcalMin}-${energy.kcalMax} kcal/día (${energy.kcalPerKg[0]}-${energy.kcalPerKg[1]} kcal/kg ajustado a actividad).`
       );
     } else {
-      recommendation.push("Energia: aportar 25-30 kcal/kg/dia y ajustar segun apetito/objetivo.");
+      recommendation.push("Energía: aportar 25-30 kcal/kg/día y ajustar según apetito/objetivo.");
     }
     if (protein) {
-      recommendation.push(`Proteina: ${protein.range} (${protein.grams}). Prioriza reparto 3-4 tomas ricas en proteina.`);
+      recommendation.push(`Proteína: ${protein.range} (${protein.grams}). Prioriza reparto 3-4 tomas ricas en proteína.`);
     } else {
-      recommendation.push("Proteina: 1.0-1.3 g/kg/dia (sube a 1.4-1.6 g/kg si perdida de peso, sarcopenia o onco).");
+      recommendation.push("Proteína: 1.0-1.3 g/kg/dia (sube a 1.4-1.6 g/kg si perdida de peso, sarcopenia o onco).");
     }
     recommendation.push(
       "Hidratos/fibra: 40-50% de kcal con grano integral si lo tolera; ajustar si hay control glucemico."
@@ -350,26 +350,26 @@ const DEFAULT_ASSISTANT_GREETING =
 
     const alerts = [];
     if (bmi && bmi < 17) {
-      alerts.push("IMC <17: valorar desnutricion severa; considerar derivacion o soporte enteral/ONS.");
+      alerts.push("IMC <17: valorar desnutrición severa; considerar derivación o soporte enteral/ONS.");
     }
-    alerts.push("Perdida >5% peso en 1 mes o >10% en 6 meses: requiere valoracion completa.");
-    alerts.push("Vomitos persistentes, diarrea >48h, disfagia, edemas generalizados o signos de TCA: derivar/coordinar con medico.");
-    alerts.push("El asistente no sustituye valoracion clinica; confirma con historial y exploracion.");
+    alerts.push("Pérdida >5% peso en 1 mes o >10% en 6 meses: requiere valoración completa.");
+    alerts.push("Vómitos persistentes, diarrea >48h, disfagia, edemas generalizados o signos de TCA: derivar/coordinar con médico.");
+    alerts.push("El asistente no sustituye valoración clínica; confirma con historial y exploración.");
 
     const blocks = [];
-    blocks.push("Evaluacion rapida:");
+    blocks.push("Evaluación rápida:");
     assessment.forEach((line) => blocks.push("- " + line));
     blocks.push("");
     blocks.push("Datos que faltan / preguntas clave:");
     missing.forEach((item) => blocks.push("- " + item));
     blocks.push("");
-    blocks.push("Recomendacion principal:");
+    blocks.push("Recomendación principal:");
     recommendation.forEach((line) => blocks.push("- " + line));
     blocks.push("");
-    blocks.push("Opciones practicas:");
+    blocks.push("Opciones prácticas:");
     actions.forEach((line) => blocks.push("- " + line));
     blocks.push("");
-    blocks.push("Alertas / derivacion:");
+    blocks.push("Alertas / derivación:");
     alerts.forEach((line) => blocks.push("- " + line));
 
     return blocks.join("\n");
@@ -381,8 +381,8 @@ const DEFAULT_ASSISTANT_GREETING =
 
     const launcher = document.createElement("button");
     launcher.className = "bh-chat-launcher";
-    launcher.setAttribute("aria-label", "Abrir asistente de nutricion");
-    launcher.setAttribute("title", "Abrir asistente de nutricion");
+    launcher.setAttribute("aria-label", "Abrir asistente de nutrición");
+    launcher.setAttribute("title", "Abrir asistente de nutrición");
     launcher.innerHTML = `<img src="${CHAT_LOGO}" alt="Logo Bizihotz" class="bh-chat-launcher__logo" />`;
 
     const panel = document.createElement("section");
@@ -527,7 +527,7 @@ const DEFAULT_ASSISTANT_GREETING =
     const renameInput = document.createElement("input");
     renameInput.type = "text";
     renameInput.className = "bh-chat-input__field";
-    renameInput.placeholder = "Sesion chatbot";
+    renameInput.placeholder = "Sesión chatbot";
     renameBody.appendChild(renameLabel);
     renameBody.appendChild(renameInput);
     const renameActions = document.createElement("div");
@@ -642,7 +642,7 @@ const DEFAULT_ASSISTANT_GREETING =
     const userInitial = (userName[0] || DEFAULT_USER_NAME[0] || "T").toUpperCase();
     const usuarioId = resolveUserId(user);
     if (!usuarioId) {
-      ui.statusNode.textContent = "Inicia sesion para usar el asistente.";
+      ui.statusNode.textContent = "Inicia sesión para usar el asistente.";
       ui.sendBtn.disabled = true;
     }
 
@@ -787,7 +787,7 @@ const DEFAULT_ASSISTANT_GREETING =
       state.sessions.forEach((session, index) => {
         const opt = document.createElement("option");
         opt.value = session.id;
-        opt.textContent = session.titulo || `Sesion ${index + 1}`;
+        opt.textContent = session.titulo || `Sesión ${index + 1}`;
         if (session.id === state.activeId) opt.selected = true;
         ui.threadSelect.appendChild(opt);
       });
@@ -803,8 +803,8 @@ const DEFAULT_ASSISTANT_GREETING =
         renderMessages(state.activeId);
       } else {
         ui.messagesList.innerHTML = "";
-        setStatus("Crea o selecciona una sesion para empezar a chatear.");
-        setInputEnabled(false, "Crea o selecciona una sesion para empezar a chatear.");
+        setStatus("Crea o selecciona una sesión para empezar a chatear.");
+        setInputEnabled(false, "Crea o selecciona una sesión para empezar a chatear.");
       }
     };
 
@@ -815,7 +815,7 @@ const DEFAULT_ASSISTANT_GREETING =
     const promptRenameSession = async () => {
       if (!state.activeId) return;
       const current = state.sessions.find((s) => s.id === state.activeId);
-      const baseTitle = current?.titulo || "Sesion chatbot";
+      const baseTitle = current?.titulo || "Sesión chatbot";
       ui.renameInput.value = baseTitle;
       ui.renameModal.hidden = false;
       ui.renameInput.focus();
@@ -828,7 +828,7 @@ const DEFAULT_ASSISTANT_GREETING =
       }
       const nuevoTitulo = sanitizeText(ui.renameInput.value || "");
       const current = state.sessions.find((s) => s.id === state.activeId);
-      const baseTitle = current?.titulo || "Sesion chatbot";
+      const baseTitle = current?.titulo || "Sesión chatbot";
       if (!nuevoTitulo || nuevoTitulo === baseTitle) {
         closeRenameModal();
         return;
@@ -847,7 +847,7 @@ const DEFAULT_ASSISTANT_GREETING =
           refreshUI();
         }
       } catch (error) {
-        console.warn("No se pudo renombrar la sesion:", error);
+        console.warn("No se pudo renombrar la sesión:", error);
       } finally {
         closeRenameModal();
       }
@@ -882,7 +882,7 @@ const DEFAULT_ASSISTANT_GREETING =
         state.sessions = data;
         if (!state.sessions.length) {
           setStatus("No hay sesiones. Creando una nueva...");
-          setInputEnabled(false, "Creando sesion...");
+          setInputEnabled(false, "Creando sesión...");
           await createSessionOnServer();
           return;
         }
@@ -929,11 +929,11 @@ const DEFAULT_ASSISTANT_GREETING =
     const createSessionOnServer = async () => {
       if (!usuarioId) return;
       try {
-        setInputEnabled(false, "Creando sesion...");
+        setInputEnabled(false, "Creando sesión...");
         const res = await requestChatbot("/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuarioId, titulo: "Sesion chatbot" })
+          body: JSON.stringify({ usuarioId, titulo: "Sesión chatbot" })
         });
         const session = res?.data;
         if (session?.id) {
@@ -944,11 +944,11 @@ const DEFAULT_ASSISTANT_GREETING =
           state.messages.set(session.id, []);
           await sendAssistantMessage(session.id, DEFAULT_ASSISTANT_GREETING);
           await fetchMessages(session.id);
-          setStatus("Sesion creada. Puedes empezar a chatear.");
+          setStatus("Sesión creada. Puedes empezar a chatear.");
         }
       } catch (error) {
-        console.warn("No se pudo crear la sesion:", error);
-        setStatus("No se pudo crear la sesion de chatbot.");
+        console.warn("No se pudo crear la sesión:", error);
+        setStatus("No se pudo crear la sesión de chatbot.");
       } finally {
         setInputEnabled(Boolean(state.activeId));
         refreshUI();
@@ -1097,11 +1097,11 @@ const DEFAULT_ASSISTANT_GREETING =
         } else {
           state.activeId = null;
           setStatus("No hay sesiones. Creando una nueva...");
-          setInputEnabled(false, "Creando sesion...");
+          setInputEnabled(false, "Creando sesión...");
           await createSessionOnServer();
         }
       } catch (error) {
-        console.warn("No se pudo borrar la sesion:", error);
+        console.warn("No se pudo borrar la sesión:", error);
       } finally {
         refreshUI();
       }

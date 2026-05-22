@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 const buildGestionBases = () => {
   const protocol = window.location.protocol === "file:" ? "http:" : window.location.protocol;
   const hostname = (window.location.hostname || "localhost").toLowerCase();
@@ -44,11 +44,28 @@ const ensureToastContainer = () => {
   return container;
 };
 
+const cleanUiMessage = (message, fallback = "") => {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const cleaned = raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+    .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+};
+
 const showToast = (message, type = "info", duration = 2800) => {
+  const safeMessage = cleanUiMessage(message, "");
+  if (!safeMessage) {
+    return;
+  }
   const container = ensureToastContainer();
   const toast = document.createElement("div");
   toast.className = `perfil-toast perfil-toast--${type}`;
-  toast.textContent = message;
+  toast.textContent = safeMessage;
   container.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("is-visible"));
   window.setTimeout(() => {
@@ -56,6 +73,77 @@ const showToast = (message, type = "info", duration = 2800) => {
     toast.addEventListener("transitionend", () => toast.remove(), { once: true });
   }, duration);
 };
+
+const showConfirmDialog = (
+  message,
+  { title = "Confirmar acción", confirmLabel = "Aceptar", cancelLabel = "Cancelar" } = {}
+) =>
+  new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(17, 24, 39, 0.45)";
+    overlay.style.display = "grid";
+    overlay.style.placeItems = "center";
+    overlay.style.zIndex = "6000";
+
+    const box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "14px";
+    box.style.padding = "20px";
+    box.style.width = "min(460px, 92vw)";
+    box.style.boxShadow = "0 20px 45px rgba(0,0,0,.2)";
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    heading.style.margin = "0 0 10px";
+
+    const body = document.createElement("p");
+    body.textContent = cleanUiMessage(message, "¿Deseas continuar?");
+    body.style.margin = "0 0 16px";
+
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.justifyContent = "flex-end";
+    actions.style.gap = "10px";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.textContent = cancelLabel;
+    cancelBtn.style.padding = "8px 12px";
+    cancelBtn.style.borderRadius = "8px";
+    cancelBtn.style.border = "1px solid #cbd5e1";
+    cancelBtn.style.background = "#fff";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.textContent = confirmLabel;
+    confirmBtn.style.padding = "8px 12px";
+    confirmBtn.style.borderRadius = "8px";
+    confirmBtn.style.border = "1px solid #047857";
+    confirmBtn.style.background = "#059669";
+    confirmBtn.style.color = "#fff";
+
+    const cleanup = (value) => {
+      overlay.remove();
+      resolve(Boolean(value));
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) cleanup(false);
+    });
+    cancelBtn.addEventListener("click", () => cleanup(false));
+    confirmBtn.addEventListener("click", () => cleanup(true));
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    box.appendChild(heading);
+    box.appendChild(body);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    confirmBtn.focus();
+  });
 
 const logoutAndRedirect = async (mensaje) => {
   try {
@@ -89,7 +177,7 @@ const resolveTokenOrRedirect = () => {
   if (!token) {
     localStorage.removeItem("bizihotzUsuario");
     window.location.href = LOGIN_PAGE;
-    throw new Error("Sesion no valida. Inicia sesion de nuevo.");
+    throw new Error("Sesión no válida. Inicia sesión de nuevo.");
   }
   return token;
 };
@@ -102,7 +190,7 @@ const buildAuthHeaders = (baseHeaders = {}) => {
       headers.Authorization = `Bearer ${token}`;
     }
   } catch (error) {
-    console.warn(error?.message || "Sesion no valida");
+    console.warn(error?.message || "Sesión no válida");
   }
   return headers;
 };
@@ -218,7 +306,7 @@ function actualizarPerfilUI() {
   document.getElementById("profileInfo").innerHTML = `
     <p><span class="label">Nombre:</span> <span class="value">${nombre || "-"}</span></p>
     <p><span class="label">Apellidos:</span> <span class="value">${apellidos || "-"}</span></p>
-    <p><span class="label">Telefono:</span> <span class="value">${telefono || "-"}</span></p>
+    <p><span class="label">Teléfono:</span> <span class="value">${telefono || "-"}</span></p>
     <p><span class="label">Rol:</span> <span class="value">${rol || "-"}</span></p>
     <p><span class="label">Nombre de usuario:</span> <span class="value">${
       nombreUsuario || "-"
@@ -426,7 +514,7 @@ async function guardarContrasena(event) {
   feedback.classList.remove("success");
 
   if (!usuarioActual) {
-    feedback.textContent = "Sesión no valida. Vuelve a iniciar sesión.";
+    feedback.textContent = "Sesión no válida. Vuelve a iniciar sesión.";
     return;
   }
 
@@ -476,7 +564,7 @@ async function guardarContrasena(event) {
     await logoutAndRedirect("Contraseña actualizada. Vuelve a iniciar sesión.");
   } catch (error) {
     console.warn("Error actualizando contraseña:", error);
-    feedback.textContent = error.message || "No se pudo cambiar la contraseña.";
+    feedback.textContent = cleanUiMessage(error?.message, "No se pudo cambiar la contraseña.");
     feedback.classList.remove("success");
   } finally {
     document.getElementById("currentPassword").value = "";
@@ -779,7 +867,7 @@ if (applyCropButton) {
 if (removeAvatarButton) {
   removeAvatarButton.addEventListener("click", async () => {
     if (!usuarioActual) {
-      showToast("Inicia sesion de nuevo para modificar tu foto de perfil.", "error");
+      showToast("Inicia sesión de nuevo para modificar tu foto de perfil.", "error");
       return;
     }
 
@@ -805,8 +893,9 @@ if (removeAvatarButton) {
       return;
     }
 
-    const confirmar = window.confirm(
-      "¿Quieres quitar tu foto de perfil y volver al avatar por defecto?"
+    const confirmar = await showConfirmDialog(
+      "¿Quieres quitar tu foto de perfil y volver al avatar por defecto?",
+      { title: "Quitar foto de perfil", confirmLabel: "Quitar foto" }
     );
     if (!confirmar) return;
 
@@ -862,7 +951,18 @@ if (openEditProfileButton) {
 
 const openPasswordModalButton = document.getElementById("openPasswordModal");
 if (openPasswordModalButton) {
-  openPasswordModalButton.addEventListener("click", () => abrirModal("modalContrasena"));
+  openPasswordModalButton.addEventListener("click", () => {
+    const modal = document.getElementById("modalContrasena");
+    if (modal) {
+      const title = modal.querySelector("h2");
+      if (title) title.textContent = "Cambiar Contraseña";
+      const labels = modal.querySelectorAll("label");
+      if (labels[0]) labels[0].textContent = "Contraseña actual";
+      if (labels[1]) labels[1].textContent = "Nueva contraseña";
+      if (labels[2]) labels[2].textContent = "Confirmar nueva contraseña";
+    }
+    abrirModal("modalContrasena");
+  });
 }
 
 const closeModalEditarButton = document.getElementById("closeModalEditar");
@@ -915,4 +1015,7 @@ window.addEventListener("DOMContentLoaded", () => {
   actualizarNombreArchivoAvatar(avatarNombre);
   actualizarEstadoEliminarAvatar();
 });
+
+
+
 

@@ -31,6 +31,18 @@ const API_BASE_URL = GESTION_BASES[0];
 const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
+const cleanUiMessage = (message, fallback = "") => {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const cleaned = raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+    .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+};
 
 const state = {
   page: 1,
@@ -190,7 +202,7 @@ const updateScopeButtons = () => {
 
 const setStatus = (message) => {
   if (elements.status) {
-    elements.status.textContent = message || "";
+    elements.status.textContent = cleanUiMessage(message, "");
   }
 };
 

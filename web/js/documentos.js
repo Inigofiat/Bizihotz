@@ -66,16 +66,30 @@
 
   const getApiBase = () => activeApiBase || API_BASES[0] || "";
 
+  const cleanUiMessage = (message, fallback = "Ha ocurrido un error.") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   const setFeedback = (message, variant = "info") => {
     if (!selectors.feedback) return;
-    if (!message) {
+    const safeMessage = cleanUiMessage(message, "");
+    if (!safeMessage) {
       selectors.feedback.hidden = true;
       selectors.feedback.textContent = "";
       selectors.feedback.className = "feedback";
       return;
     }
     selectors.feedback.hidden = false;
-    selectors.feedback.textContent = message;
+    selectors.feedback.textContent = safeMessage;
     selectors.feedback.className = `feedback feedback--${variant}`;
   };
 
@@ -83,6 +97,37 @@
     if (selectors.count) {
       selectors.count.textContent = Number.isFinite(value) ? String(value) : "--";
     }
+  };
+
+  const normalizeForSearch = (value) =>
+    String(value || "")
+      .toLocaleLowerCase("es-ES")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const filterDocsClientSide = (docs = [], rawQ = "", rawEtiqueta = "") => {
+    const q = normalizeForSearch(rawQ);
+    const etiqueta = normalizeForSearch(rawEtiqueta);
+    if (!q && !etiqueta) {
+      return docs;
+    }
+
+    return docs.filter((doc) => {
+      const title = normalizeForSearch(doc?.titulo);
+      const description = normalizeForSearch(doc?.descripcion);
+      const source = normalizeForSearch(doc?.fuente);
+      const type = normalizeForSearch(doc?.tipo);
+      const tags = Array.isArray(doc?.etiquetas) ? doc.etiquetas.map((item) => normalizeForSearch(item)) : [];
+      const searchableText = `${title} ${description} ${tags.join(" ")} ${source} ${type}`.trim();
+
+      const matchesQ = q ? searchableText.includes(q) : true;
+      const matchesEtiqueta = etiqueta
+        ? tags.some((tag) => tag.includes(etiqueta)) || source.includes(etiqueta) || type.includes(etiqueta)
+        : true;
+
+      return matchesQ && matchesEtiqueta;
+    });
   };
 
   const resolveDocLinks = (doc) => {
@@ -197,13 +242,15 @@
     throw lastError || new Error("No se pudo contactar con el servicio documental.");
   };
 
-  const buildQueryString = (page = 1) => {
+  const buildQueryString = (page = 1, { includeServerFilters = true } = {}) => {
     const params = new URLSearchParams();
     const q = selectors.searchQ?.value.trim();
     const etiqueta = selectors.searchEtiqueta?.value.trim();
 
-    if (q) params.set("q", q);
-    if (etiqueta) params.set("etiqueta", etiqueta);
+    if (includeServerFilters) {
+      if (q) params.set("q", q);
+      if (etiqueta) params.set("etiqueta", etiqueta);
+    }
 
     params.set("limit", String(state.pageSize));
     params.set("skip", String((page - 1) * state.pageSize));
@@ -220,11 +267,25 @@
   const loadDocs = async () => {
     setFeedback("Cargando documentos...");
     try {
-      const query = buildQueryString(state.page);
+      const rawQ = selectors.searchQ?.value || "";
+      const rawEtiqueta = selectors.searchEtiqueta?.value || "";
+      const hasFilters = Boolean(rawQ.trim() || rawEtiqueta.trim());
+
+      const query = buildQueryString(state.page, { includeServerFilters: true });
       const data = await fetchWithFallback(`/documentos${query}`);
-      state.lastPage = Array.isArray(data) ? data.length < state.pageSize : true;
+      let docs = Array.isArray(data) ? data : [];
+
+      let filteredDocs = filterDocsClientSide(docs, rawQ, rawEtiqueta);
+      if (hasFilters && filteredDocs.length === 0) {
+        const fallbackQuery = buildQueryString(1, { includeServerFilters: false });
+        const fallbackData = await fetchWithFallback(`/documentos${fallbackQuery}`);
+        const fallbackDocs = Array.isArray(fallbackData) ? fallbackData : [];
+        filteredDocs = filterDocsClientSide(fallbackDocs, rawQ, rawEtiqueta);
+      }
+
+      state.lastPage = filteredDocs.length < state.pageSize;
       updatePaginationControls();
-      renderDocs(data || []);
+      renderDocs(filteredDocs);
     } catch (error) {
       state.lastPage = true;
       updatePaginationControls();

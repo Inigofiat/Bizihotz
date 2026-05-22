@@ -49,6 +49,8 @@ const buildCitaPayload = (payload = {}) => {
 router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONISTA), async (req, res) => {
   try {
     const { idPaciente, idUsuario, fechaDesde, fechaHasta, atendida } = req.query;
+    const rolSolicitante = (req.user?.rolSistema || '').toLowerCase();
+    const esRecepcionista = rolSolicitante === ROLES.RECEPCIONISTA.toLowerCase();
     const filtro = {};
 
     if (idPaciente) {
@@ -82,13 +84,21 @@ router.get('/', permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONIST
 
     const citas = await Cita.find(filtro)
       .populate({ path: "idPaciente", select: "nombrePaciente apellidos" })
-      .populate({ path: "idUsuario", select: "nombre nombreUsuario apellidos rolSistema" })
+      .populate({ path: "idUsuario", select: "nombre nombreUsuario apellidos rolSistema activo" })
       .sort({ fechaCita: 1, hora: 1 })
       .lean({ virtuals: true });
 
     const soloProfesionales = citas.filter((cita) => {
       const rol = (cita.idUsuario?.rolSistema || "").toLowerCase();
-      return rol !== ROLES.ADMIN.toLowerCase() && rol !== ROLES.RECEPCIONISTA.toLowerCase();
+      const esRolValido =
+        rol !== ROLES.ADMIN.toLowerCase() && rol !== ROLES.RECEPCIONISTA.toLowerCase();
+      if (!esRolValido) {
+        return false;
+      }
+      if (esRecepcionista && cita.idUsuario?.activo === false) {
+        return false;
+      }
+      return true;
     });
 
     const transformadas = soloProfesionales.map((cita) => {

@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 try {
   const _u = JSON.parse(localStorage.getItem("bizihotzUsuario") || "null");
@@ -39,6 +39,154 @@ const API_URL = `${API_BASE_URL}/api`;
 const API_FALLBACK = GESTION_BASES[1] || null;
 const LOGIN_PAGE = "login.html";
 const HISTORIAL_PAGE = "historialClinico.html";
+const cleanUiMessage = (message, fallback = "Ha ocurrido un error.") => {
+  const raw = String(message || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const cleaned = raw
+    .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+    .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || fallback;
+};
+
+const uiDialogState = {
+  overlay: null,
+  title: null,
+  message: null,
+  confirm: null,
+  cancel: null,
+  close: null,
+  resolver: null,
+};
+
+const resolveUiDialog = (value) => {
+  if (!uiDialogState.overlay) {
+    return;
+  }
+  uiDialogState.overlay.hidden = true;
+  document.body.classList.remove("modal-open");
+  const done = uiDialogState.resolver;
+  uiDialogState.resolver = null;
+  if (typeof done === "function") {
+    done(Boolean(value));
+  }
+};
+
+const ensureUiDialog = () => {
+  if (uiDialogState.overlay) {
+    return;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.hidden = true;
+
+  const content = document.createElement("div");
+  content.className = "modal-content";
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "modal-close";
+  close.textContent = "×";
+  close.setAttribute("aria-label", "Cerrar");
+
+  const title = document.createElement("h3");
+  title.textContent = "Aviso";
+
+  const message = document.createElement("p");
+  message.className = "modal-message";
+
+  const actions = document.createElement("div");
+  actions.className = "form-actions";
+
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "btn";
+  cancel.textContent = "Cancelar";
+
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "btn primary";
+  confirm.textContent = "Aceptar";
+
+  actions.appendChild(cancel);
+  actions.appendChild(confirm);
+
+  content.appendChild(close);
+  content.appendChild(title);
+  content.appendChild(message);
+  content.appendChild(actions);
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      resolveUiDialog(false);
+    }
+  });
+  close.addEventListener("click", () => resolveUiDialog(false));
+  cancel.addEventListener("click", () => resolveUiDialog(false));
+  confirm.addEventListener("click", () => resolveUiDialog(true));
+  window.addEventListener("keydown", (event) => {
+    if (!overlay.hidden && event.key === "Escape") {
+      event.preventDefault();
+      resolveUiDialog(false);
+    }
+  });
+
+  uiDialogState.overlay = overlay;
+  uiDialogState.title = title;
+  uiDialogState.message = message;
+  uiDialogState.confirm = confirm;
+  uiDialogState.cancel = cancel;
+  uiDialogState.close = close;
+};
+
+const openUiDialog = ({
+  title = "Confirmar",
+  message = "",
+  confirmLabel = "Aceptar",
+  cancelLabel = "Cancelar",
+  showCancel = true,
+  danger = false,
+} = {}) =>
+  new Promise((resolve) => {
+    ensureUiDialog();
+    uiDialogState.resolver = resolve;
+    uiDialogState.title.textContent = title;
+    uiDialogState.message.textContent = cleanUiMessage(message, "¿Deseas continuar?");
+    uiDialogState.confirm.textContent = confirmLabel;
+    uiDialogState.cancel.textContent = cancelLabel;
+    uiDialogState.cancel.hidden = !showCancel;
+    uiDialogState.close.hidden = !showCancel;
+    uiDialogState.confirm.classList.toggle("danger", danger);
+    uiDialogState.confirm.classList.toggle("primary", !danger);
+    uiDialogState.overlay.hidden = false;
+    document.body.classList.add("modal-open");
+    requestAnimationFrame(() => uiDialogState.confirm?.focus());
+  });
+
+const showUiConfirm = (message, options = {}) =>
+  openUiDialog({
+    title: options.title || "Confirmar acción",
+    message,
+    confirmLabel: options.confirmLabel || "Aceptar",
+    cancelLabel: options.cancelLabel || "Cancelar",
+    showCancel: true,
+    danger: Boolean(options.danger),
+  });
+
+const showUiAlert = (message, options = {}) =>
+  openUiDialog({
+    title: options.title || "Aviso",
+    message,
+    confirmLabel: options.confirmLabel || "Aceptar",
+    showCancel: false,
+    danger: false,
+  }).then(() => undefined);
 
 const unique = (values) => [...new Set(values.filter(Boolean))];
 
@@ -659,7 +807,7 @@ const renderPaciente = (paciente) => {
 
     const email = paciente.emailPaciente || "Sin email";
 
-    const telefono = paciente.telefono || "Sin tel├®fono";
+    const telefono = paciente.telefono || "Sin teléfono";
 
     elements.meta.textContent = `${email} - ${telefono}`;
 
@@ -1168,7 +1316,7 @@ const setCitaFeedback = (message, isSuccess = false) => {
 
   if (!elements.citaFeedback) return;
 
-  elements.citaFeedback.textContent = message || "";
+  elements.citaFeedback.textContent = cleanUiMessage(message, "");
 
   elements.citaFeedback.classList.toggle("success", Boolean(isSuccess));
 
@@ -1674,7 +1822,7 @@ const setAntFeedback = (message, isSuccess = false) => {
 
   if (!elements.antFeedback) return;
 
-  elements.antFeedback.textContent = message || "";
+  elements.antFeedback.textContent = cleanUiMessage(message, "");
 
   elements.antFeedback.classList.toggle("success", Boolean(isSuccess));
 
@@ -2002,7 +2150,9 @@ const handleDeleteRegistro = async () => {
 
     console.error("No se pudo eliminar el registro antropom├®trico:", error);
 
-    alert(error?.message || "No se pudo eliminar el registro.");
+    await showUiAlert(cleanUiMessage(error?.message, "No se pudo eliminar el registro."), {
+      title: "Error",
+    });
 
     closeDeleteModal();
 
@@ -2020,7 +2170,10 @@ const darDeBajaPaciente = async () => {
     elements.bajaBtn.disabled = true;
   }
 
-  const confirmar = window.confirm("¿Quieres poner en standby a este paciente? No se eliminará de la base de datos.");
+  const confirmar = await showUiConfirm(
+    "¿Quieres poner en standby a este paciente? No se eliminará de la base de datos.",
+    { title: "Confirmar standby" }
+  );
   if (!confirmar) {
     if (elements.bajaBtn) elements.bajaBtn.disabled = false;
     return;
@@ -2033,10 +2186,12 @@ const darDeBajaPaciente = async () => {
       body: JSON.stringify({})
     });
     await loadPaciente();
-    alert("Paciente pasado a standby correctamente.");
+    await showUiAlert("Paciente pasado a standby correctamente.", { title: "Standby aplicado" });
   } catch (error) {
     console.error("No se pudo poner en standby al paciente:", error);
-    alert(error?.message || "No se pudo poner en standby al paciente.");
+    await showUiAlert(cleanUiMessage(error?.message, "No se pudo poner en standby al paciente."), {
+      title: "Error",
+    });
   } finally {
     if (elements.bajaBtn) elements.bajaBtn.disabled = false;
   }
@@ -2050,7 +2205,9 @@ const reactivarPaciente = async () => {
     elements.reactivarBtn.disabled = true;
   }
 
-  const confirmar = window.confirm("┬┐Quieres reactivar al paciente?");
+  const confirmar = await showUiConfirm("¿Quieres reactivar al paciente?", {
+    title: "Confirmar reactivación",
+  });
   if (!confirmar) {
     if (elements.reactivarBtn) elements.reactivarBtn.disabled = false;
     return;
@@ -2061,10 +2218,12 @@ const reactivarPaciente = async () => {
       method: "POST"
     });
     await loadPaciente();
-    alert("Paciente reactivado correctamente.");
+    await showUiAlert("Paciente reactivado correctamente.", { title: "Paciente reactivado" });
   } catch (error) {
     console.error("No se pudo reactivar al paciente:", error);
-    alert(error?.message || "No se pudo reactivar al paciente.");
+    await showUiAlert(cleanUiMessage(error?.message, "No se pudo reactivar al paciente."), {
+      title: "Error",
+    });
   } finally {
     if (elements.reactivarBtn) elements.reactivarBtn.disabled = false;
   }
@@ -2101,7 +2260,9 @@ const loadPaciente = async () => {
 
     console.error("No se pudo obtener el paciente:", error);
 
-    alert(error?.message || "No se pudo cargar el paciente.");
+    await showUiAlert(cleanUiMessage(error?.message, "No se pudo cargar el paciente."), {
+      title: "Error",
+    });
 
     window.location.href = HISTORIAL_PAGE;
 
@@ -2482,7 +2643,7 @@ const setHistorialDietaState = (enabled = false) => {
 
 const handleGuardarDieta = async () => {
   if (!dietaActualSeleccionada) {
-    alert("No hay una dieta actual para guardar.");
+    await showUiAlert("No hay una dieta actual para guardar.", { title: "Aviso" });
     return;
   }
 
@@ -2491,7 +2652,7 @@ const handleGuardarDieta = async () => {
     10
   );
   if (!Number.isFinite(dietaId)) {
-    alert("No se pudo identificar la dieta actual.");
+    await showUiAlert("No se pudo identificar la dieta actual.", { title: "Aviso" });
     return;
   }
 
@@ -2555,7 +2716,9 @@ const handleGuardarDieta = async () => {
     await loadPacienteDietas(pacienteActual);
   } catch (error) {
     console.warn("No se pudo registrar el guardado de la dieta:", error);
-    alert(error?.message || "No se pudo guardar la dieta.");
+    await showUiAlert(cleanUiMessage(error?.message, "No se pudo guardar la dieta."), {
+      title: "Error",
+    });
   } finally {
     setGuardarDietaState({ loading: false, text: "Guardar dieta" });
   }
@@ -2614,9 +2777,9 @@ const buildDonutChart = (macros = {}, label = "", small = false) => {
     { key: "fibra", value: Number.parseFloat(macros.fibra), color: "#2d9e5e" },
   ].filter((item) => Number.isFinite(item.value) && item.value > 0);
   if (!valores.length) {
-    // Donut vacÃ­o para mostrar el placeholder del meal
+    // Donut vacío para mostrar el placeholder del meal
     const sizeClass = small ? "hist-donut hist-donut--small" : "hist-donut";
-    const centerLabel = small ? "" : `<span>Energia</span><strong>0</strong><small>kcal</small>`;
+    const centerLabel = small ? "" : `<span>Energía</span><strong>0</strong><small>kcal</small>`;
     return `<div class="${small ? "hist-donut-mini" : "hist-donut-main"}">
         <div class="${sizeClass} hist-donut--empty">
           <div class="hist-donut__center">${centerLabel}</div>
@@ -2641,7 +2804,7 @@ const buildDonutChart = (macros = {}, label = "", small = false) => {
     .join(", ");
   const energia = Number.parseFloat(macros.energia ?? macros.calorias ?? 0) || 0;
   const sizeClass = small ? "hist-donut hist-donut--small" : "hist-donut";
-  const centerLabel = small ? "" : `<span>Energia</span><strong>${formatNumber(energia, 0)}</strong><small>kcal</small>`;
+  const centerLabel = small ? "" : `<span>Energía</span><strong>${formatNumber(energia, 0)}</strong><small>kcal</small>`;
   return `<div class="${small ? "hist-donut-mini" : "hist-donut-main"}">
       <div class="${sizeClass}" style="background: conic-gradient(${segments});">
         <div class="hist-donut__center">${centerLabel}</div>
@@ -2916,7 +3079,10 @@ const renderMealsDetail = (comidas) => {
       ev.stopPropagation();
       const id = delBtn.dataset.histDelete;
       if (!id || !dietaActualSeleccionada?.id) return;
-      const confirmar = window.confirm("?Seguro que quieres eliminar esta versi?n del historial?");
+      const confirmar = await showUiConfirm("¿Seguro que quieres eliminar esta versión del historial?", {
+        title: "Eliminar versión",
+        danger: true,
+      });
       if (!confirmar) return;
       try {
         delBtn.disabled = true;
@@ -2928,7 +3094,9 @@ const renderMealsDetail = (comidas) => {
           renderHistorialDietaModal(dietaActualSeleccionada);
         }
       } catch (error) {
-        alert(error?.message || "No se pudo eliminar la versi?n.");
+        await showUiAlert(cleanUiMessage(error?.message, "No se pudo eliminar la versión."), {
+          title: "Error",
+        });
       } finally {
         delBtn.disabled = false;
       }
@@ -2941,7 +3109,7 @@ const renderMealsDetail = (comidas) => {
 const openHistorialDietaModal = () => {
   if (!elements.dietHistoryModal) return;
   if (!dietaActualSeleccionada) {
-    alert("No hay una dieta seleccionada.");
+    void showUiAlert("No hay una dieta seleccionada.", { title: "Aviso" });
     return;
   }
   renderHistorialDietaModal(dietaActualSeleccionada);
@@ -3199,9 +3367,13 @@ const loadPacienteDietas = async (paciente) => {
     renderPacienteDietas(dietas);
   } catch (error) {
     console.warn("No se pudo obtener el plan nutricional del paciente:", error);
-    container.innerHTML = `<p class="diet-card__item-note">${escapeHtml(error?.message || "No se pudo consultar el servicio de nutrici&oacute;n.")}</p>`;
+    container.innerHTML = `<p class="diet-card__item-note">${escapeHtml(
+      cleanUiMessage(error?.message, "No se pudo consultar el servicio de nutrición.")
+    )}</p>`;
     setHistorialDietaState(false);
   }
 };
+
+
 
 

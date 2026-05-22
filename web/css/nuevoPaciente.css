@@ -122,10 +122,24 @@ body {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.field input:focus {
+.field select {
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #c8e0cf;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: #12814c;
   box-shadow: 0 0 0 3px rgba(18, 129, 76, 0.18);
+}
+
+.field--full {
+  grid-column: 1 / -1;
 }
 
 .helper-text {

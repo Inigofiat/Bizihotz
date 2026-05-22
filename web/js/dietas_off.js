@@ -70,6 +70,19 @@
     return headers;
   };
 
+  const cleanUiMessage = (message, fallback = "") => {
+    const raw = String(message || "").trim();
+    if (!raw) {
+      return fallback;
+    }
+    const cleaned = raw
+      .replace(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s"']*)?/gi, "el servidor")
+      .replace(/\b(?:localhost|127\.0\.0\.1)(?::\d+)?\b/gi, "el servidor")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || fallback;
+  };
+
   const emptyMacros = () => ({
     energia: 0,
     grasa: 0,
@@ -124,6 +137,7 @@
   const DIETA_INTRO_SEEN_KEY = "bizihotzDietaIntroSeen";
   const PACIENTE_PARAM = new URLSearchParams(window.location.search).get("pacienteId");
   let planState = cloneEmptyPlan();
+  let selectDietRequestId = 0;
 
   const setLastDietaId = (id) => {
     if (!id) {
@@ -152,7 +166,7 @@
     try {
       localStorage.setItem(LAST_DIETA_ASSIGNED_KEY, String(id));
     } catch (error) {
-      console.warn("No se pudo guardar el ID de ultima dieta asignada", error);
+      console.warn("No se pudo guardar el ID de última dieta asignada", error);
     }
   };
 
@@ -333,6 +347,7 @@
     alimentosLoading: false,
     pacientesLoading: false,
     pacientesLoaded: false,
+    deletingDieta: false,
     recetas: [],
     bedcaSyncAttempted: false,
     alimentoEditId: null,
@@ -350,18 +365,33 @@
 
   const setPlaceholder = (element, message) => {
     if (!element) return;
-    element.dataset.empty = message;
-    element.innerHTML = `<div class="placeholder">${message}</div>`;
+    const safeMessage = cleanUiMessage(message, "");
+    element.dataset.empty = safeMessage;
+    element.innerHTML = "";
+    const placeholder = document.createElement("div");
+    placeholder.className = "placeholder";
+    placeholder.textContent = safeMessage;
+    element.appendChild(placeholder);
   };
 
   const safeParseJson = (text) => {
-    if (!text || typeof text !== "string") return null;
+    if (text === null || text === undefined) return null;
+    if (typeof text === "object") return text;
+    if (typeof text !== "string") return null;
     try {
       return JSON.parse(text);
     } catch (error) {
       return null;
     }
   };
+
+  const normalizeMacroShape = (macros) => ({
+    energia: Number(macros?.energia ?? macros?.calorias ?? 0) || 0,
+    grasa: Number(macros?.grasa ?? macros?.grasas ?? 0) || 0,
+    carbohidratos: Number(macros?.carbohidratos ?? 0) || 0,
+    proteina: Number(macros?.proteina ?? macros?.proteinas ?? 0) || 0,
+    fibra: Number(macros?.fibra ?? 0) || 0,
+  });
 
   const fetchJson = async (path) => {
     const url = `${API_BASE}${path}`;
@@ -425,15 +455,35 @@
   const deserializeComidas = (input) => {
     if (!Array.isArray(input)) return [...REQUIRED_MEALS, ...OPTIONAL_MEALS].map((nombre) => buildEmptyMeal(nombre));
     return input.map((item) => {
+      const items = Array.isArray(item?.items) ? item.items : [];
       const meal = {
-        nombre: item.nombre || "Comida",
-        hora: item.hora || "",
-        items: Array.isArray(item.items) ? item.items : [],
-        macros: item.macros || emptyMacros(),
-        empty: !item.items || item.items.length === 0,
+        nombre: item?.nombre || "Comida",
+        hora: item?.hora || "",
+        items,
+        macros: normalizeMacroShape(item?.macros || {}),
+        empty: !items.length,
       };
-      return recalcMealMacros(meal);
+      const hasItemMacros = items.some((entry) => entry && typeof entry === "object" && entry.macros);
+      return hasItemMacros ? recalcMealMacros(meal) : meal;
     });
+  };
+
+  const withDefaultMeals = (meals) => {
+    const incoming = Array.isArray(meals) ? meals.filter(Boolean) : [];
+    const byName = new Map();
+    incoming.forEach((meal) => {
+      const key = (meal?.nombre || "").trim().toLowerCase();
+      if (key && !byName.has(key)) {
+        byName.set(key, meal);
+      }
+    });
+    const defaults = [...REQUIRED_MEALS, ...OPTIONAL_MEALS].map((name) => {
+      const key = name.toLowerCase();
+      return byName.get(key) || buildEmptyMeal(name);
+    });
+    const known = new Set([...REQUIRED_MEALS, ...OPTIONAL_MEALS].map((name) => name.toLowerCase()));
+    const extras = incoming.filter((meal) => !known.has((meal?.nombre || "").trim().toLowerCase()));
+    return [...defaults, ...extras];
   };
 
   const hydratePlanFromDieta = (data) => {
@@ -441,13 +491,17 @@
     const parsedDescripcion = safeParseJson(data.descripcion);
     const descFechaInicio = parsedDescripcion?.fecha_inicio ?? parsedDescripcion?.fechaInicio ?? null;
     const descFechaFin = parsedDescripcion?.fecha_fin ?? parsedDescripcion?.fechaFin ?? null;
+    const parsedComidas =
+      parsedDescripcion?.comidas ||
+      parsedDescripcion?.plan?.comidas ||
+      null;
     planState.id = data.id ?? planState.id;
     if (planState.id) setLastDietaId(planState.id);
     planState.nombre = data.nombre || planState.nombre || "Plantilla en blanco";
     planState.objetivoCalorias = data.calorias_objetivo || 0;
-    planState.notas = data.notas || "";
-    planState.notasPaciente = data.notas || "";
-    planState.comentarioInterno = "";
+    planState.notas = data.notas || parsedDescripcion?.notas_paciente || parsedDescripcion?.notasPaciente || "";
+    planState.notasPaciente = data.notas || parsedDescripcion?.notas_paciente || parsedDescripcion?.notasPaciente || "";
+    planState.comentarioInterno = parsedDescripcion?.comentarioInterno || "";
     planState.esPlantilla = data.es_plantilla !== false;
     planState.pacienteBase = data.paciente_id || null;
     planState.fechaInicio = descFechaInicio ?? data.fecha_inicio ?? null;
@@ -464,24 +518,20 @@
     if (planState.asignadoA) {
       setLastAssignedId(planState.id);
     }
+    planState.comidas = withDefaultMeals([]);
     if (Array.isArray(data.recetas) && data.recetas.length) {
-      planState.comidas = mapDietRecetasToMeals(data.recetas);
-    } else {
-      const parsed = safeParseJson(data.descripcion);
-      if (parsed?.comidas) {
-        planState.comidas = deserializeComidas(parsed.comidas);
-      }
-      if (parsed?.comentarioInterno) {
-        planState.comentarioInterno = parsed.comentarioInterno;
-      }
+      planState.comidas = withDefaultMeals(mapDietRecetasToMeals(data.recetas));
+    } else if (Array.isArray(parsedComidas) && parsedComidas.length) {
+      planState.comidas = withDefaultMeals(deserializeComidas(parsedComidas));
     }
     if (selectors.dietaNotasPaciente) selectors.dietaNotasPaciente.value = planState.notasPaciente || "";
     if (selectors.dietaComentarioInterno) selectors.dietaComentarioInterno.value = planState.comentarioInterno || "";
+    renderDietDetail(data);
     renderPlan();
   };
 
   const buildDietaPayload = () => ({
-    nombre: planState.nombre || "Plantilla rapida",
+    nombre: planState.nombre || "Plantilla rápida",
     es_plantilla: planState.esPlantilla !== false,
     usuario_id: resolveCurrentUserId(),
     actor_usuario_id: resolveCurrentUserId(),
@@ -767,27 +817,33 @@
   };
 
   const performDeleteDieta = async () => {
-    if (!planState.id) return;
-    const dieta = state.dietas.find((d) => String(d.id) === String(planState.id));
+    if (!planState.id || state.deletingDieta) return;
+    state.deletingDieta = true;
+    const deletedId = String(planState.id);
+    const dieta = state.dietas.find((d) => String(d.id) === deletedId);
     const nombre = dieta?.nombre || "dieta";
+    if (selectors.confirmDeleteDietaBtn) selectors.confirmDeleteDietaBtn.disabled = true;
     try {
-      await sendJson("DELETE", `/dietas/${planState.id}`);
-      state.dietas = state.dietas.filter((d) => String(d.id) !== String(planState.id));
-      renderDietasList(state.dietas);
-      if (state.dietas.length) {
-        const next = state.dietas[0];
-        planState = cloneEmptyPlan();
-        planState.id = next.id;
-        hydratePlanFromDieta(next);
-      } else {
-        resetPlanState();
-        planState.id = null;
+      await sendJson("DELETE", `/dietas/${deletedId}`);
+      if (getLastDietaId() && String(getLastDietaId()) === deletedId) {
+        setLastDietaId(null);
+      }
+      if (getLastAssignedId() && String(getLastAssignedId()) === deletedId) {
+        setLastAssignedId(null);
+      }
+      planState = cloneEmptyPlan();
+      state.dietas = state.dietas.filter((d) => String(d.id) !== deletedId);
+      renderPlan();
+      await loadDietas();
+      if (!planState.id && state.dietas.length) {
+        await selectDiet(state.dietas[0].id, true);
       }
       showToast(`Dieta borrada: ${nombre}.`);
-      setTimeout(() => window.location.reload(), 300);
     } catch (error) {
       showToast(error.message || "No se pudo borrar la dieta.");
     } finally {
+      state.deletingDieta = false;
+      if (selectors.confirmDeleteDietaBtn) selectors.confirmDeleteDietaBtn.disabled = false;
       if (selectors.deleteDietaModal) {
         selectors.deleteDietaModal.classList.remove("is-open");
         selectors.deleteDietaModal.hidden = true;
@@ -828,7 +884,7 @@
           <div class="dieta-card__summary">
             <span><strong>${dieta.calorias_objetivo ?? 0}</strong> kcal objetivo</span>
             <span>${comidas.length} comidas</span>
-            <span>Version ${dieta.version || 1}</span>
+            <span>Versión ${dieta.version || 1}</span>
           </div>
         </div>
         <div class="dieta-card__badge-stack">
@@ -909,7 +965,7 @@
   const loadDietas = async () => {
     try {
       // Trae todas las dietas (plantillas y asignadas) para que el selector muestre el listado completo.
-      const data = await fetchJson("/dietas");
+      const data = await fetchJson("/dietas?es_plantilla=true");
       const fetched = dedupeDietas(Array.isArray(data) ? data : []);
       // Mezcla plantillas y asignadas; luego se colapsan por nombre priorizando la seleccionada/asignadas.
       state.dietas = fetched;
@@ -917,7 +973,8 @@
       // Incluye la dieta activa o la última asignada aunque no sea plantilla (clon para paciente).
       await includeExtraDieta(planState.id);
       const lastAssignedId = getLastAssignedId();
-      if (lastAssignedId && String(lastAssignedId) !== String(planState.id)) {
+      const hasPacienteContext = Boolean((PACIENTE_PARAM || "").trim());
+      if (hasPacienteContext && lastAssignedId && String(lastAssignedId) !== String(planState.id)) {
         await includeExtraDieta(lastAssignedId);
       }
 
@@ -972,10 +1029,14 @@
       selectors.templatePicker.value = String(dieta.id);
     }
     if (hydrate) {
+      const requestId = ++selectDietRequestId;
+      hydratePlanFromDieta(dieta);
       try {
         const fresh = await fetchJson(`/dietas/${planState.id}`);
+        if (requestId !== selectDietRequestId) return;
         hydratePlanFromDieta(fresh);
       } catch (error) {
+        if (requestId !== selectDietRequestId) return;
         hydratePlanFromDieta(dieta);
       }
     } else {
@@ -1001,9 +1062,9 @@
           <h3>${item.nombre || "Receta sin nombre"}</h3>
           ${calorias ? `<span class="pill">${formatNumber(calorias)} kcal</span>` : ""}
         </div>
-        <p class="receta-card__desc">${item.descripcion || "Sin descripcion disponible"}</p>
+        <p class="receta-card__desc">${item.descripcion || "Sin descripción disponible"}</p>
         <div class="macro-grid">
-          <div><strong>Proteinas:</strong> ${formatNumber(macros.proteinas)}</div>
+          <div><strong>Proteínas:</strong> ${formatNumber(macros.proteinas)}</div>
           <div><strong>Grasas:</strong> ${formatNumber(macros.grasas)}</div>
           <div><strong>Carbohidratos:</strong> ${formatNumber(macros.carbohidratos)}</div>
           <div><strong>Fibra:</strong> ${formatNumber(macros.fibra)}</div>
@@ -1163,12 +1224,12 @@
       .join("");
 
     analysis.innerHTML = `
-      <h3>Analisis global</h3>
+      <h3>Análisis global</h3>
       ${assignedLabel ? `<div class="analysis-meta"><span class="chip chip--ghost">Paciente: ${assignedLabel}</span></div>` : ""}
       <div class="analysis-group">
         <div class="macro-donut" style="background:${mainDonut}">
           <div class="macro-donut__center">
-            <span>Energia</span>
+            <span>Energía</span>
             <strong>${formatNumber(plan.resumen.energia)}</strong>
             <small>kcal</small>
           </div>
@@ -1176,10 +1237,10 @@
         <div class="mini-donuts">${miniDonuts}</div>
       </div>
       <div class="analysis-group">
-        ${macroBar("Energia", "energia", plan.resumen.energia, plan.objetivoCalorias, "kcal")}
+        ${macroBar("Energía", "energia", plan.resumen.energia, plan.objetivoCalorias, "kcal")}
         ${macroBar("Grasa", "grasa", plan.resumen.grasa, plan.objetivosMacros.grasa, "g")}
         ${macroBar("Hidratos de carbono", "carbohidratos", plan.resumen.carbohidratos, plan.objetivosMacros.carbohidratos, "g")}
-        ${macroBar("Proteina", "proteina", plan.resumen.proteina, plan.objetivosMacros.proteina, "g")}
+        ${macroBar("Proteína", "proteina", plan.resumen.proteina, plan.objetivosMacros.proteina, "g")}
         ${macroBar("Fibra", "fibra", plan.resumen.fibra, plan.objetivosMacros.fibra, "g")}
       </div>
     `;
@@ -1197,10 +1258,10 @@
     const items = meal.items && meal.items.length ? meal.items : ["Sin alimentos agregados"];
     selectors.mealDetailBody.innerHTML = `
       <div class="meal-detail__macros">
-        <span class="pill soft">Energia: ${formatNumber(meal.macros.energia)} kcal</span>
+        <span class="pill soft">Energía: ${formatNumber(meal.macros.energia)} kcal</span>
         <span class="pill soft">Grasa: ${formatNumber(meal.macros.grasa)} g</span>
         <span class="pill soft">Carbohidratos: ${formatNumber(meal.macros.carbohidratos)} g</span>
-        <span class="pill soft">Proteina: ${formatNumber(meal.macros.proteina)} g</span>
+        <span class="pill soft">Proteína: ${formatNumber(meal.macros.proteina)} g</span>
         <span class="pill soft">Fibra: ${formatNumber(meal.macros.fibra)} g</span>
       </div>
       <div>
@@ -1365,25 +1426,114 @@
     renderPlan();
   };
 
-  const showToast = (message) => {
-    alert(message);
+  const ensureToastHost = () => {
+    let host = document.getElementById("dietasToastHost");
+    if (host) return host;
+    host = document.createElement("div");
+    host.id = "dietasToastHost";
+    host.style.position = "fixed";
+    host.style.right = "20px";
+    host.style.bottom = "20px";
+    host.style.zIndex = "6000";
+    host.style.display = "grid";
+    host.style.gap = "8px";
+    document.body.appendChild(host);
+    return host;
   };
+
+  const showToast = (message) => {
+    const safeMessage = cleanUiMessage(message, "");
+    if (!safeMessage) return;
+    const host = ensureToastHost();
+    const toast = document.createElement("div");
+    toast.textContent = safeMessage;
+    toast.style.background = "#1f2937";
+    toast.style.color = "#fff";
+    toast.style.borderRadius = "10px";
+    toast.style.padding = "10px 14px";
+    toast.style.maxWidth = "360px";
+    toast.style.boxShadow = "0 10px 22px rgba(0,0,0,0.2)";
+    host.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+      if (!host.childElementCount) {
+        host.remove();
+      }
+    }, 3200);
+  };
+
+  const showConfirmDialog = (message, confirmLabel = "Aceptar") =>
+    new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.background = "rgba(0,0,0,0.45)";
+      overlay.style.display = "grid";
+      overlay.style.placeItems = "center";
+      overlay.style.zIndex = "6100";
+
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "12px";
+      box.style.padding = "18px";
+      box.style.width = "min(480px,92vw)";
+      box.style.boxShadow = "0 20px 45px rgba(0,0,0,0.2)";
+
+      const text = document.createElement("p");
+      text.textContent = cleanUiMessage(message, "¿Deseas continuar?");
+      text.style.margin = "0 0 14px";
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.justifyContent = "flex-end";
+      actions.style.gap = "10px";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Cancelar";
+      cancelBtn.className = "btn ghost";
+
+      const okBtn = document.createElement("button");
+      okBtn.type = "button";
+      okBtn.textContent = confirmLabel;
+      okBtn.className = "btn primary";
+
+      const cleanup = (value) => {
+        overlay.remove();
+        resolve(Boolean(value));
+      };
+
+      cancelBtn.addEventListener("click", () => cleanup(false));
+      okBtn.addEventListener("click", () => cleanup(true));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) cleanup(false);
+      });
+
+      actions.appendChild(cancelBtn);
+      actions.appendChild(okBtn);
+      box.appendChild(text);
+      box.appendChild(actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      okBtn.focus();
+    });
 
   let alertTimer;
   const setGlobalAlert = (message = "", variant = "info") => {
     const alertNode = document.getElementById("globalAlert");
+    const safeMessage = cleanUiMessage(message, "");
     if (!alertNode) {
-      if (message) showToast(message);
+      if (safeMessage) showToast(safeMessage);
       return;
     }
     clearTimeout(alertTimer);
-    if (!message) {
+    if (!safeMessage) {
       alertNode.hidden = true;
       alertNode.textContent = "";
       alertNode.className = "global-alert";
       return;
     }
-    alertNode.textContent = message;
+    alertNode.textContent = safeMessage;
     alertNode.className = `global-alert global-alert--${variant}`;
     alertNode.hidden = false;
     if (variant !== "error") {
@@ -1466,7 +1616,7 @@
       state.pacientes = [];
       state.pacientesLoaded = false;
       if (error?.status === 401) {
-        showToast("Inicia sesion para cargar pacientes (401).");
+        showToast("Inicia sesión para cargar pacientes (401).");
       } else {
         showToast(error.message || "No se pudieron cargar los pacientes.");
       }
@@ -1606,10 +1756,10 @@
           <h3>${item.nombre || "Alimento sin nombre"}</h3>
           ${item.unidad_base ? `<span class="pill soft">${item.unidad_base}</span>` : ""}
         </div>
-        <p class="alimento-card__desc">${item.descripcion || "Sin descripcion disponible"}</p>
+        <p class="alimento-card__desc">${item.descripcion || "Sin descripción disponible"}</p>
         <div class="macro-grid">
-          <div><strong>Calorias:</strong> ${formatNumber(item.calorias)} kcal</div>
-          <div><strong>Proteinas:</strong> ${formatNumber(item.proteinas)}</div>
+          <div><strong>Calorías:</strong> ${formatNumber(item.calorias)} kcal</div>
+          <div><strong>Proteínas:</strong> ${formatNumber(item.proteinas)}</div>
           <div><strong>Grasas:</strong> ${formatNumber(item.grasas)}</div>
           <div><strong>Carbohidratos:</strong> ${formatNumber(item.carbohidratos)}</div>
           <div><strong>Fibra:</strong> ${formatNumber(item.fibra)}</div>
@@ -1640,7 +1790,7 @@
       showToast("No encontramos el alimento seleccionado.");
       return;
     }
-    const ok = window.confirm(`¿Borrar "${alimento.nombre}" del catálogo?`);
+    const ok = await showConfirmDialog(`¿Borrar "${alimento.nombre}" del catálogo?`, "Borrar");
     if (!ok) return;
     try {
       await sendJson("DELETE", `/alimentos/${alimento.id}`);
@@ -1686,8 +1836,8 @@
     }
     const macros = computeMacrosFromAlimento(alimento, cantidad);
     selectors.mealFoodPreview.innerHTML = `
-      <div><strong>Energia:</strong> ${formatNumber(macros.energia)} kcal</div>
-      <div><strong>Proteinas:</strong> ${formatNumber(macros.proteina, 1)} g</div>
+      <div><strong>Energía:</strong> ${formatNumber(macros.energia)} kcal</div>
+      <div><strong>Proteínas:</strong> ${formatNumber(macros.proteina, 1)} g</div>
       <div><strong>Grasas:</strong> ${formatNumber(macros.grasa, 1)} g</div>
       <div><strong>Carbohidratos:</strong> ${formatNumber(macros.carbohidratos, 1)} g</div>
       <div><strong>Fibra:</strong> ${formatNumber(macros.fibra, 1)} g</div>
@@ -1717,12 +1867,13 @@
     if (!meal) return meal;
     const totals = emptyMacros();
     (meal.items || []).forEach((item) => {
-      if (item && typeof item === "object" && item.macros) {
-        totals.energia += Number(item.macros.energia) || 0;
-        totals.grasa += Number(item.macros.grasa) || 0;
-        totals.carbohidratos += Number(item.macros.carbohidratos) || 0;
-        totals.proteina += Number(item.macros.proteina) || 0;
-        totals.fibra += Number(item.macros.fibra) || 0;
+      if (item && typeof item === "object") {
+        const itemMacros = normalizeMacroShape(item.macros || item);
+        totals.energia += itemMacros.energia;
+        totals.grasa += itemMacros.grasa;
+        totals.carbohidratos += itemMacros.carbohidratos;
+        totals.proteina += itemMacros.proteina;
+        totals.fibra += itemMacros.fibra;
       }
     });
     meal.macros = totals;
@@ -2547,3 +2698,4 @@ try {
 } catch (_e) {
   window.location.href = "login.html";
 }
+

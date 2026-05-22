@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion de Dietas</title>
+  <title>Gesti&oacute;n de Dietas</title>
   <link rel="stylesheet" href="../css/dietas.css">
   <link rel="stylesheet" href="../css/chatbot.css">
   <style>
@@ -29,7 +29,7 @@
       </button>
       <div class="diet-topbar__titles">
         <h1>Planes Alimenticios</h1>
-        <p>Gestion de dietas, recetas y alimentos</p>
+        <p>Gesti&oacute;n de dietas, recetas y alimentos</p>
       </div>
       <div class="diet-topbar__stats">
         <div class="stat-card">
@@ -58,7 +58,7 @@
           </div>
         <div class="panel__actions">
           <button type="button" class="btn ghost" id="savePlanBtn">Guardar cambios</button>
-          <button type="button" class="btn" id="analysisBtn">Ver analisis</button>
+          <button type="button" class="btn" id="analysisBtn">Ver an&aacute;lisis</button>
           <button type="button" class="btn" id="newDietaBtn">Nueva dieta</button>
           <div class="template-picker">
               <select id="templatePicker" class="template-picker__select">
@@ -100,14 +100,14 @@
 
     </main>
 
-    <footer class="app-footer">Bizihotz &mdash; Panel de nutricion</footer>
+    <footer class="app-footer">Bizihotz &mdash; Panel de nutrici&oacute;n</footer>
   </div>
 
   <div class="modal-overlay" id="alimentoModal" hidden>
     <div class="modal">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="alimentoModal">&times;</button>
       <h3 id="alimentoModalTitle">Nuevo alimento</h3>
-      <p class="modal__subtitle">Define la informacion nutricional base del ingrediente.</p>
+      <p class="modal__subtitle">Define la informaci&oacute;n nutricional base del ingrediente.</p>
       <form id="alimentoForm" class="form-grid" autocomplete="off">
         <div class="form-group">
           <label for="alimentoNombre">Nombre</label>
@@ -118,16 +118,16 @@
           <input type="text" id="alimentoUnidad" name="alimentoUnidad" placeholder="g">
         </div>
         <div class="form-group">
-          <label for="alimentoDescripcion">Descripcion</label>
+          <label for="alimentoDescripcion">Descripci&oacute;n</label>
           <textarea id="alimentoDescripcion" name="alimentoDescripcion" rows="2" placeholder="Notas o especificaciones"></textarea>
         </div>
         <div class="form-grid two">
           <div class="form-group">
-            <label for="alimentoCalorias">Calorias (kcal)</label>
+            <label for="alimentoCalorias">Calor&iacute;as (kcal)</label>
             <input type="number" id="alimentoCalorias" name="alimentoCalorias" min="0" step="0.1" required>
           </div>
           <div class="form-group">
-            <label for="alimentoProteinas">Proteinas (g)</label>
+            <label for="alimentoProteinas">Prote&iacute;nas (g)</label>
             <input type="number" id="alimentoProteinas" name="alimentoProteinas" min="0" step="0.1" required>
           </div>
           <div class="form-group">
@@ -160,7 +160,7 @@
     <div class="modal">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="recetaModal">&times;</button>
       <h3 id="recetaModalTitle">Nueva receta</h3>
-      <p class="modal__subtitle">Combina alimentos y cantidades para crear una preparacion.</p>
+      <p class="modal__subtitle">Combina alimentos y cantidades para crear una preparaci&oacute;n.</p>
       <form id="recetaForm" class="form-grid" autocomplete="off">
         <div class="form-grid two">
           <div class="form-group">
@@ -168,12 +168,12 @@
             <input type="text" id="recetaNombre" name="recetaNombre" required>
           </div>
           <div class="form-group">
-            <label for="recetaCalorias">Calorias objetivo</label>
+            <label for="recetaCalorias">Calor&iacute;as objetivo</label>
             <input type="number" id="recetaCalorias" name="recetaCalorias" min="0" step="1">
           </div>
         </div>
         <div class="form-group">
-          <label for="recetaDescripcion">Descripcion</label>
+          <label for="recetaDescripcion">Descripci&oacute;n</label>
           <textarea id="recetaDescripcion" name="recetaDescripcion" rows="2" placeholder="Breve resumen de la receta"></textarea>
         </div>
         <div class="form-group">
@@ -183,7 +183,7 @@
         <div class="form-group">
           <span class="modal__subtitle">Ingredientes</span>
           <div id="recetaIngredientesContainer"></div>
-          <button type="button" class="btn" id="addRecetaIngrediente">+ Anadir ingrediente</button>
+          <button type="button" class="btn" id="addRecetaIngrediente">+ A&ntilde;adir ingrediente</button>
         </div>
         <p class="modal-feedback" id="recetaFeedback"></p>
         <div class="modal__actions">
@@ -219,7 +219,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="dietaCalorias">Calorias objetivo</label>
+            <label for="dietaCalorias">Calor&iacute;as objetivo</label>
             <input type="number" id="dietaCalorias" name="dietaCalorias" min="0" step="1">
           </div>
         </div>
@@ -243,10 +243,10 @@
         </div>
         <div class="form-group">
           <label for="dietaObjetivo">Objetivo</label>
-          <input type="text" id="dietaObjetivo" name="dietaObjetivo" placeholder="Ej. Reduccion de peso, mantenimiento">
+          <input type="text" id="dietaObjetivo" name="dietaObjetivo" placeholder="Ej. Reducci&oacute;n de peso, mantenimiento">
         </div>
         <div class="form-group">
-          <label for="dietaDescripcion">Descripcion</label>
+          <label for="dietaDescripcion">Descripci&oacute;n</label>
           <textarea id="dietaDescripcion" name="dietaDescripcion" rows="3" placeholder="Resumen general de la dieta"></textarea>
         </div>
         <div class="form-group">
@@ -256,7 +256,7 @@
         <div class="form-group">
           <span class="modal__subtitle">Recetas incluidas</span>
           <div id="dietaRecetasContainer"></div>
-          <button type="button" class="btn" id="addDietaReceta">+ Anadir receta</button>
+          <button type="button" class="btn" id="addDietaReceta">+ A&ntilde;adir receta</button>
         </div>
         <p class="modal-feedback" id="dietaFeedback"></p>
         <div class="modal__actions">
@@ -310,7 +310,7 @@
   <div class="modal-overlay" id="versionModal" hidden>
     <div class="modal">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="versionModal">&times;</button>
-      <h3>Generar nueva version</h3>
+      <h3>Generar nueva versi&oacute;n</h3>
       <p class="modal__subtitle">Actualiza los datos antes de duplicar la dieta para seguimiento.</p>
       <form id="versionForm" class="form-grid" autocomplete="off">
         <input type="hidden" id="versionDietaId" name="versionDietaId">
@@ -324,7 +324,7 @@
         </div>
         <div class="form-grid two">
           <div class="form-group">
-            <label for="versionCalorias">Calorias objetivo</label>
+            <label for="versionCalorias">Calor&iacute;as objetivo</label>
             <input type="number" id="versionCalorias" name="versionCalorias" min="0" step="1">
           </div>
           <div class="form-group">
@@ -347,7 +347,7 @@
         <p class="modal-feedback" id="versionFeedback"></p>
         <div class="modal__actions">
           <button type="button" class="btn" data-modal-close="versionModal">Cancelar</button>
-          <button type="submit" class="btn primary">Crear version</button>
+          <button type="submit" class="btn primary">Crear versi&oacute;n</button>
         </div>
       </form>
     </div>
@@ -357,13 +357,13 @@
     <div class="modal">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="notifyModal">&times;</button>
       <h3>Notificar al paciente</h3>
-      <p class="modal__subtitle">Envia el plan por el canal seleccionado con los adjuntos necesarios.</p>
+      <p class="modal__subtitle">Env&iacute;a el plan por el canal seleccionado con los adjuntos necesarios.</p>
       <form id="notifyForm" class="form-grid" autocomplete="off">
         <input type="hidden" id="notifyDietaId" name="notifyDietaId">
         <div class="form-group">
           <label for="notifyCanal">Canal</label>
           <select id="notifyCanal" name="notifyCanal">
-            <option value="email">Correo electronico</option>
+            <option value="email">Correo electr&oacute;nico</option>
             <option value="sms">SMS</option>
           </select>
         </div>
@@ -383,7 +383,7 @@
         <p class="modal-feedback" id="notifyFeedback"></p>
         <div class="modal__actions">
           <button type="button" class="btn" data-modal-close="notifyModal">Cancelar</button>
-          <button type="submit" class="btn primary">Enviar notificacion</button>
+          <button type="submit" class="btn primary">Enviar notificaci&oacute;n</button>
         </div>
       </form>
     </div>
@@ -531,7 +531,7 @@
   <div class="modal-overlay" id="analysisModal" hidden>
     <div class="modal modal--wide">
       <button type="button" class="modal__close" aria-label="Cerrar" data-modal-close="analysisModal">&times;</button>
-      <h3>Analisis global</h3>
+      <h3>Análisis global</h3>
       <div id="dietPlanAnalysis" class="analysis-card"></div>
     </div>
   </div>
