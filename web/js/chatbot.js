@@ -683,20 +683,57 @@ const DEFAULT_ASSISTANT_GREETING =
     const withBold = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     const lines = withBold.split(/\n/);
     let html = "";
-    let currentList = null; // 'ul' | 'ol'
+    let currentList = null;
+    let tableBuffer = [];
+
     const closeList = () => {
       if (currentList === "ul") html += "</ul>";
       if (currentList === "ol") html += "</ol>";
       currentList = null;
     };
+
+    const flushTable = () => {
+      if (!tableBuffer.length) return;
+      html += '<table class="bh-chat-table">';
+      tableBuffer.forEach((row, i) => {
+        const cells = row
+          .split("|")
+          .map((c) => c.trim())
+          .filter((c) => c.length > 0);
+        if (i === 0) {
+          html += "<thead><tr>" + cells.map((c) => `<th>${c}</th>`).join("") + "</tr></thead><tbody>";
+        } else {
+          html += "<tr>" + cells.map((c) => `<td>${c}</td>`).join("") + "</tr>";
+        }
+      });
+      html += "</tbody></table>";
+      tableBuffer = [];
+    };
+
     lines.forEach((line) => {
       const trimmed = line.trim();
+
+      // Detectar filas de tabla (contienen | y no son separadores ---)
+      const isTableRow = trimmed.startsWith("|") && trimmed.endsWith("|");
+      const isSeparator = /^\|[\s\-|]+\|$/.test(trimmed);
+
+      if (isTableRow && !isSeparator) {
+        closeList();
+        tableBuffer.push(trimmed);
+        return;
+      }
+      if (isSeparator) return; // ignorar línea de separación |---|---|
+
+      // Si había tabla acumulada y llega otra cosa, vaciarla
+      if (tableBuffer.length) flushTable();
+
       const headingMatch = /^#{1,6}\s+(.*)$/.exec(trimmed);
       if (headingMatch) {
         closeList();
         html += `<div class="bh-chat-heading">${headingMatch[1]}</div>`;
         return;
       }
+
       const isBullet = /^[-*]\s+/.test(trimmed);
       const isNumber = /^\d+\.\s+/.test(trimmed);
       if (isBullet || isNumber) {
@@ -710,9 +747,12 @@ const DEFAULT_ASSISTANT_GREETING =
         html += `<li>${clean}</li>`;
         return;
       }
+
       closeList();
       html += `${trimmed || "&nbsp;"}<br>`;
     });
+
+    if (tableBuffer.length) flushTable();
     closeList();
     return html;
   };
