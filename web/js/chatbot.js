@@ -35,6 +35,18 @@ const DEFAULT_ASSISTANT_GREETING =
     }
   };
 
+  const normalizeRole = (value) =>
+    String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const isRecepcionista = (user) => {
+    const role = normalizeRole(user?.rolSistema || user?.rol || user?.role || "");
+    return role === "recepcionista" || role === "recepcion";
+  };
+
   const resolveUserId = (user) => {
     if (!user) return null;
     return (
@@ -622,10 +634,14 @@ const DEFAULT_ASSISTANT_GREETING =
   };
 
   const bootstrap = () => {
+    const user = getStoredUser();
+    if (isRecepcionista(user)) {
+      return;
+    }
+
     const ui = createUI();
     document.body.appendChild(ui.container);
 
-    const user = getStoredUser();
     const resolveUserName = (u) => {
       const candidates = [
         u?.nombreCompleto,
