@@ -6,6 +6,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,6 +16,7 @@ import app as nutrition_app
 from app.database import Base
 from app.models import Alimento
 from app.services import bedca, communication, export, external
+from app.services import gestion as gestion_service
 
 
 def _fake_dieta_for_exports():
@@ -64,6 +66,83 @@ class _FakeRequestsResponse:
         if self._payload == "__invalid_json__":
             raise ValueError("invalid json")
         return self._payload
+
+
+def test_gestion_validation_success_and_failures(monkeypatch):
+    settings = SimpleNamespace(
+        validate_paciente_with_gestion=True,
+        gestion_service_url="http://gestion:4001/api",
+        gestion_service_bearer_token="",
+        gestion_service_timeout=3.0,
+    )
+    monkeypatch.setattr(gestion_service, "get_settings", lambda: settings)
+
+    captured = {}
+
+    def _fake_get_ok(url, headers, timeout):  # noqa: ARG001
+        captured["url"] = url
+        captured["headers"] = headers
+        return _FakeRequestsResponse(payload={"idPaciente": "abc123"}, status_code=200)
+
+    monkeypatch.setattr(gestion_service.requests, "get", _fake_get_ok)
+    gestion_service.validar_paciente_en_gestion(
+        "abc123",
+        incoming_authorization="Bearer token-user",
+    )
+    assert captured["url"].endswith("/pacientes/abc123")
+    assert captured["headers"]["Authorization"] == "Bearer token-user"
+
+    monkeypatch.setattr(
+        gestion_service.requests,
+        "get",
+        lambda *args, **kwargs: _FakeRequestsResponse(
+            payload={"mensaje": "Paciente no encontrado"},
+            status_code=404,
+        ),
+    )
+    with pytest.raises(HTTPException) as not_found_exc:
+        gestion_service.validar_paciente_en_gestion("missing-id")
+    assert not_found_exc.value.status_code == 400
+
+    monkeypatch.setattr(
+        gestion_service.requests,
+        "get",
+        lambda *args, **kwargs: _FakeRequestsResponse(
+            payload={"mensaje": "Token invalido"},
+            status_code=401,
+        ),
+    )
+    with pytest.raises(HTTPException) as unauthorized_exc:
+        gestion_service.validar_paciente_en_gestion("abc123")
+    assert unauthorized_exc.value.status_code == 401
+
+    def _raising_get(*args, **kwargs):  # noqa: ARG001
+        raise gestion_service.requests.RequestException("connection error")
+
+    monkeypatch.setattr(gestion_service.requests, "get", _raising_get)
+    with pytest.raises(HTTPException) as unavailable_exc:
+        gestion_service.validar_paciente_en_gestion("abc123")
+    assert unavailable_exc.value.status_code == 503
+
+
+def test_gestion_validation_can_be_disabled(monkeypatch):
+    settings = SimpleNamespace(
+        validate_paciente_with_gestion=False,
+        gestion_service_url="",
+        gestion_service_bearer_token="",
+        gestion_service_timeout=3.0,
+    )
+    monkeypatch.setattr(gestion_service, "get_settings", lambda: settings)
+
+    called = {"count": 0}
+
+    def _fake_get(*args, **kwargs):  # noqa: ARG001
+        called["count"] += 1
+        return _FakeRequestsResponse(status_code=200)
+
+    monkeypatch.setattr(gestion_service.requests, "get", _fake_get)
+    gestion_service.validar_paciente_en_gestion("abc123")
+    assert called["count"] == 0
 
 
 def test_external_service_parsing_and_validation(monkeypatch):

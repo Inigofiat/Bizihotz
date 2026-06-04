@@ -508,8 +508,10 @@
     planState.fechaFin = descFechaFin ?? data.fecha_fin ?? null;
     if (selectors.dietaFechaInicio) selectors.dietaFechaInicio.value = planState.fechaInicio ? String(planState.fechaInicio).slice(0, 10) : "";
     if (selectors.dietaFechaFin) selectors.dietaFechaFin.value = planState.fechaFin ? String(planState.fechaFin).slice(0, 10) : "";
-    planState.asignadoA = data.paciente_id || planState.asignadoA || null;
-    planState.asignadoLabel = getPacienteLabel(planState.asignadoA) || planState.asignadoA || planState.asignadoLabel || "";
+    // Reinicia la asignacion activa al cargar una dieta para evitar
+    // arrastrar el paciente de una dieta anterior.
+    planState.asignadoA = data.paciente_id || null;
+    planState.asignadoLabel = getPacienteLabel(planState.asignadoA) || planState.asignadoA || "";
     if (Array.isArray(data.asignaciones) && data.asignaciones.length) {
       const asignacion = data.asignaciones[0];
       planState.asignadoA = asignacion.paciente_id || asignacion.pacienteId || null;
@@ -965,7 +967,7 @@
   const loadDietas = async () => {
     try {
       // Trae todas las dietas (plantillas y asignadas) para que el selector muestre el listado completo.
-      const data = await fetchJson("/dietas?es_plantilla=true");
+      const data = await fetchJson("/dietas");
       const fetched = dedupeDietas(Array.isArray(data) ? data : []);
       // Mezcla plantillas y asignadas; luego se colapsan por nombre priorizando la seleccionada/asignadas.
       state.dietas = fetched;
@@ -2589,7 +2591,10 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
     const pacienteSelect = selectors.assignPacienteId;
     if (!pacienteSelect) return;
     const wrapper = selectors.assignPacienteWrapper || pacienteSelect.parentElement;
-    if (planState.asignadoA) {
+    // Solo bloqueamos selector si la dieta actual ya es personalizada
+    // (no plantilla) y tiene paciente asociado.
+    const bloquearSelector = planState.esPlantilla === false && Boolean(planState.asignadoA);
+    if (bloquearSelector) {
       pacienteSelect.value = String(planState.asignadoA);
       pacienteSelect.disabled = true;
       if (wrapper) wrapper.style.display = "none";
@@ -2610,7 +2615,13 @@ selectors.savePlanBtn?.addEventListener("click", (e) => {
     }
 
     const bootstrap = async () => {
-      // Solo cargamos dieta si viene indicada por parámetro; no se autoselecciona ni por paciente.
+      // Si viene un paciente en query, intentamos recuperar su dieta activa.
+      if (!dietaId && pacienteId) {
+        const loadedForPaciente = await loadPlanForPaciente(pacienteId);
+        if (loadedForPaciente) return;
+      }
+
+      // Solo cargamos dieta si viene indicada por parámetro.
       const ok = await ensureDietaId();
       if (ok) {
         await loadPlanFromBackend();

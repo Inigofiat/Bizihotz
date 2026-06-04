@@ -17,6 +17,10 @@ API REST creada con FastAPI y PostgreSQL que gestiona alimentos, recetas, planes
 Copia `.env.example` a `.env` y ajusta:
 
 - `DATABASE_URL`: URL SQLAlchemy (por defecto `postgresql+psycopg://postgres:postgres@postgres:5432/nutricion` al usar Docker).
+- `GESTION_SERVICE_URL`: base URL del microservicio de gestion para validar `paciente_id` (ej. `http://gestion:4001/api`).
+- `VALIDATE_PACIENTE_WITH_GESTION`: activa/desactiva la validacion cruzada (`true` por defecto).
+- `GESTION_SERVICE_TIMEOUT`: timeout (segundos) para validaciones en gestion.
+- `GESTION_SERVICE_BEARER_TOKEN`: token opcional para validacion server-to-server cuando no se reenvia `Authorization`.
 - `NOTIFICATIONS_SERVICE_URL` y `NOTIFICATIONS_SERVICE_API_KEY`: webhook opcional para avisar al paciente.
 - `CORS_ALLOWED_ORIGINS`: lista separada por comas con origenes permitidos (por defecto `*`).
 - `EXPORT_FOOTER_NOTE`: texto que aparece en los archivos exportados.
@@ -70,6 +74,7 @@ Si ya tenias tablas y ahora integras el microservicio de gestion, ejecuta `scrip
 
 - Calculo de calorias, macros y micronutrientes por receta o dieta.
 - Versionado de dietas y seguimiento de asignaciones por paciente.
+- Validacion opcional de `paciente_id` contra el microservicio de gestion antes de crear/asignar dietas.
 - Exportacion CSV/PDF lista para compartir.
 - Integracion opcional con un webhook de notificaciones.
 - Seeds (`scripts/seed_demo.py`) para contar con catalogos y ejemplos al iniciar.

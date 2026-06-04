@@ -5,7 +5,7 @@ import json
 from decimal import Decimal
 from typing import Iterable, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -33,6 +33,7 @@ from ..schemas import (
 )
 from ..services.communication import enviar_notificacion_dieta
 from ..services.export import generar_csv_dieta, generar_pdf_dieta
+from ..services.gestion import validar_paciente_en_gestion
 from ..services.nutrition import calcular_totales_dieta
 
 router = APIRouter()
@@ -305,12 +306,21 @@ def listar_dietas(
 
 
 @router.post("", response_model=DietaRead, status_code=status.HTTP_201_CREATED)
-def crear_dieta(payload: DietaCreate, session: Session = Depends(get_session)):
+def crear_dieta(
+    payload: DietaCreate,
+    request: Request,
+    session: Session = Depends(get_session),
+):
     paciente_id = payload.paciente_id.strip() if payload.paciente_id else None
     if not payload.es_plantilla and not paciente_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Las dietas personalizadas deben indicar paciente_id.",
+        )
+    if paciente_id:
+        validar_paciente_en_gestion(
+            paciente_id,
+            incoming_authorization=request.headers.get("Authorization"),
         )
 
     estado = payload.estado or ("borrador" if payload.es_plantilla else "publicada")
@@ -395,6 +405,7 @@ def eliminar_historial_dieta(
 def actualizar_dieta(
     dieta_id: int,
     payload: DietaUpdate,
+    request: Request,
     session: Session = Depends(get_session),
 ):
     dieta = _obtener_dieta(session, dieta_id)
@@ -424,6 +435,11 @@ def actualizar_dieta(
         campos_modificados.add("notas")
     if payload.paciente_id is not None:
         paciente_actualizado = payload.paciente_id.strip()
+        if paciente_actualizado:
+            validar_paciente_en_gestion(
+                paciente_actualizado,
+                incoming_authorization=request.headers.get("Authorization"),
+            )
         dieta.paciente_id = paciente_actualizado or None
         campos_modificados.add("paciente_id")
     if payload.usuario_id is not None:
@@ -494,6 +510,7 @@ def eliminar_dieta(dieta_id: int, session: Session = Depends(get_session)):
 def asignar_dieta(
     dieta_id: int,
     payload: DietaAsignacionCreate,
+    request: Request,
     session: Session = Depends(get_session),
 ):
     paciente_id = payload.paciente_id.strip()
@@ -502,6 +519,10 @@ def asignar_dieta(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Debe proporcionar un identificador de paciente valido.",
         )
+    validar_paciente_en_gestion(
+        paciente_id,
+        incoming_authorization=request.headers.get("Authorization"),
+    )
 
     origen = _obtener_dieta(session, dieta_id)
 
