@@ -42,6 +42,7 @@ Al primer arranque, si no hay usuarios, se crean:
 - `npm run dev`: arranque con recarga (nodemon).
 - `npm start`: arranque en modo produccion.
 - `npm run seed`: carga datos de ejemplo (pacientes, citas, historiales, usuarios).
+- `npm run migrate-names`: renombra colecciones y campos persistidos a la nomenclatura PascalCase/camelCase sin borrar datos.
 - `npm run purge-weekend-citas`: borra citas en fin de semana (script de limpieza).
 
 Scripts adicionales de apoyo en `scripts/` (`debugWeekendCitas.js`, `findCitasPorFecha.js`, etc.).

@@ -373,11 +373,11 @@ const seed = async () => {
         telefono: profesional.telefono ?? "",
         rol: profesional.rol ?? "Nutricionista",
         foto: profesional.foto ?? "",
-        passwordHash: bcrypt.hashSync(DEFAULT_PROFESIONALES_PASSWORD, 12),
+        contraseniaHash: bcrypt.hashSync(DEFAULT_PROFESIONALES_PASSWORD, 12),
         activo: profesional.activo ?? true,
         rolSistema: profesional.rolSistema ?? "Profesional del centro",
-        debeActualizarPassword: false,
-        ultimoCambioPassword: null
+        debeActualizarCont: false,
+        ultimoCambioCont: null
       };
     });
 
@@ -391,10 +391,10 @@ const seed = async () => {
         rol: "Administrador",
         rolSistema: "Administrador",
         foto: "",
-        passwordHash: bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 12),
+        contraseniaHash: bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 12),
         activo: true,
-        debeActualizarPassword: false,
-        ultimoCambioPassword: null
+        debeActualizarCont: false,
+        ultimoCambioCont: null
       },
       {
         nombreUsuario: "recep",
@@ -405,10 +405,10 @@ const seed = async () => {
         rol: "Recepcionista",
         rolSistema: "Recepcionista",
         foto: "",
-        passwordHash: bcrypt.hashSync(DEFAULT_RECEPCIONISTA_PASSWORD, 12),
+        contraseniaHash: bcrypt.hashSync(DEFAULT_RECEPCIONISTA_PASSWORD, 12),
         activo: true,
-        debeActualizarPassword: false,
-        ultimoCambioPassword: null
+        debeActualizarCont: false,
+        ultimoCambioCont: null
       }
     );
 

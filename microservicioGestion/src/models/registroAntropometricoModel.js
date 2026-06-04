@@ -20,4 +20,4 @@ registroModelo.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('RegistroAntropometrico', registroModelo);
+module.exports = mongoose.model('RegistroAntropometrico', registroModelo, 'RegistroAntropometrico');

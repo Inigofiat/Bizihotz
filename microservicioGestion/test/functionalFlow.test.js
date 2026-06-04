@@ -38,7 +38,7 @@ const createUser = async (index = 1) => {
     email: `pro${index}@example.com`,
     telefono: `60012345${index}`,
     rol: 'Nutricionista',
-    passwordHash: 'hash'
+    contraseniaHash: 'hash'
   });
 };
 

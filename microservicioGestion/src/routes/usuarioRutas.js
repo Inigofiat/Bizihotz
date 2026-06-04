@@ -103,7 +103,7 @@ router.get("/", permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONIST
     const usuarios = await Usuario.find(filter)
       .sort({ nombre: 1, apellidos: 1, nombreUsuario: 1 })
       .limit(maxLimit)
-      .select("nombre apellidos nombreUsuario email telefono rol rolSistema foto activo ultimoAcceso updatedAt");
+      .select("nombre apellidos nombreUsuario email telefono rol rolSistema foto activo ultimoAcceso acutalizadoEn updatedAt");
 
     const data = usuarios
       .filter((usuario) => {
@@ -122,7 +122,7 @@ router.get("/", permitirRoles(ROLES.ADMIN, ROLES.PROFESIONAL, ROLES.RECEPCIONIST
         const apellidos = usuario.apellidos?.trim() || "";
         const nombreCompleto = `${nombre} ${apellidos}`.trim() || usuario.nombreUsuario;
         const activo = usuario.activo !== false;
-        const ultimoAcceso = usuario.ultimoAcceso || usuario.updatedAt || null;
+        const ultimoAcceso = usuario.ultimoAcceso || usuario.acutalizadoEn || usuario.updatedAt || null;
 
         return {
           idUsuario: usuario._id.toString(),
@@ -171,8 +171,10 @@ const buildUserResponse = (usuario) => {
     apellidos: plain.apellidos ?? "",
     telefono: plain.telefono ?? "",
     foto: plain.foto ?? "",
-    debeActualizarPassword: plain.debeActualizarPassword ?? false,
-    ultimoCambioPassword: plain.ultimoCambioPassword ?? null,
+    debeActualizarCont: plain.debeActualizarCont ?? plain.debeActualizarPassword ?? false,
+    ultimoCambioCont: plain.ultimoCambioCont ?? plain.ultimoCambioPassword ?? null,
+    debeActualizarPassword: plain.debeActualizarCont ?? plain.debeActualizarPassword ?? false,
+    ultimoCambioPassword: plain.ultimoCambioCont ?? plain.ultimoCambioPassword ?? null,
     ultimoAcceso: plain.ultimoAcceso ?? null
   };
 };
@@ -213,19 +215,19 @@ router.post(
         return res.status(409).json({ mensaje: "Ya existe un usuario con ese email." });
       }
 
-      const passwordHash = await bcrypt.hash(String(password), 12);
+      const contraseniaHash = await bcrypt.hash(String(password), 12);
       const usuario = new Usuario({
         nombre,
         apellidos,
         telefono,
         email: email.toLowerCase().trim(),
         nombreUsuario: nombreUsuario.trim(),
-        passwordHash,
+        contraseniaHash,
         rol: rol || "Nutricionista",
         rolSistema: rolSistema || ROLES.PROFESIONAL,
         foto: foto || "",
         activo: typeof activo === "boolean" ? activo : true,
-        debeActualizarPassword: false
+        debeActualizarCont: false
       });
 
       const creado = await usuario.save();
@@ -353,9 +355,12 @@ router.patch("/:id/password", permitirRoles(ROLES.ADMIN), async (req, res, next)
       return res.status(404).json({ mensaje: "Usuario no encontrado." });
     }
 
-    usuario.passwordHash = await bcrypt.hash(String(nuevaPassword), 12);
-    usuario.debeActualizarPassword = true;
-    usuario.ultimoCambioPassword = new Date();
+    usuario.contraseniaHash = await bcrypt.hash(String(nuevaPassword), 12);
+    usuario.passwordHash = undefined;
+    usuario.debeActualizarCont = true;
+    usuario.debeActualizarPassword = undefined;
+    usuario.ultimoCambioCont = new Date();
+    usuario.ultimoCambioPassword = undefined;
 
     await usuario.save();
 

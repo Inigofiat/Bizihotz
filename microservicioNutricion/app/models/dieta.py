@@ -10,31 +10,42 @@ from ..database import Base
 
 
 class Dieta(Base):
-    __tablename__ = "dietas"
+    __tablename__ = "Dieta"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nombre: Mapped[str] = mapped_column(String(150), nullable=False)
     objetivo: Mapped[str | None] = mapped_column(String(200), nullable=True)
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
-    calorias_objetivo: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
-    fecha_inicio: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
-    fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
-    paciente_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    usuario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    es_plantilla: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    calorias_objetivo: Mapped[Decimal | None] = mapped_column(
+        "caloriasObjetivo", Numeric(8, 2), nullable=True
+    )
+    fecha_inicio: Mapped[date] = mapped_column(
+        "fechaInicio", Date, default=date.today, nullable=False
+    )
+    fecha_fin: Mapped[date | None] = mapped_column("fechaFin", Date, nullable=True)
+    paciente_id: Mapped[str | None] = mapped_column(
+        "pacienteId", String(128), nullable=True, index=True
+    )
+    usuario_id: Mapped[int] = mapped_column("usuarioId", Integer, nullable=False, index=True)
+    es_plantilla: Mapped[bool] = mapped_column(
+        "esPlantilla", Boolean, default=False, nullable=False
+    )
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     estado: Mapped[str] = mapped_column(String(20), default="borrador", nullable=False)
     activa: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     parent_id: Mapped[int | None] = mapped_column(
-        ForeignKey("dietas.id", ondelete="SET NULL"), nullable=True, index=True
+        "idPadre",
+        ForeignKey("Dieta.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    publicada_en: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    publicada_en: Mapped[datetime | None] = mapped_column(
+        "publicadaEn", DateTime, nullable=True
+    )
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        "creadoEn", DateTime, default=datetime.utcnow, nullable=False
     )
     actualizado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        "acutalizadoEn", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     recetas: Mapped[list["DietaReceta"]] = relationship(

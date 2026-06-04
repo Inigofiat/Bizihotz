@@ -18,4 +18,4 @@ historialPacienteModelo.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('HistorialPaciente', historialPacienteModelo);
+module.exports = mongoose.model('HistorialPaciente', historialPacienteModelo, 'HistorialPaciente');

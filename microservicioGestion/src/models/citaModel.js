@@ -78,4 +78,4 @@ citaModelo.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('Cita', citaModelo);
+module.exports = mongoose.model('Cita', citaModelo, 'Cita');

@@ -34,7 +34,7 @@ const extractNombreApellidos = (profesional = {}) => {
   return { nombre, apellidos: resto.join(" ") };
 };
 
-const buildUsuarioDocs = (seedUsuarios, passwordHash) => {
+const buildUsuarioDocs = (seedUsuarios, contraseniaHash) => {
   return seedUsuarios.map((profesional) => {
     const { nombre, apellidos } = extractNombreApellidos(profesional);
     const email = (profesional.email ?? "").toLowerCase().trim();
@@ -53,10 +53,13 @@ const buildUsuarioDocs = (seedUsuarios, passwordHash) => {
       rol: profesional.rol ?? "Nutricionista",
       rolSistema: profesional.rolSistema ?? "Profesional del centro",
       foto: profesional.foto ?? "",
-      passwordHash: profesional.passwordHash ?? passwordHash,
+      contraseniaHash:
+        profesional.contraseniaHash ?? profesional.passwordHash ?? contraseniaHash,
       activo: profesional.activo ?? true,
-      debeActualizarPassword: profesional.debeActualizarPassword ?? false,
-      ultimoCambioPassword: profesional.ultimoCambioPassword ?? null
+      debeActualizarCont:
+        profesional.debeActualizarCont ?? profesional.debeActualizarPassword ?? false,
+      ultimoCambioCont:
+        profesional.ultimoCambioCont ?? profesional.ultimoCambioPassword ?? null
     };
   });
 };
@@ -84,10 +87,10 @@ const ensureDefaultUsers = async () => {
     rol: "Administrador",
     rolSistema: "Administrador",
     foto: "",
-    passwordHash: hashAdmin,
+    contraseniaHash: hashAdmin,
     activo: true,
-    debeActualizarPassword: false,
-    ultimoCambioPassword: null
+    debeActualizarCont: false,
+    ultimoCambioCont: null
   });
 
   // Recepcionista inicial para la operativa de agenda y registro asistencial.
@@ -100,10 +103,10 @@ const ensureDefaultUsers = async () => {
     rol: "Recepcionista",
     rolSistema: "Recepcionista",
     foto: "",
-    passwordHash: hashRecepcionista,
+    contraseniaHash: hashRecepcionista,
     activo: true,
-    debeActualizarPassword: false,
-    ultimoCambioPassword: null
+    debeActualizarCont: false,
+    ultimoCambioCont: null
   });
 
   await Usuario.insertMany(usuariosDocuments);

@@ -34,5 +34,6 @@ Variables de entorno:
 
 ## Notas
 
-- Persistencia en Mongo usando colecciones `chatbot_sessions` y `chatbot_messages`.
+- Persistencia en Mongo usando colecciones `SesionesChatbot` y `MensajesChatbot`.
+- `npm run migrate-names` renombra `MensajesChatbot.role` a `rol` sin borrar datos.
 - Incluye heuristica local para respuestas si no hay proveedor de IA configurado. Si se define `AI_API_URL`, se llama al proveedor y se almacena la respuesta como `assistant`.

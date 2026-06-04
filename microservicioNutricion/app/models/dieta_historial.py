@@ -9,17 +9,18 @@ from ..database import Base
 
 
 class DietaHistorial(Base):
-    __tablename__ = "dietas_historial"
+    __tablename__ = "HistorialDieta"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     dieta_id: Mapped[int] = mapped_column(
-        ForeignKey("dietas.id", ondelete="CASCADE"), nullable=False, index=True
+        "dietaId",
+        ForeignKey("Dieta.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    usuario_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    usuario_id: Mapped[int] = mapped_column("usuarioId", Integer, nullable=False, index=True)
     detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
-    snapshot_data: Mapped[str | None] = mapped_column(Text, nullable=True)
+    snapshot_data: Mapped[str | None] = mapped_column("datos", Text, nullable=True)
     registrado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        "registradoEn", DateTime, default=datetime.utcnow, nullable=False
     )
 
     dieta: Mapped["Dieta"] = relationship("Dieta", back_populates="historial")

@@ -25,7 +25,7 @@ const createChatbotMessage = async ({ sesionId, remitenteId, contenido, role = '
   const message = await Message.create({
     sesionId: session._id,
     remitenteId,
-    role: sanitizeRole(role),
+    rol: sanitizeRole(role),
     contenido: trimmed,
     metadatos,
   });
@@ -44,6 +44,7 @@ const listMessages = async (sesionId, { page = 1, limit = 50, order = 'asc' } = 
 
   const [items, total] = await Promise.all([
     Message.find({ sesionId: session._id })
+      .select('+role')
       .sort({ enviadoEn: safeOrder })
       .skip(skip)
       .limit(safeLimit)
@@ -63,7 +64,8 @@ const listMessages = async (sesionId, { page = 1, limit = 50, order = 'asc' } = 
       id: msg._id.toString(),
       sesionId: msg.sesionId.toString(),
       remitenteId: msg.remitenteId,
-      role: msg.role,
+      role: msg.rol || msg.role,
+      rol: msg.rol || msg.role,
       contenido: msg.contenido,
       metadatos: msg.metadatos,
       enviadoEn: msg.enviadoEn,

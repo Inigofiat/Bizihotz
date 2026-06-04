@@ -47,4 +47,4 @@ pacienteModelo.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('Paciente', pacienteModelo);
+module.exports = mongoose.model('Paciente', pacienteModelo, 'Paciente');

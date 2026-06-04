@@ -51,6 +51,10 @@ python scripts/seed_documents.py
 
 Respeta `DATABASE_URL` del `.env` y crea la tabla si no existe.
 
+### Migrar nombres persistidos
+
+Si ya existe una base con la tabla `documentos`, ejecuta `python scripts/migrate_persisted_names.py` antes de arrancar la version nueva. El script renombra tabla y columnas solo cuando el destino no existe, para evitar sobrescribir datos.
+
 ## Docker Compose (servicio aislado)
 
 ```bash
@@ -71,10 +75,10 @@ Swagger disponible en `/docs`.
 
 ## Modelo de datos
 
-Tabla `documentos` con:
+Tabla `Documento` con:
 
-- `titulo`, `descripcion`, `etiquetas` (JSON array), `tipo`, `fuente`, `external_id`, `url_descarga`, `metadata` (json), `fecha_subida`, `last_synced_at`, `estado`, `idioma`.
-- Restricción única por `fuente + external_id` para evitar duplicados.
+- `titulo`, `descripcion`, `etiquetas` (JSON array), `tipo`, `fuente`, `refer`, `url`, `rutaArchivo`, `metadata` (json), `fechaSubida`, `ultimaAct`, `estado`, `idioma`.
+- Restriccion unica por `fuente + refer` para evitar duplicados.
 
 ## Búsqueda
 
@@ -83,7 +87,7 @@ Tabla `documentos` con:
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_documento_fts
-ON documentos
+ON "Documento"
 USING GIN (to_tsvector('spanish', coalesce(titulo,'') || ' ' || coalesce(descripcion,'')));
 ```
 

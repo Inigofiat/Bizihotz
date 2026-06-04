@@ -9,17 +9,17 @@ from ..database import Base
 
 
 class RecetaAlimento(Base):
-    __tablename__ = "recetas_alimentos"
+    __tablename__ = "RecetaAlimento"
     __table_args__ = (
-        UniqueConstraint("receta_id", "alimento_id", name="uq_receta_alimento"),
+        UniqueConstraint("recetaId", "alimentoId", name="uq_receta_alimento"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     receta_id: Mapped[int] = mapped_column(
-        ForeignKey("recetas.id", ondelete="CASCADE"), nullable=False
+        "recetaId", ForeignKey("Receta.id", ondelete="CASCADE"), nullable=False
     )
     alimento_id: Mapped[int] = mapped_column(
-        ForeignKey("alimentos.id", ondelete="CASCADE"), nullable=False
+        "alimentoId", ForeignKey("Alimento.id", ondelete="CASCADE"), nullable=False
     )
     cantidad: Mapped[Decimal] = mapped_column(
         Numeric(8, 2), nullable=False, doc="Cantidad expresada en la unidad_base."

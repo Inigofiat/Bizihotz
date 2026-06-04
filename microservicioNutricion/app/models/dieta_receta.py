@@ -7,12 +7,12 @@ from ..database import Base
 
 
 class DietaReceta(Base):
-    __tablename__ = "dietas_recetas"
+    __tablename__ = "DietaReceta"
     __table_args__ = (
         UniqueConstraint(
-            "dieta_id",
-            "receta_id",
-            "dia_semana",
+            "dietaId",
+            "recetaId",
+            "diaSemana",
             "momento",
             name="uq_dieta_receta_dia_momento",
         ),
@@ -20,12 +20,13 @@ class DietaReceta(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     dieta_id: Mapped[int] = mapped_column(
-        ForeignKey("dietas.id", ondelete="CASCADE"), nullable=False
+        "dietaId",
+        ForeignKey("Dieta.id", ondelete="CASCADE"), nullable=False
     )
     receta_id: Mapped[int] = mapped_column(
-        ForeignKey("recetas.id", ondelete="CASCADE"), nullable=False
+        "recetaId", ForeignKey("Receta.id", ondelete="CASCADE"), nullable=False
     )
-    dia_semana: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    dia_semana: Mapped[str | None] = mapped_column("diaSemana", String(15), nullable=True)
     momento: Mapped[str | None] = mapped_column(
         String(30), nullable=True, doc="Ej: desayuno, almuerzo, cena, snack."
     )

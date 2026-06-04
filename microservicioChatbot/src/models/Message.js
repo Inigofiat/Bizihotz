@@ -13,10 +13,15 @@ const messageSchema = new Schema(
       required: true,
       index: true,
     },
-    role: {
+    rol: {
       type: String,
       enum: ['user', 'assistant'],
       default: 'user',
+    },
+    role: {
+      type: String,
+      enum: ['user', 'assistant'],
+      select: false,
     },
     contenido: {
       type: String,
@@ -44,7 +49,8 @@ messageSchema.methods.toPublicJSON = function toPublicJSON() {
     id: doc._id.toString(),
     sesionId: doc.sesionId?.toString(),
     remitenteId: doc.remitenteId,
-    role: doc.role,
+    role: doc.rol || doc.role,
+    rol: doc.rol || doc.role,
     contenido: doc.contenido,
     metadatos: doc.metadatos || null,
     enviadoEn: doc.enviadoEn,

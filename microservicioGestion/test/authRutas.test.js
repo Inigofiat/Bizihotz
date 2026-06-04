@@ -42,7 +42,7 @@ test('POST /api/auth/login devuelve 401 si no existe usuario', async (t) => {
 
 test('POST /api/auth/login devuelve 401 si password es invalido', async (t) => {
   const fakeUser = {
-    passwordHash: 'hash',
+    contraseniaHash: 'hash',
     toJSON: () => ({
       idUsuario: 'u-1',
       nombreUsuario: 'pro',
@@ -67,7 +67,7 @@ test('POST /api/auth/login devuelve 401 si password es invalido', async (t) => {
 test('POST /api/auth/login responde 200 y token en caso valido', async (t) => {
   const fakeUser = {
     _id: 'u-1',
-    passwordHash: 'hash',
+    contraseniaHash: 'hash',
     toJSON: () => ({
       idUsuario: 'u-1',
       nombreUsuario: 'pro',
@@ -78,8 +78,8 @@ test('POST /api/auth/login responde 200 y token en caso valido', async (t) => {
       apellidos: 'Bar',
       telefono: '600000000',
       foto: '',
-      debeActualizarPassword: false,
-      ultimoCambioPassword: null,
+      debeActualizarCont: false,
+      ultimoCambioCont: null,
       ultimoAcceso: null
     })
   };
@@ -129,7 +129,7 @@ test('POST /api/auth/cambiar-password cubre 404 y 401', async (t) => {
   assert.equal(notFound.status, 404);
   restoreFindNone();
 
-  const fakeUser = { passwordHash: 'hash' };
+  const fakeUser = { contraseniaHash: 'hash' };
   const restoreFindOne = patch(Usuario, 'findOne', async () => fakeUser);
   const restoreCompare = patch(bcrypt, 'compare', async () => false);
   t.after(restoreFindOne);
@@ -145,9 +145,9 @@ test('POST /api/auth/cambiar-password cubre no cambio y cambio exitoso', async (
   let saveCalled = false;
 
   const fakeUser = {
-    passwordHash: 'hash-old',
-    debeActualizarPassword: true,
-    ultimoCambioPassword: null,
+    contraseniaHash: 'hash-old',
+    debeActualizarCont: true,
+    ultimoCambioCont: null,
     async save() {
       saveCalled = true;
     }
@@ -202,7 +202,7 @@ test('POST /api/auth/confirmar-password cubre 400/404/401/200', async (t) => {
 
   let saveCalled = false;
   const fakeUser = {
-    passwordHash: 'hash',
+    contraseniaHash: 'hash',
     async save() {
       saveCalled = true;
     }

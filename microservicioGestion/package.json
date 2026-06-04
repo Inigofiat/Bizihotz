@@ -9,6 +9,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "seed": "node scripts/seed.js",
+    "migrate-names": "node scripts/migratePersistedNames.js",
     "purge-weekend-citas": "node scripts/deleteWeekendCitas.js"
   },
   "keywords": [

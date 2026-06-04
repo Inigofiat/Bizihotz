@@ -10,7 +10,7 @@ API REST creada con FastAPI y PostgreSQL que gestiona alimentos, recetas, planes
 - `POST /api/dietas/{id}/versionar`: genera una nueva version de dieta.
 - `GET /api/dietas/{id}/exportar?formato=pdf|csv`: exporta el plan nutricional.
 - `POST /api/dietas/{id}/notificar`: envia la dieta a traves del servicio externo configurado.
-- Scripts utilitarios (`scripts/seed_demo.py`, `scripts/migrate_patient_ids_to_text.py`) para poblar datos o adaptar el esquema.
+- Scripts utilitarios (`scripts/seed_demo.py`, `scripts/migrate_persisted_names.py`, `scripts/migrate_patient_ids_to_text.py`) para poblar datos o adaptar el esquema.
 
 ## Variables y configuracion
 
@@ -58,12 +58,13 @@ Copia `.env.example` a `.env` y ajusta:
 4. Ejecuta seeds o migraciones cuando lo necesites:
    ```bash
    python scripts/seed_demo.py
+   python scripts/migrate_persisted_names.py
    python scripts/migrate_patient_ids_to_text.py
    ```
 
 ## Migracion de identificadores
 
-Si ya tenias tablas y ahora integras el microservicio de gestion, ejecuta `scripts/migrate_patient_ids_to_text.py` (via Docker o local) para convertir `paciente_id` a texto y aceptar ObjectId externos.
+Si ya tenias tablas con nombres antiguos, ejecuta `scripts/migrate_persisted_names.py` antes de arrancar la version nueva para renombrar tablas/columnas sin borrar datos. Si integras el microservicio de gestion, ejecuta despues `scripts/migrate_patient_ids_to_text.py` para convertir `pacienteId` a texto y aceptar ObjectId externos.
 
 ## Acceso a la base de datos
 

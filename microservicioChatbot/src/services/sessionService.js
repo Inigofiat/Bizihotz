@@ -86,7 +86,7 @@ const updateUnreadForMessage = async (session, message) => {
     contenido: message.contenido,
     enviadoEn: message.enviadoEn,
     remitenteId: message.remitenteId,
-    role: message.role,
+    role: message.rol || message.role,
   };
   session.noLeidos ??= new Map();
   session.participantes.forEach((p) => {

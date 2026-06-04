@@ -10,18 +10,20 @@ from ..database import Base
 
 
 class Receta(Base):
-    __tablename__ = "recetas"
+    __tablename__ = "Receta"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nombre: Mapped[str] = mapped_column(String(150), nullable=False)
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
-    calorias_objetivo: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    calorias_objetivo: Mapped[Decimal | None] = mapped_column(
+        "caloriasObjetivo", Numeric(8, 2), nullable=True
+    )
     instrucciones: Mapped[str | None] = mapped_column(Text, nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        "creadoEn", DateTime, default=datetime.utcnow, nullable=False
     )
     actualizado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        "actualizadoEn", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     ingredientes: Mapped[list["RecetaAlimento"]] = relationship(
