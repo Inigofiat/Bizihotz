@@ -555,8 +555,8 @@ async function guardarContrasena(event) {
     }
 
     actualizarUsuarioLocal({
-      debeActualizarPassword: false,
-      ultimoCambioPassword: new Date().toISOString()
+      debeActualizarCont: false,
+      ultimoCambioCont: new Date().toISOString()
     });
 
     feedback.textContent = "Contraseña actualizada correctamente. Cerrando sesión...";

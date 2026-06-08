@@ -19,12 +19,9 @@ const usuarioSchema = new mongoose.Schema(
     },
     foto: { type: String, default: "" },
     contraseniaHash: { type: String, required: true },
-    passwordHash: { type: String, select: false },
     activo: { type: Boolean, default: true },
     debeActualizarCont: { type: Boolean, default: false },
-    debeActualizarPassword: { type: Boolean, select: false },
     ultimoCambioCont: { type: Date, default: null },
-    ultimoCambioPassword: { type: Date, select: false },
     ultimoAcceso: { type: Date, default: null }
   },
   { timestamps: { createdAt: "creadoEn", updatedAt: "acutalizadoEn" } }
@@ -37,7 +34,6 @@ usuarioSchema.set("toJSON", {
     ret.idUsuario = ret._id;
     delete ret._id;
     delete ret.contraseniaHash;
-    delete ret.passwordHash;
     // Aseguramos que los documentos antiguos sin rolSistema sigan funcionando como "Profesional del centro".
     if (!ret.rolSistema) {
       ret.rolSistema = "Profesional del centro";

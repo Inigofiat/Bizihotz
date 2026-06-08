@@ -12,18 +12,18 @@ class AsignacionDieta(Base):
     __tablename__ = "DietaAsignacion"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    dieta_id: Mapped[int] = mapped_column(
+    dietaId: Mapped[int] = mapped_column(
         "dietaId",
         ForeignKey("Dieta.id", ondelete="CASCADE"), nullable=False
     )
-    paciente_id: Mapped[str] = mapped_column("pacienteId", String(128), nullable=False, index=True)
-    usuario_id: Mapped[int] = mapped_column("usuarioId", Integer, nullable=False, index=True)
+    pacienteId: Mapped[str] = mapped_column("pacienteId", String(128), nullable=False, index=True)
+    usuarioId: Mapped[int] = mapped_column("usuarioId", Integer, nullable=False, index=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    es_actual: Mapped[bool] = mapped_column("esActual", Boolean, default=True, nullable=False)
-    fecha_asignacion: Mapped[datetime] = mapped_column(
+    esActual: Mapped[bool] = mapped_column("esActual", Boolean, default=True, nullable=False)
+    fechaAsignacion: Mapped[datetime] = mapped_column(
         "fechaAsignacion", DateTime, default=datetime.utcnow, nullable=False
     )
-    notificado_en: Mapped[datetime | None] = mapped_column(
+    notificadoEn: Mapped[datetime | None] = mapped_column(
         "notificadoEn", DateTime, nullable=True
     )
     comentario: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -32,6 +32,6 @@ class AsignacionDieta(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - repr only
         return (
-            f"<AsignacionDieta dieta={self.dieta_id} paciente={self.paciente_id} "
+            f"<AsignacionDieta dieta={self.dietaId} paciente={self.pacienteId} "
             f"version={self.version}>"
         )

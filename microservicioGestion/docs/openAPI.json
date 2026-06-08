@@ -1589,7 +1589,7 @@
           "foto": {
             "type": "string"
           },
-          "debeActualizarPassword": {
+          "debeActualizarCont": {
             "type": "boolean"
           }
         }

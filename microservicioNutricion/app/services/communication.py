@@ -25,13 +25,13 @@ def enviar_notificacion_dieta(
 
     payload: Dict[str, Any] = {
         "canal": canal,
-        "pacienteId": dieta.paciente_id,
+        "pacienteId": dieta.pacienteId,
         "asunto": asunto or f"Plan nutricional {dieta.nombre}",
         "mensaje": mensaje or "Se ha actualizado tu plan nutricional.",
         "datosDieta": {
             "dietaId": dieta.id,
             "version": dieta.version,
-            "usuarioId": dieta.usuario_id,
+            "usuarioId": dieta.usuarioId,
         },
         "enviarCopiaProfesional": incluir_profesional,
     }

@@ -55,7 +55,7 @@ def _ordenar_recetas(recetas: list[DietaReceta]) -> list[DietaReceta]:
     return sorted(
         recetas,
         key=lambda item: (
-            item.dia_semana or "",
+            item.diaSemana or "",
             item.momento or "",
             item.orden or 0,
         ),
@@ -74,9 +74,9 @@ def generar_csv_dieta(dieta: Dieta) -> Tuple[bytes, str]:
     writer = csv.writer(buffer)
 
     writer.writerow(["Dieta", dieta.nombre])
-    writer.writerow(["Paciente", dieta.paciente_id or "N/A"])
+    writer.writerow(["Paciente", dieta.pacienteId or "N/A"])
     writer.writerow(["Version", dieta.version])
-    writer.writerow(["Periodo", f"{dieta.fecha_inicio} - {dieta.fecha_fin or 'Indefinido'}"])
+    writer.writerow(["Periodo", f"{dieta.fechaInicio} - {dieta.fechaFin or 'Indefinido'}"])
     writer.writerow([])
     writer.writerow(["Dia", "Momento", "Receta", "Porciones", "Macros", "Micros"])
 
@@ -87,7 +87,7 @@ def generar_csv_dieta(dieta: Dieta) -> Tuple[bytes, str]:
         totales = calcular_totales_receta(receta)
         writer.writerow(
             [
-                item.dia_semana or "-",
+                item.diaSemana or "-",
                 item.momento or "-",
                 receta.nombre,
                 item.porciones or 1,
@@ -125,12 +125,12 @@ def generar_pdf_dieta(dieta: Dieta, footer_note: str) -> Tuple[bytes, str]:
 
     if _HAS_FPDF:
         pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 8, f"Paciente: {dieta.paciente_id or '-'}", ln=True)
+    pdf.cell(0, 8, f"Paciente: {dieta.pacienteId or '-'}", ln=True)
     pdf.cell(0, 8, f"Version: {dieta.version}", ln=True)
     pdf.cell(
         0,
         8,
-        f"Periodo: {dieta.fecha_inicio} - {dieta.fecha_fin or 'Indefinido'}",
+        f"Periodo: {dieta.fechaInicio} - {dieta.fechaFin or 'Indefinido'}",
         ln=True,
     )
     if dieta.objetivo:
@@ -149,7 +149,7 @@ def generar_pdf_dieta(dieta: Dieta, footer_note: str) -> Tuple[bytes, str]:
 
         if _HAS_FPDF:
             pdf.set_font("Helvetica", "B", 12)
-        encabezado = f"{item.dia_semana or '-'} - {item.momento or '-'}"
+        encabezado = f"{item.diaSemana or '-'} - {item.momento or '-'}"
         pdf.cell(0, 8, encabezado, ln=True)
 
         if _HAS_FPDF:

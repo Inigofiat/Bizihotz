@@ -48,28 +48,28 @@ def _to_decimal(value: Optional[float | int | Decimal]) -> Optional[Decimal]:
 
 
 def _ordenar_asignaciones(asignaciones: Iterable[AsignacionDieta]) -> List[DietaAsignacionRead]:
-    ordenadas = sorted(asignaciones, key=lambda item: item.fecha_asignacion, reverse=True)
+    ordenadas = sorted(asignaciones, key=lambda item: item.fechaAsignacion, reverse=True)
     return [DietaAsignacionRead.from_orm(item) for item in ordenadas]
 
 
 def _ordenar_historial(historial: Iterable[DietaHistorial]) -> List[DietaHistorialRead]:
-    ordenados = sorted(historial, key=lambda item: item.registrado_en, reverse=True)
+    ordenados = sorted(historial, key=lambda item: item.registradoEn, reverse=True)
     salida: list[DietaHistorialRead] = []
     for item in ordenados:
         snapshot = None
-        if item.snapshot_data:
+        if item.datos:
             try:
-                snapshot = json.loads(item.snapshot_data)
+                snapshot = json.loads(item.datos)
             except json.JSONDecodeError:
                 snapshot = None
         salida.append(
             DietaHistorialRead(
                 id=item.id,
-                dieta_id=item.dieta_id,
-                usuario_id=item.usuario_id,
+                dieta_id=item.dietaId,
+                usuario_id=item.usuarioId,
                 detalle=item.detalle,
                 snapshot=snapshot,
-                registrado_en=item.registrado_en,
+                registrado_en=item.registradoEn,
             )
         )
     return salida
@@ -88,13 +88,13 @@ def _snapshot_dieta(dieta: Dieta) -> dict:
         "nombre": dieta.nombre,
         "objetivo": dieta.objetivo,
         "descripcion": parsed_desc,
-        "calorias_objetivo": float(dieta.calorias_objetivo) if dieta.calorias_objetivo is not None else None,
-        "fecha_inicio": dieta.fecha_inicio.isoformat() if dieta.fecha_inicio else None,
-        "fecha_fin": dieta.fecha_fin.isoformat() if dieta.fecha_fin else None,
+        "calorias_objetivo": float(dieta.caloriasObjetivo) if dieta.caloriasObjetivo is not None else None,
+        "fecha_inicio": dieta.fechaInicio.isoformat() if dieta.fechaInicio else None,
+        "fecha_fin": dieta.fechaFin.isoformat() if dieta.fechaFin else None,
         "notas": dieta.notas,
-        "paciente_id": dieta.paciente_id,
-        "usuario_id": dieta.usuario_id,
-        "es_plantilla": dieta.es_plantilla,
+        "paciente_id": dieta.pacienteId,
+        "usuario_id": dieta.usuarioId,
+        "es_plantilla": dieta.esPlantilla,
         "estado": dieta.estado,
         "activa": dieta.activa,
         "totales": calcular_totales_dieta(dieta.recetas),
@@ -138,7 +138,7 @@ def _sincronizar_recetas(
         nuevos.append(
             DietaReceta(
                 receta=receta,
-                dia_semana=item.dia_semana,
+                diaSemana=item.dia_semana,
                 momento=item.momento,
                 orden=item.orden,
                 porciones=item.porciones or 1,
@@ -157,7 +157,7 @@ def _copiar_recetas(origen: Dieta) -> list[DietaReceta]:
         copias.append(
             DietaReceta(
                 receta=receta,
-                dia_semana=item.dia_semana,
+                diaSemana=item.diaSemana,
                 momento=item.momento,
                 orden=item.orden,
                 porciones=item.porciones,
@@ -182,9 +182,9 @@ def _clonar_dieta(
     nombre = origen.nombre
     objetivo = origen.objetivo
     descripcion = origen.descripcion
-    calorias_objetivo = origen.calorias_objetivo
-    fecha_inicio = origen.fecha_inicio
-    fecha_fin = origen.fecha_fin
+    calorias_objetivo = origen.caloriasObjetivo
+    fecha_inicio = origen.fechaInicio
+    fecha_fin = origen.fechaFin
     notas = origen.notas
 
     if overrides:
@@ -209,12 +209,12 @@ def _clonar_dieta(
         nombre=nombre,
         objetivo=objetivo,
         descripcion=descripcion,
-        calorias_objetivo=_to_decimal(calorias_objetivo),
-        fecha_inicio=fecha_inicio,
-        fecha_fin=fecha_fin,
-        paciente_id=paciente_id,
-        usuario_id=usuario_id,
-        es_plantilla=es_plantilla,
+        caloriasObjetivo=_to_decimal(calorias_objetivo),
+        fechaInicio=fecha_inicio,
+        fechaFin=fecha_fin,
+        pacienteId=paciente_id,
+        usuarioId=usuario_id,
+        esPlantilla=es_plantilla,
         version=version,
         estado=estado,
         activa=activa,
@@ -236,15 +236,15 @@ def _desactivar_asignaciones(
     session: Session, paciente_id: str, excluir_dieta_id: Optional[int] = None
 ) -> None:
     stmt = select(AsignacionDieta).where(
-        AsignacionDieta.paciente_id == paciente_id,
-        AsignacionDieta.es_actual.is_(True),
+        AsignacionDieta.pacienteId == paciente_id,
+        AsignacionDieta.esActual.is_(True),
     )
     if excluir_dieta_id is not None:
-        stmt = stmt.where(AsignacionDieta.dieta_id != excluir_dieta_id)
+        stmt = stmt.where(AsignacionDieta.dietaId != excluir_dieta_id)
 
     asignaciones = session.execute(stmt).scalars().all()
     for asignacion in asignaciones:
-        asignacion.es_actual = False
+        asignacion.esActual = False
 
 
 def _dieta_base_stmt():
@@ -259,7 +259,7 @@ def _dieta_base_stmt():
             selectinload(Dieta.historial),
             selectinload(Dieta.parent),
         )
-        .order_by(Dieta.creado_en.desc())
+        .order_by(Dieta.creadoEn.desc())
     )
 
 
@@ -287,19 +287,19 @@ def listar_dietas(
     stmt = _dieta_base_stmt()
     paciente_id_filter = paciente_id.strip() if paciente_id else None
     if paciente_id_filter is not None:
-        stmt = stmt.where(Dieta.paciente_id == paciente_id_filter)
+        stmt = stmt.where(Dieta.pacienteId == paciente_id_filter)
     if usuario_id is not None:
-        stmt = stmt.where(Dieta.usuario_id == usuario_id)
+        stmt = stmt.where(Dieta.usuarioId == usuario_id)
     if es_plantilla is not None:
-        stmt = stmt.where(Dieta.es_plantilla.is_(es_plantilla))
+        stmt = stmt.where(Dieta.esPlantilla.is_(es_plantilla))
     if estado is not None:
         stmt = stmt.where(Dieta.estado == estado)
     if activa is not None:
         stmt = stmt.where(Dieta.activa.is_(activa))
     if parent_id is not None:
-        stmt = stmt.where(Dieta.parent_id == parent_id)
+        stmt = stmt.where(Dieta.idPadre == parent_id)
     if solo_actuales:
-        stmt = stmt.join(Dieta.asignaciones).where(AsignacionDieta.es_actual.is_(True))
+        stmt = stmt.join(Dieta.asignaciones).where(AsignacionDieta.esActual.is_(True))
 
     dietas = session.execute(stmt).scalars().unique().all()
     return [_build_dieta_response(dieta) for dieta in dietas]
@@ -330,12 +330,12 @@ def crear_dieta(
         nombre=payload.nombre,
         objetivo=payload.objetivo,
         descripcion=payload.descripcion,
-        calorias_objetivo=_to_decimal(payload.calorias_objetivo),
-        fecha_inicio=payload.fecha_inicio or date.today(),
-        fecha_fin=payload.fecha_fin,
-        paciente_id=paciente_id,
-        usuario_id=payload.usuario_id,
-        es_plantilla=payload.es_plantilla,
+        caloriasObjetivo=_to_decimal(payload.calorias_objetivo),
+        fechaInicio=payload.fecha_inicio or date.today(),
+        fechaFin=payload.fecha_fin,
+        pacienteId=paciente_id,
+        usuarioId=payload.usuario_id,
+        esPlantilla=payload.es_plantilla,
         estado=estado,
         activa=activa,
         notas=payload.notas,
@@ -351,15 +351,15 @@ def crear_dieta(
         dieta.parent = parent
 
     if not payload.es_plantilla and activa:
-        dieta.publicada_en = datetime.utcnow()
+        dieta.publicadaEn = datetime.utcnow()
 
     _sincronizar_recetas(session, dieta, payload.recetas)
 
     dieta.historial.append(
         DietaHistorial(
-            usuario_id=payload.usuario_id,
+            usuarioId=payload.usuario_id,
             detalle="Creacion de dieta",
-            snapshot_data=json.dumps(_snapshot_dieta(dieta)),
+            datos=json.dumps(_snapshot_dieta(dieta)),
         )
     )
 
@@ -410,7 +410,7 @@ def actualizar_dieta(
 ):
     dieta = _obtener_dieta(session, dieta_id)
     campos_modificados: set[str] = set()
-    usuario_historial = payload.actor_usuario_id or payload.usuario_id or dieta.usuario_id
+    usuario_historial = payload.actor_usuario_id or payload.usuario_id or dieta.usuarioId
 
     if payload.nombre is not None:
         dieta.nombre = payload.nombre
@@ -422,13 +422,13 @@ def actualizar_dieta(
         dieta.descripcion = payload.descripcion
         campos_modificados.add("descripcion")
     if payload.calorias_objetivo is not None:
-        dieta.calorias_objetivo = _to_decimal(payload.calorias_objetivo)
+        dieta.caloriasObjetivo = _to_decimal(payload.calorias_objetivo)
         campos_modificados.add("calorias_objetivo")
     if payload.fecha_inicio is not None:
-        dieta.fecha_inicio = payload.fecha_inicio
+        dieta.fechaInicio = payload.fecha_inicio
         campos_modificados.add("fecha_inicio")
     if payload.fecha_fin is not None:
-        dieta.fecha_fin = payload.fecha_fin
+        dieta.fechaFin = payload.fecha_fin
         campos_modificados.add("fecha_fin")
     if payload.notas is not None:
         dieta.notas = payload.notas
@@ -440,13 +440,13 @@ def actualizar_dieta(
                 paciente_actualizado,
                 incoming_authorization=request.headers.get("Authorization"),
             )
-        dieta.paciente_id = paciente_actualizado or None
+        dieta.pacienteId = paciente_actualizado or None
         campos_modificados.add("paciente_id")
     if payload.usuario_id is not None:
-        dieta.usuario_id = payload.usuario_id
+        dieta.usuarioId = payload.usuario_id
         campos_modificados.add("usuario_id")
     if payload.es_plantilla is not None:
-        dieta.es_plantilla = payload.es_plantilla
+        dieta.esPlantilla = payload.es_plantilla
         campos_modificados.add("es_plantilla")
     if payload.estado is not None:
         dieta.estado = payload.estado
@@ -468,16 +468,16 @@ def actualizar_dieta(
         _sincronizar_recetas(session, dieta, payload.recetas)
         campos_modificados.add("recetas")
 
-    usuario_historial = payload.usuario_id or dieta.usuario_id
+    usuario_historial = payload.usuario_id or dieta.usuarioId
     if campos_modificados:
         detalle = f"v{dieta.version}: Actualizacion de campos: {', '.join(sorted(campos_modificados))}"
     else:
         detalle = f"v{dieta.version}: Actualizacion registrada sin cambios de campos"
     dieta.historial.append(
         DietaHistorial(
-            usuario_id=usuario_historial,
+            usuarioId=usuario_historial,
             detalle=detalle,
-            snapshot_data=json.dumps(_snapshot_dieta(dieta)),
+            datos=json.dumps(_snapshot_dieta(dieta)),
         )
     )
 
@@ -526,7 +526,7 @@ def asignar_dieta(
 
     origen = _obtener_dieta(session, dieta_id)
 
-    if not origen.es_plantilla and origen.paciente_id not in (None, paciente_id):
+    if not origen.esPlantilla and origen.pacienteId not in (None, paciente_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="La dieta ya esta asociada a otro paciente.",
@@ -544,12 +544,12 @@ def asignar_dieta(
         estado="publicada",
         activa=True,
     )
-    nueva.publicada_en = datetime.utcnow()
+    nueva.publicadaEn = datetime.utcnow()
     nueva.historial.append(
         DietaHistorial(
-            usuario_id=payload.usuario_id,
+            usuarioId=payload.usuario_id,
             detalle=f"Asignacion a paciente {paciente_id}",
-            snapshot_data=json.dumps(_snapshot_dieta(nueva)),
+            datos=json.dumps(_snapshot_dieta(nueva)),
         )
     )
 
@@ -560,8 +560,8 @@ def asignar_dieta(
 
     asignacion = AsignacionDieta(
         dieta=nueva,
-        paciente_id=paciente_id,
-        usuario_id=payload.usuario_id,
+        pacienteId=paciente_id,
+        usuarioId=payload.usuario_id,
         version=nueva.version,
         comentario=payload.comentario,
     )
@@ -592,12 +592,12 @@ def versionar_dieta(
 ):
     actual = _obtener_dieta(session, dieta_id)
 
-    if actual.es_plantilla:
+    if actual.esPlantilla:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No es posible versionar una plantilla directamente. Asigne primero al paciente.",
         )
-    if actual.paciente_id is None:
+    if actual.pacienteId is None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="La dieta no tiene paciente asociado para generar una version.",
@@ -607,13 +607,13 @@ def versionar_dieta(
     fecha_inicio_nueva = payload.fecha_inicio or date.today()
     fecha_fin_nueva = payload.fecha_fin
     # Cerrar la versión anterior en la fecha de inicio de la nueva (o hoy)
-    actual.fecha_fin = fecha_inicio_nueva
+    actual.fechaFin = fecha_inicio_nueva
 
     nueva = _clonar_dieta(
         session,
         actual,
         payload,
-        paciente_id=actual.paciente_id,
+        paciente_id=actual.pacienteId,
         usuario_id=payload.usuario_id,
         parent=actual,
         version=actual.version + 1,
@@ -621,9 +621,9 @@ def versionar_dieta(
         estado="publicada",
         activa=True,
     )
-    nueva.fecha_inicio = fecha_inicio_nueva
-    nueva.fecha_fin = fecha_fin_nueva
-    nueva.publicada_en = datetime.utcnow()
+    nueva.fechaInicio = fecha_inicio_nueva
+    nueva.fechaFin = fecha_fin_nueva
+    nueva.publicadaEn = datetime.utcnow()
     detalle_version = (
         f"Nueva version: {payload.comentario}"
         if payload.comentario
@@ -631,9 +631,9 @@ def versionar_dieta(
     )
     nueva.historial.append(
         DietaHistorial(
-            usuario_id=payload.usuario_id,
+            usuarioId=payload.usuario_id,
             detalle=detalle_version,
-            snapshot_data=json.dumps(_snapshot_dieta(nueva)),
+            datos=json.dumps(_snapshot_dieta(nueva)),
         )
     )
     actual.activa = False
@@ -642,11 +642,11 @@ def versionar_dieta(
     session.add(nueva)
     session.flush()
 
-    _desactivar_asignaciones(session, actual.paciente_id, excluir_dieta_id=nueva.id)
+    _desactivar_asignaciones(session, actual.pacienteId, excluir_dieta_id=nueva.id)
     asignacion = AsignacionDieta(
         dieta=nueva,
-        paciente_id=actual.paciente_id,
-        usuario_id=payload.usuario_id,
+        pacienteId=actual.pacienteId,
+        usuarioId=payload.usuario_id,
         version=nueva.version,
         comentario=payload.comentario,
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Dict, List, Literal, Optional
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from .base import ORMModel
 from .dieta_receta import DietaRecetaCreate, DietaRecetaRead
@@ -13,9 +13,15 @@ class DietaBase(ORMModel):
     nombre: str = Field(..., max_length=150)
     objetivo: Optional[str] = None
     descripcion: Optional[str] = None
-    calorias_objetivo: Optional[float] = None
-    fecha_inicio: Optional[date] = None
-    fecha_fin: Optional[date] = None
+    calorias_objetivo: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("calorias_objetivo", "caloriasObjetivo")
+    )
+    fecha_inicio: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_inicio", "fechaInicio")
+    )
+    fecha_fin: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_fin", "fechaFin")
+    )
     notas: Optional[str] = None
 
 
@@ -33,9 +39,15 @@ class DietaUpdate(ORMModel):
     nombre: Optional[str] = None
     objetivo: Optional[str] = None
     descripcion: Optional[str] = None
-    calorias_objetivo: Optional[float] = None
-    fecha_inicio: Optional[date] = None
-    fecha_fin: Optional[date] = None
+    calorias_objetivo: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("calorias_objetivo", "caloriasObjetivo")
+    )
+    fecha_inicio: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_inicio", "fechaInicio")
+    )
+    fecha_fin: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_fin", "fechaFin")
+    )
     notas: Optional[str] = None
     paciente_id: Optional[str] = None
     usuario_id: Optional[int] = None
@@ -75,22 +87,28 @@ class DietaNotificacionRequest(ORMModel):
 
 class DietaAsignacionRead(ORMModel):
     id: int
-    paciente_id: str
-    usuario_id: int
+    paciente_id: str = Field(validation_alias=AliasChoices("paciente_id", "pacienteId"))
+    usuario_id: int = Field(validation_alias=AliasChoices("usuario_id", "usuarioId"))
     version: int
-    es_actual: bool
-    fecha_asignacion: datetime
-    notificado_en: Optional[datetime] = None
+    es_actual: bool = Field(validation_alias=AliasChoices("es_actual", "esActual"))
+    fecha_asignacion: datetime = Field(
+        validation_alias=AliasChoices("fecha_asignacion", "fechaAsignacion")
+    )
+    notificado_en: Optional[datetime] = Field(
+        default=None, validation_alias=AliasChoices("notificado_en", "notificadoEn")
+    )
     comentario: Optional[str] = None
 
 
 class DietaHistorialRead(ORMModel):
     id: int
-    dieta_id: int
-    usuario_id: int
+    dieta_id: int = Field(validation_alias=AliasChoices("dieta_id", "dietaId"))
+    usuario_id: int = Field(validation_alias=AliasChoices("usuario_id", "usuarioId"))
     detalle: Optional[str] = None
     snapshot: Optional[Dict] = None
-    registrado_en: datetime
+    registrado_en: datetime = Field(
+        validation_alias=AliasChoices("registrado_en", "registradoEn")
+    )
 
 
 class DietaRead(ORMModel):
@@ -98,20 +116,34 @@ class DietaRead(ORMModel):
     nombre: str
     objetivo: Optional[str] = None
     descripcion: Optional[str] = None
-    calorias_objetivo: Optional[float] = None
-    fecha_inicio: Optional[date] = None
-    fecha_fin: Optional[date] = None
+    calorias_objetivo: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("calorias_objetivo", "caloriasObjetivo")
+    )
+    fecha_inicio: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_inicio", "fechaInicio")
+    )
+    fecha_fin: Optional[date] = Field(
+        default=None, validation_alias=AliasChoices("fecha_fin", "fechaFin")
+    )
     notas: Optional[str] = None
-    paciente_id: Optional[str] = None
-    usuario_id: int
-    es_plantilla: bool
+    paciente_id: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("paciente_id", "pacienteId")
+    )
+    usuario_id: int = Field(validation_alias=AliasChoices("usuario_id", "usuarioId"))
+    es_plantilla: bool = Field(validation_alias=AliasChoices("es_plantilla", "esPlantilla"))
     version: int
     estado: str
     activa: bool
-    parent_id: Optional[int] = None
-    publicada_en: Optional[datetime] = None
-    creado_en: datetime
-    actualizado_en: datetime
+    parent_id: Optional[int] = Field(
+        default=None, validation_alias=AliasChoices("parent_id", "idPadre")
+    )
+    publicada_en: Optional[datetime] = Field(
+        default=None, validation_alias=AliasChoices("publicada_en", "publicadaEn")
+    )
+    creado_en: datetime = Field(validation_alias=AliasChoices("creado_en", "creadoEn"))
+    actualizado_en: datetime = Field(
+        validation_alias=AliasChoices("actualizado_en", "acutalizadoEn")
+    )
     recetas: List[DietaRecetaRead] = Field(default_factory=list)
     totales: Dict[str, Dict[str, float]] = Field(default_factory=dict)
     asignaciones: List[DietaAsignacionRead] = Field(default_factory=list)

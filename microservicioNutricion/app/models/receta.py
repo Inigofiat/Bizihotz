@@ -15,14 +15,14 @@ class Receta(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nombre: Mapped[str] = mapped_column(String(150), nullable=False)
     descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
-    calorias_objetivo: Mapped[Decimal | None] = mapped_column(
+    caloriasObjetivo: Mapped[Decimal | None] = mapped_column(
         "caloriasObjetivo", Numeric(8, 2), nullable=True
     )
     instrucciones: Mapped[str | None] = mapped_column(Text, nullable=True)
-    creado_en: Mapped[datetime] = mapped_column(
+    creadoEn: Mapped[datetime] = mapped_column(
         "creadoEn", DateTime, default=datetime.utcnow, nullable=False
     )
-    actualizado_en: Mapped[datetime] = mapped_column(
+    actualizadoEn: Mapped[datetime] = mapped_column(
         "actualizadoEn", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 

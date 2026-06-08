@@ -1367,6 +1367,6 @@ document.addEventListener("DOMContentLoaded", () => {
     apiFallback: API_FALLBACK
   });
 
-  // Antes se forzaba abrir perfil si debeActualizarPassword=true; lo desactivamos para no interrumpir el flujo inicial.
+  // Antes se forzaba abrir perfil si debeActualizarCont=true; lo desactivamos para no interrumpir el flujo inicial.
   // El usuario podrá actualizarla desde su perfil cuando lo decida.
 });

@@ -53,13 +53,10 @@ const buildUsuarioDocs = (seedUsuarios, contraseniaHash) => {
       rol: profesional.rol ?? "Nutricionista",
       rolSistema: profesional.rolSistema ?? "Profesional del centro",
       foto: profesional.foto ?? "",
-      contraseniaHash:
-        profesional.contraseniaHash ?? profesional.passwordHash ?? contraseniaHash,
+      contraseniaHash: profesional.contraseniaHash ?? contraseniaHash,
       activo: profesional.activo ?? true,
-      debeActualizarCont:
-        profesional.debeActualizarCont ?? profesional.debeActualizarPassword ?? false,
-      ultimoCambioCont:
-        profesional.ultimoCambioCont ?? profesional.ultimoCambioPassword ?? null
+      debeActualizarCont: profesional.debeActualizarCont ?? false,
+      ultimoCambioCont: profesional.ultimoCambioCont ?? null
     };
   });
 };

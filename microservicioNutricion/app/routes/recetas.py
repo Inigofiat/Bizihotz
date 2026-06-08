@@ -136,7 +136,7 @@ def crear_receta(payload: RecetaCreate, session: Session = Depends(get_session))
     receta = Receta(
         nombre=payload.nombre,
         descripcion=payload.descripcion,
-        calorias_objetivo=_to_decimal(payload.calorias_objetivo),
+        caloriasObjetivo=_to_decimal(payload.calorias_objetivo),
         instrucciones=payload.instrucciones,
     )
 
@@ -183,7 +183,7 @@ def actualizar_receta(
     if payload.descripcion is not None:
         receta.descripcion = payload.descripcion
     if payload.calorias_objetivo is not None:
-        receta.calorias_objetivo = _to_decimal(payload.calorias_objetivo)
+        receta.caloriasObjetivo = _to_decimal(payload.calorias_objetivo)
     if payload.instrucciones is not None:
         receta.instrucciones = payload.instrucciones
 

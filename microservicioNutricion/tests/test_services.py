@@ -32,7 +32,7 @@ def _fake_dieta_for_exports():
     receta = SimpleNamespace(nombre="Receta base", ingredientes=[ingrediente])
     dieta_receta = SimpleNamespace(
         receta=receta,
-        dia_semana="Lunes",
+        diaSemana="Lunes",
         momento="Comida",
         orden=1,
         porciones=2,
@@ -40,11 +40,11 @@ def _fake_dieta_for_exports():
     return SimpleNamespace(
         id=7,
         nombre="Plan prueba",
-        paciente_id="42",
-        usuario_id=9,
+        pacienteId="42",
+        usuarioId=9,
         version=3,
-        fecha_inicio=date(2026, 1, 1),
-        fecha_fin=None,
+        fechaInicio=date(2026, 1, 1),
+        fechaFin=None,
         objetivo="Subir masa",
         descripcion="Descripcion plan",
         notas="Notas plan",

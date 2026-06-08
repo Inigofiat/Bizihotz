@@ -171,10 +171,8 @@ const buildUserResponse = (usuario) => {
     apellidos: plain.apellidos ?? "",
     telefono: plain.telefono ?? "",
     foto: plain.foto ?? "",
-    debeActualizarCont: plain.debeActualizarCont ?? plain.debeActualizarPassword ?? false,
-    ultimoCambioCont: plain.ultimoCambioCont ?? plain.ultimoCambioPassword ?? null,
-    debeActualizarPassword: plain.debeActualizarCont ?? plain.debeActualizarPassword ?? false,
-    ultimoCambioPassword: plain.ultimoCambioCont ?? plain.ultimoCambioPassword ?? null,
+    debeActualizarCont: plain.debeActualizarCont ?? false,
+    ultimoCambioCont: plain.ultimoCambioCont ?? null,
     ultimoAcceso: plain.ultimoAcceso ?? null
   };
 };
@@ -356,11 +354,8 @@ router.patch("/:id/password", permitirRoles(ROLES.ADMIN), async (req, res, next)
     }
 
     usuario.contraseniaHash = await bcrypt.hash(String(nuevaPassword), 12);
-    usuario.passwordHash = undefined;
     usuario.debeActualizarCont = true;
-    usuario.debeActualizarPassword = undefined;
     usuario.ultimoCambioCont = new Date();
-    usuario.ultimoCambioPassword = undefined;
 
     await usuario.save();
 

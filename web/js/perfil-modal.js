@@ -106,10 +106,10 @@
       profilePhone.textContent = usuario.telefono || "-";
       profileRole.textContent = usuario.rol || "-";
 
-      if (usuario.debeActualizarPassword) {
+      if (usuario.debeActualizarCont) {
         profileStatus.textContent = "Debes actualizar tu contraseña.";
-      } else if (usuario.ultimoCambioPassword) {
-        const fecha = new Date(usuario.ultimoCambioPassword);
+      } else if (usuario.ultimoCambioCont) {
+        const fecha = new Date(usuario.ultimoCambioCont);
         profileStatus.textContent = `Último cambio: ${fecha.toLocaleDateString("es-ES")}`;
       } else {
         profileStatus.textContent = "Contraseña revisada.";
@@ -235,8 +235,8 @@
         }
 
         actualizarUsuarioLocal({
-          debeActualizarPassword: false,
-          ultimoCambioPassword: new Date().toISOString()
+          debeActualizarCont: false,
+          ultimoCambioCont: new Date().toISOString()
         });
 
         passwordFeedback.textContent = "Contraseña actualizada correctamente.";

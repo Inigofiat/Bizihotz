@@ -48,8 +48,8 @@ def test_listar_y_obtener_documento():
             etiquetas=["nutricion", "guia"],
             tipo="pdf",
             fuente="manual",
-            external_id="doc-1",
-            url_descarga="https://example.com/doc.pdf",
+            refer="doc-1",
+            url="https://example.com/doc.pdf",
             idioma="es",
         )
         session.add(doc)
@@ -89,8 +89,8 @@ def test_listar_documentos_con_filtros_y_paginacion():
                 etiquetas=["diabetes", "adulto"],
                 tipo="pdf",
                 fuente="manual",
-                external_id="doc-a",
-                url_descarga="https://example.com/a.pdf",
+                    refer="doc-a",
+                    url="https://example.com/a.pdf",
                 idioma="es",
             ),
             Documento(
@@ -99,8 +99,8 @@ def test_listar_documentos_con_filtros_y_paginacion():
                 etiquetas=["renal"],
                 tipo="html",
                 fuente="web",
-                external_id="doc-b",
-                url_descarga="https://example.com/b.html",
+                    refer="doc-b",
+                    url="https://example.com/b.html",
                 idioma="es",
             ),
         ]
@@ -154,8 +154,8 @@ def test_obtener_contenido_remoto_ok(monkeypatch):
             etiquetas=["hospital"],
             tipo="pdf",
             fuente="manual",
-            external_id="doc-remote",
-            url_descarga="https://example.com/path/protocolo.pdf",
+            refer="doc-remote",
+            url="https://example.com/path/protocolo.pdf",
             idioma="es",
         )
         session.add(doc)
@@ -191,8 +191,8 @@ def test_obtener_contenido_remoto_error(monkeypatch):
             etiquetas=[],
             tipo="pdf",
             fuente="manual",
-            external_id="doc-remote-err",
-            url_descarga="https://example.com/error.pdf",
+            refer="doc-remote-err",
+            url="https://example.com/error.pdf",
             idioma="es",
         )
         session.add(doc)
@@ -221,7 +221,7 @@ def test_obtener_contenido_local_y_errores():
             etiquetas=[],
             tipo="pdf",
             fuente="manual",
-            external_id="doc-sin-url",
+            refer="doc-sin-url",
             idioma="es",
         )
         session.add(doc_sin_url)
@@ -235,8 +235,8 @@ def test_obtener_contenido_local_y_errores():
             etiquetas=[],
             tipo="pdf",
             fuente="manual",
-            external_id="doc-ruta-inexistente",
-            ruta_archivo=str(missing_file),
+            refer="doc-ruta-inexistente",
+            rutaArchivo=str(missing_file),
             idioma="es",
         )
         session.add(doc_ruta_inexistente)
@@ -250,8 +250,8 @@ def test_obtener_contenido_local_y_errores():
             etiquetas=[],
             tipo="txt",
             fuente="manual",
-            external_id="doc-local",
-            ruta_archivo=str(local_file),
+            refer="doc-local",
+            rutaArchivo=str(local_file),
             idioma="es",
         )
         session.add(doc_local)
@@ -279,16 +279,16 @@ def test_obtener_contenido_local_y_errores():
 
 def test_helpers_safe_filename_and_url_resolution():
     class _Doc:
-        def __init__(self, url_descarga=None, ruta_archivo=None, metadata_json=None):
-            self.url_descarga = url_descarga
-            self.ruta_archivo = ruta_archivo
+        def __init__(self, url=None, rutaArchivo=None, metadata_json=None):
+            self.url = url
+            self.rutaArchivo = rutaArchivo
             self.metadata_json = metadata_json
 
     assert documentos_routes._safe_filename("https://example.com/docs/file.pdf", "fallback") == "file.pdf"
     assert documentos_routes._safe_filename("https://example.com", 'plan"\\name') == "planname"
 
-    assert documentos_routes._resolve_document_url(_Doc(url_descarga="https://x")) == "https://x"
-    assert documentos_routes._resolve_document_url(_Doc(ruta_archivo="/tmp/doc.pdf")) == "/tmp/doc.pdf"
+    assert documentos_routes._resolve_document_url(_Doc(url="https://x")) == "https://x"
+    assert documentos_routes._resolve_document_url(_Doc(rutaArchivo="/tmp/doc.pdf")) == "/tmp/doc.pdf"
     assert (
         documentos_routes._resolve_document_url(_Doc(metadata_json={"url": "https://meta.example/doc"}))
         == "https://meta.example/doc"
@@ -305,14 +305,14 @@ def test_session_scope_commit_y_rollback():
                 etiquetas=[],
                 tipo="pdf",
                 fuente="manual",
-                external_id="doc-commit",
-                url_descarga="https://example.com/commit.pdf",
+                refer="doc-commit",
+                url="https://example.com/commit.pdf",
                 idioma="es",
             )
         )
 
     with SessionLocal() as session:
-        count = session.query(Documento).filter(Documento.external_id == "doc-commit").count()
+        count = session.query(Documento).filter(Documento.refer == "doc-commit").count()
     assert count == 1
 
     with pytest.raises(RuntimeError):
@@ -324,15 +324,15 @@ def test_session_scope_commit_y_rollback():
                     etiquetas=[],
                     tipo="pdf",
                     fuente="manual",
-                    external_id="doc-rollback",
-                    url_descarga="https://example.com/rollback.pdf",
+                    refer="doc-rollback",
+                    url="https://example.com/rollback.pdf",
                     idioma="es",
                 )
             )
             raise RuntimeError("forzar rollback")
 
     with SessionLocal() as session:
-        count = session.query(Documento).filter(Documento.external_id == "doc-rollback").count()
+        count = session.query(Documento).filter(Documento.refer == "doc-rollback").count()
     assert count == 0
 
 

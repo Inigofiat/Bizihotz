@@ -24,16 +24,16 @@ class Documento(Base):
     etiquetas: Mapped[List[str]] = mapped_column(JSON, default=list)
     tipo: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     fuente: Mapped[str] = mapped_column(String(50))
-    external_id: Mapped[Optional[str]] = mapped_column("refer", String(100), nullable=True)
-    url_descarga: Mapped[Optional[str]] = mapped_column("url", Text, nullable=True)
-    ruta_archivo: Mapped[Optional[str]] = mapped_column("rutaArchivo", Text, nullable=True)
+    refer: Mapped[Optional[str]] = mapped_column("refer", String(100), nullable=True)
+    url: Mapped[Optional[str]] = mapped_column("url", Text, nullable=True)
+    rutaArchivo: Mapped[Optional[str]] = mapped_column("rutaArchivo", Text, nullable=True)
     idioma: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     estado: Mapped[str] = mapped_column(String(20), default="activo")
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
-    fecha_subida: Mapped[datetime] = mapped_column(
+    fechaSubida: Mapped[datetime] = mapped_column(
         "fechaSubida", DateTime, default=datetime.utcnow
     )
-    last_synced_at: Mapped[datetime] = mapped_column(
+    ultimaAct: Mapped[datetime] = mapped_column(
         "ultimaAct", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 

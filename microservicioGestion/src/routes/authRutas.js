@@ -8,9 +8,6 @@ const { signToken } = require("../utils/jwt");
 const router = express.Router();
 
 const escapeRegExp = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const getContraseniaHash = (usuario) => usuario.contraseniaHash || usuario.passwordHash || "";
-const selectIfPossible = (query, fields) =>
-  typeof query?.select === "function" ? query.select(fields) : query;
 
 router.post("/login", async (req, res, next) => {
   try {
@@ -33,16 +30,13 @@ router.post("/login", async (req, res, next) => {
           ]
         };
 
-    const usuario = await selectIfPossible(
-      Usuario.findOne({ ...query, activo: true }),
-      "+passwordHash +debeActualizarPassword +ultimoCambioPassword"
-    );
+    const usuario = await Usuario.findOne({ ...query, activo: true });
 
     if (!usuario) {
       return res.status(401).json({ mensaje: "Credenciales invalidas." });
     }
 
-    const valido = await bcrypt.compare(password, getContraseniaHash(usuario));
+    const valido = await bcrypt.compare(password, usuario.contraseniaHash || "");
 
     if (!valido) {
       return res.status(401).json({ mensaje: "Credenciales invalidas." });
@@ -72,14 +66,8 @@ router.post("/login", async (req, res, next) => {
         apellidos: usuarioPlano.apellidos ?? "",
         telefono: usuarioPlano.telefono ?? "",
         foto: usuarioPlano.foto ?? "",
-        debeActualizarCont:
-          usuarioPlano.debeActualizarCont ?? usuarioPlano.debeActualizarPassword ?? false,
-        ultimoCambioCont:
-          usuarioPlano.ultimoCambioCont ?? usuarioPlano.ultimoCambioPassword ?? null,
-        debeActualizarPassword:
-          usuarioPlano.debeActualizarCont ?? usuarioPlano.debeActualizarPassword ?? false,
-        ultimoCambioPassword:
-          usuarioPlano.ultimoCambioCont ?? usuarioPlano.ultimoCambioPassword ?? null,
+        debeActualizarCont: usuarioPlano.debeActualizarCont ?? false,
+        ultimoCambioCont: usuarioPlano.ultimoCambioCont ?? null,
         ultimoAcceso: usuarioPlano.ultimoAcceso ?? null
       }
     });
@@ -108,22 +96,19 @@ router.post("/cambiar-password", async (req, res, next) => {
         .json({ mensaje: "La nueva contrasena debe tener al menos 8 caracteres." });
     }
 
-    const usuario = await selectIfPossible(
-      Usuario.findOne({ email: email.toLowerCase().trim(), activo: true }),
-      "+passwordHash"
-    );
+    const usuario = await Usuario.findOne({ email: email.toLowerCase().trim(), activo: true });
 
     if (!usuario) {
       return res.status(404).json({ mensaje: "Usuario no encontrado." });
     }
 
-    const valido = await bcrypt.compare(passwordActual, getContraseniaHash(usuario));
+    const valido = await bcrypt.compare(passwordActual, usuario.contraseniaHash || "");
 
     if (!valido) {
       return res.status(401).json({ mensaje: "La contrasena actual es incorrecta." });
     }
 
-    const esIgualAnterior = await bcrypt.compare(passwordNueva, getContraseniaHash(usuario));
+    const esIgualAnterior = await bcrypt.compare(passwordNueva, usuario.contraseniaHash || "");
 
     if (esIgualAnterior) {
       return res
@@ -132,11 +117,8 @@ router.post("/cambiar-password", async (req, res, next) => {
     }
 
     usuario.contraseniaHash = await bcrypt.hash(passwordNueva, 12);
-    usuario.passwordHash = undefined;
     usuario.debeActualizarCont = false;
-    usuario.debeActualizarPassword = undefined;
     usuario.ultimoCambioCont = new Date();
-    usuario.ultimoCambioPassword = undefined;
 
     await usuario.save();
 
@@ -154,25 +136,20 @@ router.post("/confirmar-password", async (req, res, next) => {
       return res.status(400).json({ mensaje: "Email y contrasena actual son obligatorios." });
     }
 
-    const usuario = await selectIfPossible(
-      Usuario.findOne({ email: email.toLowerCase().trim(), activo: true }),
-      "+passwordHash"
-    );
+    const usuario = await Usuario.findOne({ email: email.toLowerCase().trim(), activo: true });
 
     if (!usuario) {
       return res.status(404).json({ mensaje: "Usuario no encontrado." });
     }
 
-    const valido = await bcrypt.compare(passwordActual, getContraseniaHash(usuario));
+    const valido = await bcrypt.compare(passwordActual, usuario.contraseniaHash || "");
 
     if (!valido) {
       return res.status(401).json({ mensaje: "La contrasena actual es incorrecta." });
     }
 
     usuario.debeActualizarCont = false;
-    usuario.debeActualizarPassword = undefined;
     usuario.ultimoCambioCont = new Date();
-    usuario.ultimoCambioPassword = undefined;
     await usuario.save();
 
     return res.json({ mensaje: "Contrasena confirmada. Puedes seguir usando la actual." });

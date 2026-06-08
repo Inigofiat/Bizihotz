@@ -44,7 +44,6 @@ const listMessages = async (sesionId, { page = 1, limit = 50, order = 'asc' } = 
 
   const [items, total] = await Promise.all([
     Message.find({ sesionId: session._id })
-      .select('+role')
       .sort({ enviadoEn: safeOrder })
       .skip(skip)
       .limit(safeLimit)
@@ -64,8 +63,8 @@ const listMessages = async (sesionId, { page = 1, limit = 50, order = 'asc' } = 
       id: msg._id.toString(),
       sesionId: msg.sesionId.toString(),
       remitenteId: msg.remitenteId,
-      role: msg.rol || msg.role,
-      rol: msg.rol || msg.role,
+      role: msg.rol,
+      rol: msg.rol,
       contenido: msg.contenido,
       metadatos: msg.metadatos,
       enviadoEn: msg.enviadoEn,

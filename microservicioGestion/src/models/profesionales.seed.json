@@ -5,7 +5,7 @@
     "telefono": "987654321",
     "rol": "Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Iñigo Fiat",
@@ -13,7 +13,7 @@
     "telefono": "123456789",
     "rol": "Dietista Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$Ur9qb.sqzoXn3.9g4d.i7uc17w5o3SYYt/mTZ81JszS3x7l.Gztj."
+    "contraseniaHash": "$2a$12$Ur9qb.sqzoXn3.9g4d.i7uc17w5o3SYYt/mTZ81JszS3x7l.Gztj."
   },
   {
     "nombreUsuario": "Marta García",
@@ -21,7 +21,7 @@
     "telefono": "600100001",
     "rol": "Nutricionista Clínico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Iker Laso",
@@ -29,7 +29,7 @@
     "telefono": "600100002",
     "rol": "Nutricionista Deportivo",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "June Salazar",
@@ -37,7 +37,7 @@
     "telefono": "600100003",
     "rol": "Nutricionista Pediátrico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Laura Uribe",
@@ -45,7 +45,7 @@
     "telefono": "600100004",
     "rol": "Nutricionista Geriátrico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Ander Olaizola",
@@ -53,7 +53,7 @@
     "telefono": "600100005",
     "rol": "Psicólogo Especialista en Conducta Alimentaria",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Nahikari Goenaga",
@@ -61,7 +61,7 @@
     "telefono": "600100006",
     "rol": "Entrenador Personal",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Jon Ander Etxeberria",
@@ -69,7 +69,7 @@
     "telefono": "600100007",
     "rol": "Fisioterapeuta",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Maialen Sanz",
@@ -77,7 +77,7 @@
     "telefono": "600100008",
     "rol": "Médico Especialista en Nutrición",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Gorka Garitano",
@@ -85,7 +85,7 @@
     "telefono": "600100009",
     "rol": "Endocrinólogo",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Amaia Legarra",
@@ -93,7 +93,7 @@
     "telefono": "600100010",
     "rol": "Coach de Hábitos Saludables",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Iñigo Gaztañaga",
@@ -101,7 +101,7 @@
     "telefono": "600100011",
     "rol": "Educador en Salud y Nutrición",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Nerea Azurmendi",
@@ -109,7 +109,7 @@
     "telefono": "600100012",
     "rol": "Técnico en Dietética",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Unai Aranburu",
@@ -117,7 +117,7 @@
     "telefono": "600100013",
     "rol": "Especialista en Trastornos de la Conducta Alimentaria",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Itsaso Mendizabal",
@@ -125,7 +125,7 @@
     "telefono": "600100014",
     "rol": "Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Asier Olaberria",
@@ -133,7 +133,7 @@
     "telefono": "600100015",
     "rol": "Dietista Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Irati Larrea",
@@ -141,7 +141,7 @@
     "telefono": "600100016",
     "rol": "Nutricionista Clínico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Oier Lizarralde",
@@ -149,7 +149,7 @@
     "telefono": "600100017",
     "rol": "Nutricionista Deportivo",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Leire Altuna",
@@ -157,7 +157,7 @@
     "telefono": "600100018",
     "rol": "Nutricionista Pediátrico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Xabier Elosegi",
@@ -165,7 +165,7 @@
     "telefono": "600100019",
     "rol": "Nutricionista Geriátrico",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Ane Arizmendi",
@@ -173,7 +173,7 @@
     "telefono": "600100020",
     "rol": "Psicólogo Especialista en Conducta Alimentaria",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Markel Ugarte",
@@ -181,7 +181,7 @@
     "telefono": "600100021",
     "rol": "Entrenador Personal",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Naroa Urrutia",
@@ -189,7 +189,7 @@
     "telefono": "600100022",
     "rol": "Fisioterapeuta",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Gaizka Loyola",
@@ -197,7 +197,7 @@
     "telefono": "600100023",
     "rol": "Médico Especialista en Nutrición",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Uxue Balerdi",
@@ -205,7 +205,7 @@
     "telefono": "600100024",
     "rol": "Endocrinólogo",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Endika Aristegui",
@@ -213,7 +213,7 @@
     "telefono": "600100025",
     "rol": "Coach de Hábitos Saludables",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Amaia Irizar",
@@ -221,7 +221,7 @@
     "telefono": "600100026",
     "rol": "Educador en Salud y Nutrición",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Ibai Arrieta",
@@ -229,7 +229,7 @@
     "telefono": "600100027",
     "rol": "Técnico en Dietética",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Garazi Beristain",
@@ -237,7 +237,7 @@
     "telefono": "600100028",
     "rol": "Especialista en Trastornos de la Conducta Alimentaria",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Mikel Etxegarai",
@@ -245,7 +245,7 @@
     "telefono": "600100029",
     "rol": "Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   },
   {
     "nombreUsuario": "Nahia Bengoetxea",
@@ -253,6 +253,6 @@
     "telefono": "600100030",
     "rol": "Dietista Nutricionista",
     "foto": "",
-    "passwordHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
+    "contraseniaHash": "$2a$12$zXQc.SZCB9TkxyXPK84BV.uehsh5Hu0.v0vPcCK9vTzPuU5JUgssu"
   }
 ]

@@ -15,10 +15,10 @@ class RecetaAlimento(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    receta_id: Mapped[int] = mapped_column(
+    recetaId: Mapped[int] = mapped_column(
         "recetaId", ForeignKey("Receta.id", ondelete="CASCADE"), nullable=False
     )
-    alimento_id: Mapped[int] = mapped_column(
+    alimentoId: Mapped[int] = mapped_column(
         "alimentoId", ForeignKey("Alimento.id", ondelete="CASCADE"), nullable=False
     )
     cantidad: Mapped[Decimal] = mapped_column(
@@ -31,4 +31,4 @@ class RecetaAlimento(Base):
     alimento: Mapped["Alimento"] = relationship("Alimento", back_populates="recetas")
 
     def __repr__(self) -> str:  # pragma: no cover - repr only
-        return f"<RecetaAlimento receta={self.receta_id} alimento={self.alimento_id}>"
+        return f"<RecetaAlimento receta={self.recetaId} alimento={self.alimentoId}>"

@@ -19,14 +19,14 @@ class DietaReceta(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    dieta_id: Mapped[int] = mapped_column(
+    dietaId: Mapped[int] = mapped_column(
         "dietaId",
         ForeignKey("Dieta.id", ondelete="CASCADE"), nullable=False
     )
-    receta_id: Mapped[int] = mapped_column(
+    recetaId: Mapped[int] = mapped_column(
         "recetaId", ForeignKey("Receta.id", ondelete="CASCADE"), nullable=False
     )
-    dia_semana: Mapped[str | None] = mapped_column("diaSemana", String(15), nullable=True)
+    diaSemana: Mapped[str | None] = mapped_column("diaSemana", String(15), nullable=True)
     momento: Mapped[str | None] = mapped_column(
         String(30), nullable=True, doc="Ej: desayuno, almuerzo, cena, snack."
     )
@@ -37,4 +37,4 @@ class DietaReceta(Base):
     receta: Mapped["Receta"] = relationship("Receta", back_populates="dietas")
 
     def __repr__(self) -> str:  # pragma: no cover - repr only
-        return f"<DietaReceta dieta={self.dieta_id} receta={self.receta_id}>"
+        return f"<DietaReceta dieta={self.dietaId} receta={self.recetaId}>"

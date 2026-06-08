@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from .base import ORMModel
 
@@ -42,5 +42,7 @@ class AlimentoSummary(ORMModel):
 
 class AlimentoRead(AlimentoBase):
     id: int
-    creado_en: datetime
-    actualizado_en: datetime
+    creado_en: datetime = Field(validation_alias=AliasChoices("creado_en", "creadoEn"))
+    actualizado_en: datetime = Field(
+        validation_alias=AliasChoices("actualizado_en", "actualizadoEn")
+    )

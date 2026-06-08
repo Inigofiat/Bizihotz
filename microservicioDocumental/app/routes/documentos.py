@@ -76,7 +76,7 @@ def listar_documentos(
         query = query.where(cast(Documento.etiquetas, String).like(patron))
 
     if not order_by_clauses:
-        order_by_clauses.append(Documento.fecha_subida.desc())
+        order_by_clauses.append(Documento.fechaSubida.desc())
 
     query = query.order_by(*order_by_clauses).offset(skip).limit(limit_real)
     resultados = session.scalars(query).all()
@@ -96,10 +96,10 @@ def obtener_documento(
 
 
 def _resolve_document_url(documento: Documento) -> Optional[str]:
-    if documento.url_descarga:
-        return documento.url_descarga
-    if documento.ruta_archivo:
-        return documento.ruta_archivo
+    if documento.url:
+        return documento.url
+    if documento.rutaArchivo:
+        return documento.rutaArchivo
     metadata = getattr(documento, "metadata_json", {}) or {}
     return metadata.get("url")
 

@@ -24,10 +24,10 @@ class Alimento(Base):
     micronutrientes: Mapped[dict[str, float] | None] = mapped_column(
         JSON, nullable=True, default=dict
     )
-    creado_en: Mapped[datetime] = mapped_column(
+    creadoEn: Mapped[datetime] = mapped_column(
         "creadoEn", DateTime, default=datetime.utcnow, nullable=False
     )
-    actualizado_en: Mapped[datetime] = mapped_column(
+    actualizadoEn: Mapped[datetime] = mapped_column(
         "actualizadoEn", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
