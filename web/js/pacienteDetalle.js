@@ -1406,6 +1406,24 @@ const getFechaClave = (fecha) => {
 
 
 
+const parseCitaFechaInput = (value) => {
+
+  if (!value) return null;
+
+  const fecha = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(fecha.getTime())) {
+
+    return null;
+
+  }
+
+  return fecha;
+
+};
+
+
+
 const fetchHorasOcupadas = async (fecha) => {
 
   const clave = getFechaClave(fecha);
@@ -1646,9 +1664,9 @@ const handleCitaFechaChange = () => {
 
     if (valorFecha) {
 
-      const fecha = new Date(`${valorFecha}T00:00:00`);
+      const fecha = parseCitaFechaInput(valorFecha);
 
-      if (!Number.isNaN(fecha.getTime())) {
+      if (fecha) {
 
         modalCitaState.cache.delete(getFechaClave(fecha));
 
@@ -1682,11 +1700,9 @@ const validateCitaForm = (data) => {
 
   if (!data.fecha) return "Selecciona la fecha de la cita.";
 
-  const fecha = new Date(data.fecha);
+  const fecha = parseCitaFechaInput(data.fecha);
 
-  const fechaClave = getFechaClave(fecha);
-
-  if (Number.isNaN(fecha.getTime())) return "La fecha indicada no es v├ílida.";
+  if (!fecha) return "La fecha indicada no es v├ílida.";
 
   if (!data.hora) return "Selecciona un horario disponible.";
 
@@ -1722,9 +1738,9 @@ const handleCitaFormSubmit = async (event) => {
 
   }
 
-  const fecha = new Date(data.fecha);
+  const fecha = parseCitaFechaInput(data.fecha);
 
-  fecha.setHours(0, 0, 0, 0);
+  const fechaClave = getFechaClave(fecha);
 
   const payload = {
 

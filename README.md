@@ -220,6 +220,12 @@ npm run dev           # o npm start
 
 Configura las variables de entorno del frontend (en los archivos JS) si necesitas apuntar a URLs distintas para el gateway. La pagina de documentos (`web/pages/documentos.html`) consulta el microservicio documental via gateway (`/documentos/api/documentos`), asi que debe estar levantado para ver contenido.
 
+## Seguridad
+
+- El secreto para firmar los tokens JWT se configura con la variable de entorno `JWT_SECRET`.
+- El valor por defecto (`dev-secret-change-me`) existe solo para desarrollo y tests;
+  en producción debe definirse siempre un secreto propio y largo.
+
 ## Recursos adicionales
 
 - Detalles especificos de cada microservicio: consulta los README dentro de `microservicioGestion/`, `microservicioComunicacion/`, `microservicioNutricion/`, `microservicioDocumental/` y `api-gateway/`.
